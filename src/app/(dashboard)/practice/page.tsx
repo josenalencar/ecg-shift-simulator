@@ -8,10 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/u
 import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
 import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
-import { Loader2, ArrowRight, RotateCcw, Home } from 'lucide-react'
+import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown } from 'lucide-react'
 import type { ECG, OfficialReport } from '@/types/database'
 
-type PracticeState = 'loading' | 'practicing' | 'submitted' | 'no-ecgs'
+const FREE_MONTHLY_LIMIT = 5
+
+type PracticeState = 'loading' | 'practicing' | 'submitted' | 'no-ecgs' | 'limit-reached'
+
+type SubscriptionInfo = {
+  status: string
+  isActive: boolean
+}
 
 export default function PracticePage() {
   const router = useRouter()
@@ -23,6 +30,8 @@ export default function PracticePage() {
   const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false })
+  const [monthlyAttempts, setMonthlyAttempts] = useState(0)
 
   useEffect(() => {
     loadNextECG()
@@ -41,6 +50,41 @@ export default function PracticePage() {
       return
     }
     setUserId(user.id)
+
+    // Check subscription status
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: subData } = await (supabase as any)
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .single()
+
+    const subInfo = {
+      status: (subData as { status?: string } | null)?.status || 'inactive',
+      isActive: (subData as { status?: string } | null)?.status === 'active'
+    }
+    setSubscription(subInfo)
+
+    // Get monthly attempt count for free users
+    if (!subInfo.isActive) {
+      const startOfMonth = new Date()
+      startOfMonth.setDate(1)
+      startOfMonth.setHours(0, 0, 0, 0)
+
+      const { count } = await supabase
+        .from('attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', startOfMonth.toISOString())
+
+      const attempts = count || 0
+      setMonthlyAttempts(attempts)
+
+      if (attempts >= FREE_MONTHLY_LIMIT) {
+        setState('limit-reached')
+        return
+      }
+    }
 
     // Get ECGs the user hasn't attempted yet
     const { data: attemptedECGs } = await supabase
@@ -114,6 +158,9 @@ export default function PracticePage() {
         feedback: result.comparisons,
       })
 
+      // Update monthly count
+      setMonthlyAttempts(prev => prev + 1)
+
       setState('submitted')
     } catch (error) {
       console.error('Error submitting attempt:', error)
@@ -124,6 +171,7 @@ export default function PracticePage() {
 
   const diffLabel = currentECG ? DIFFICULTIES.find(d => d.value === currentECG.difficulty)?.label : ''
   const catLabel = currentECG ? CATEGORIES.find(c => c.value === currentECG.category)?.label : ''
+  const remainingFree = FREE_MONTHLY_LIMIT - monthlyAttempts
 
   if (state === 'loading') {
     return (
@@ -138,6 +186,41 @@ export default function PracticePage() {
     )
   }
 
+  if (state === 'limit-reached') {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="border-2 border-orange-200 bg-orange-50">
+          <CardContent className="py-12 text-center">
+            <Lock className="h-16 w-16 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Limite Mensal Atingido
+            </h2>
+            <p className="text-gray-600 mb-2">
+              Voce utilizou seus {FREE_MONTHLY_LIMIT} casos gratuitos deste mes.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Assine o Premium para acesso ilimitado a todos os casos de ECG!
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/dashboard">
+                <Button variant="outline">
+                  <Home className="h-4 w-4 mr-2" />
+                  Ir para Dashboard
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button>
+                  <Crown className="h-4 w-4 mr-2" />
+                  Assinar Premium
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (state === 'no-ecgs') {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -148,7 +231,7 @@ export default function PracticePage() {
               Tudo em dia!
             </h2>
             <p className="text-gray-600 mb-6">
-              Você completou todos os casos de ECG disponíveis. Volte mais tarde para mais!
+              Voce completou todos os casos de ECG disponiveis. Volte mais tarde para mais!
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/dashboard">
@@ -190,6 +273,28 @@ export default function PracticePage() {
         {/* Results */}
         <ResultComparison result={scoringResult} notes={officialReport?.notes} />
 
+        {/* Free user warning */}
+        {!subscription.isActive && remainingFree <= 2 && remainingFree > 0 && (
+          <Card className="mt-6 border-orange-200 bg-orange-50">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-orange-800">
+                    Voce tem {remainingFree} caso{remainingFree !== 1 ? 's' : ''} gratuito{remainingFree !== 1 ? 's' : ''} restante{remainingFree !== 1 ? 's' : ''} este mes
+                  </p>
+                  <p className="text-sm text-orange-600">Assine o Premium para casos ilimitados</p>
+                </div>
+                <Link href="/pricing">
+                  <Button size="sm">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Assinar
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Actions */}
         <div className="flex gap-4 justify-center mt-8">
           <Link href="/dashboard">
@@ -199,7 +304,7 @@ export default function PracticePage() {
             </Button>
           </Link>
           <Button onClick={loadNextECG}>
-            Próximo ECG
+            Proximo ECG
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -211,10 +316,21 @@ export default function PracticePage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sessão de Prática</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Sessao de Pratica</h1>
           <p className="text-gray-600">ECG #{currentECG?.title}</p>
         </div>
         <div className="flex items-center gap-2">
+          {!subscription.isActive && (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+              {remainingFree} restante{remainingFree !== 1 ? 's' : ''}
+            </span>
+          )}
+          {subscription.isActive && (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
+              <Crown className="h-3 w-3" />
+              Premium
+            </span>
+          )}
           <span className={`
             px-2 py-1 rounded-full text-xs font-medium
             ${currentECG?.difficulty === 'easy'
@@ -242,13 +358,13 @@ export default function PracticePage() {
       {/* Report Form - Below ECG */}
       <Card>
         <CardHeader>
-          <CardTitle>Sua Interpretação</CardTitle>
+          <CardTitle>Sua Interpretacao</CardTitle>
         </CardHeader>
         <CardContent>
           <ReportForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Enviar Interpretação"
+            submitLabel="Enviar Interpretacao"
           />
         </CardContent>
       </Card>

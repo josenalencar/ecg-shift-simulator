@@ -20,6 +20,12 @@ export default async function LandingPage() {
               <span className="font-bold text-xl text-gray-900">ECG Shift</span>
             </div>
             <nav className="flex items-center gap-4">
+              <Link
+                href="/pricing"
+                className="text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Precos
+              </Link>
               {user ? (
                 <Link href="/dashboard">
                   <Button>Ir para Dashboard</Button>
