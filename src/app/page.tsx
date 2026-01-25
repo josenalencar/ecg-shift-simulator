@@ -22,7 +22,7 @@ export default async function LandingPage() {
             <nav className="flex items-center gap-4">
               {user ? (
                 <Link href="/dashboard">
-                  <Button>Go to Dashboard</Button>
+                  <Button>Ir para Dashboard</Button>
                 </Link>
               ) : (
                 <>
@@ -30,10 +30,10 @@ export default async function LandingPage() {
                     href="/login"
                     className="text-gray-600 hover:text-gray-900 font-medium"
                   >
-                    Login
+                    Entrar
                   </Link>
                   <Link href="/register">
-                    <Button>Get Started</Button>
+                    <Button>Comece Agora</Button>
                   </Link>
                 </>
               )}
@@ -46,24 +46,24 @@ export default async function LandingPage() {
       <section className="py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Practice ECG Interpretation
+            Pratique Interpretacao de ECG
             <br />
-            <span className="text-blue-600">Like a Real Tele-ECG Shift</span>
+            <span className="text-blue-600">Como em um Plantao Real de Tele-ECG</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Sharpen your ECG reading skills with real-world cases. Get immediate feedback,
-            track your progress, and become confident in your interpretations.
+            Aprimore suas habilidades de leitura de ECG com casos reais. Receba feedback
+            imediato, acompanhe seu progresso e ganhe confianca nas suas interpretacoes.
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/register">
               <Button size="lg">
-                Start Practicing Free
+                Comece a Praticar Gratis
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </Link>
             <Link href="/login">
               <Button variant="outline" size="lg">
-                Sign In
+                Entrar
               </Button>
             </Link>
           </div>
@@ -74,7 +74,7 @@ export default async function LandingPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Everything You Need to Master ECG Reading
+            Tudo que Voce Precisa para Dominar a Leitura de ECG
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
@@ -82,10 +82,10 @@ export default async function LandingPage() {
                 <Activity className="h-7 w-7 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Real ECG Cases
+                Casos Reais de ECG
               </h3>
               <p className="text-gray-600">
-                Practice with actual ECG images covering all major pathologies and findings.
+                Pratique com imagens reais de ECG cobrindo todas as principais patologias e achados.
               </p>
             </div>
             <div className="text-center">
@@ -93,10 +93,10 @@ export default async function LandingPage() {
                 <Target className="h-7 w-7 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Instant Feedback
+                Feedback Instantaneo
               </h3>
               <p className="text-gray-600">
-                Compare your interpretation with official reports and see exactly where you went wrong.
+                Compare sua interpretacao com laudos oficiais e veja exatamente onde errou.
               </p>
             </div>
             <div className="text-center">
@@ -104,10 +104,10 @@ export default async function LandingPage() {
                 <BarChart3 className="h-7 w-7 text-purple-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Track Progress
+                Acompanhe seu Progresso
               </h3>
               <p className="text-gray-600">
-                Monitor your accuracy over time and identify areas that need more practice.
+                Monitore sua precisao ao longo do tempo e identifique areas que precisam de mais pratica.
               </p>
             </div>
             <div className="text-center">
@@ -115,10 +115,10 @@ export default async function LandingPage() {
                 <Zap className="h-7 w-7 text-orange-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Zoom & Pan
+                Zoom e Navegacao
               </h3>
               <p className="text-gray-600">
-                High-resolution ECG viewer with zoom and pan for detailed analysis.
+                Visualizador de ECG em alta resolucao com zoom e navegacao para analise detalhada.
               </p>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default async function LandingPage() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            How It Works
+            Como Funciona
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -137,10 +137,10 @@ export default async function LandingPage() {
                 1
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                View the ECG
+                Visualize o ECG
               </h3>
               <p className="text-gray-600">
-                Each session presents you with a high-quality ECG image. Use zoom and pan to examine every detail.
+                Cada sessao apresenta uma imagem de ECG em alta qualidade. Use zoom e navegacao para examinar cada detalhe.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -148,10 +148,10 @@ export default async function LandingPage() {
                 2
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Submit Your Report
+                Envie seu Laudo
               </h3>
               <p className="text-gray-600">
-                Fill out your interpretation: rhythm, rate, axis, intervals, and findings. Just like a real report.
+                Preencha sua interpretacao: ritmo, frequencia, eixo, intervalos e achados. Igual a um laudo real.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -159,10 +159,10 @@ export default async function LandingPage() {
                 3
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Learn from Feedback
+                Aprenda com o Feedback
               </h3>
               <p className="text-gray-600">
-                Get your score instantly with detailed comparison showing exactly what you got right and what to review.
+                Receba sua nota instantaneamente com comparacao detalhada mostrando exatamente o que acertou e o que revisar.
               </p>
             </div>
           </div>
@@ -173,19 +173,19 @@ export default async function LandingPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            What You&apos;ll Practice
+            O que Voce Vai Praticar
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {[
-              'Sinus Rhythms & Arrhythmias',
-              'Atrial Fibrillation & Flutter',
-              'Heart Blocks (1°, 2°, 3°)',
-              'Bundle Branch Blocks',
-              'STEMI Recognition',
-              'Axis Deviation',
-              'Chamber Enlargement',
-              'Electrolyte Abnormalities',
-              'Drug Effects',
+              'Ritmos Sinusais e Arritmias',
+              'Fibrilacao e Flutter Atrial',
+              'Bloqueios AV (1o, 2o, 3o grau)',
+              'Bloqueios de Ramo',
+              'Reconhecimento de IAMCSST',
+              'Desvio de Eixo',
+              'Sobrecarga de Camaras',
+              'Disturbios Eletroliticos',
+              'Efeitos de Medicamentos',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -200,15 +200,15 @@ export default async function LandingPage() {
       <section className="py-20 bg-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Improve Your ECG Skills?
+            Pronto para Melhorar suas Habilidades em ECG?
           </h2>
           <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
-            Join thousands of healthcare professionals practicing ECG interpretation.
-            Start your first session in minutes.
+            Junte-se a profissionais de saude praticando interpretacao de ECG.
+            Comece sua primeira sessao em minutos.
           </p>
           <Link href="/register">
             <Button size="lg" variant="outline" className="bg-white text-blue-600 hover:bg-blue-50 border-white">
-              Get Started Free
+              Comece Gratis
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
@@ -224,7 +224,7 @@ export default async function LandingPage() {
               <span className="font-bold text-gray-900">ECG Shift Simulator</span>
             </div>
             <p className="text-gray-500 text-sm">
-              Practice ECG interpretation like a real tele-ECG shift.
+              Pratique interpretacao de ECG como em um plantao real de tele-ECG.
             </p>
           </div>
         </div>

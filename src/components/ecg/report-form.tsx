@@ -48,7 +48,7 @@ export function ReportForm({
   initialData,
   onSubmit,
   isSubmitting,
-  submitLabel = 'Submit Report',
+  submitLabel = 'Enviar Laudo',
 }: ReportFormProps) {
   const [formData, setFormData] = useState<ReportFormData>({
     ...defaultData,
@@ -83,12 +83,12 @@ export function ReportForm({
       {/* Rhythm Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Rhythm</CardTitle>
+          <CardTitle className="text-lg">Ritmo</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Primary Rhythm (select all that apply)
+              Ritmo Cardíaco (selecione todos que se aplicam)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {RHYTHMS.map((rhythm) => (
@@ -116,7 +116,7 @@ export function ReportForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Regularity
+              Regularidade
             </label>
             <div className="flex gap-4">
               {REGULARITIES.map((reg) => (
@@ -149,13 +149,13 @@ export function ReportForm({
       {/* Rate and Measurements */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Rate & Measurements</CardTitle>
+          <CardTitle className="text-lg">Frequência e Medidas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Heart Rate (bpm)
+                Frequência Cardíaca (bpm)
               </label>
               <Input
                 type="number"
@@ -168,7 +168,7 @@ export function ReportForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Axis
+                Eixo Elétrico
               </label>
               <div className="flex flex-wrap gap-2">
                 {AXES.map((axis) => (
@@ -200,7 +200,7 @@ export function ReportForm({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PR Interval
+                Intervalo PR
               </label>
               <div className="flex flex-col gap-2">
                 {PR_INTERVALS.map((interval) => (
@@ -230,7 +230,7 @@ export function ReportForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                QRS Duration
+                Duração do QRS
               </label>
               <div className="flex flex-col gap-2">
                 {QRS_DURATIONS.map((duration) => (
@@ -260,7 +260,7 @@ export function ReportForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                QT Interval
+                Intervalo QT
               </label>
               <div className="flex flex-col gap-2">
                 {QT_INTERVALS.map((interval) => (
@@ -294,7 +294,7 @@ export function ReportForm({
       {/* Findings Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Findings</CardTitle>
+          <CardTitle className="text-lg">Achados</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {Object.entries(FINDINGS_BY_CATEGORY).map(([category, findings]) => (
@@ -332,13 +332,13 @@ export function ReportForm({
       {/* Notes Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Notes (Optional)</CardTitle>
+          <CardTitle className="text-lg">Observações (Opcional)</CardTitle>
         </CardHeader>
         <CardContent>
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-            placeholder="Additional notes or explanation..."
+            placeholder="Notas adicionais ou explicação..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
           />
         </CardContent>

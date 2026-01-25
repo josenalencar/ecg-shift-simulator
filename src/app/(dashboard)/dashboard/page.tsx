@@ -47,10 +47,10 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {profile?.full_name || 'Doctor'}!
+          Bem-vindo(a), {profile?.full_name || 'Doutor(a)'}!
         </h1>
         <p className="text-gray-600 mt-1">
-          Continue your ECG interpretation practice
+          Continue sua prática de interpretação de ECG
         </p>
       </div>
 
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
                 <Activity className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">ECGs Interpreted</p>
+                <p className="text-sm text-gray-600">ECGs Interpretados</p>
                 <p className="text-2xl font-bold text-gray-900">{totalAttempts}</p>
               </div>
             </div>
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
                 <Target className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Average Score</p>
+                <p className="text-sm text-gray-600">Média de Acertos</p>
                 <p className="text-2xl font-bold text-gray-900">{averageScore}%</p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Available ECGs</p>
+                <p className="text-sm text-gray-600">ECGs Disponíveis</p>
                 <p className="text-2xl font-bold text-gray-900">{ecgCount || 0}</p>
               </div>
             </div>
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
                 <Clock className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Remaining</p>
+                <p className="text-sm text-gray-600">Restantes</p>
                 <p className="text-2xl font-bold text-gray-900">{(ecgCount || 0) - totalAttempts}</p>
               </div>
             </div>
@@ -117,16 +117,16 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Start Practice</CardTitle>
+            <CardTitle>Iniciar Prática</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              Jump into a practice session and interpret ECGs just like a real tele-ECG shift.
-              Get immediate feedback and learn from your mistakes.
+              Entre em uma sessão de prática e interprete ECGs como em um plantão real de tele-ECG.
+              Receba feedback imediato e aprenda com seus erros.
             </p>
             <Link href="/practice">
               <Button size="lg">
-                Start Practice Session
+                Iniciar Sessão de Prática
               </Button>
             </Link>
           </CardContent>
@@ -134,12 +134,12 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Progress</CardTitle>
+            <CardTitle>Seu Progresso</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Completion</span>
+                <span className="text-gray-600">Conclusão</span>
                 <span className="font-medium">
                   {ecgCount ? Math.round((totalAttempts / ecgCount) * 100) : 0}%
                 </span>
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
                 />
               </div>
               <p className="text-xs text-gray-500">
-                {totalAttempts} of {ecgCount || 0} ECGs completed
+                {totalAttempts} de {ecgCount || 0} ECGs completados
               </p>
             </div>
           </CardContent>
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>Atividade Recente</CardTitle>
         </CardHeader>
         <CardContent>
           {typedAttempts && typedAttempts.length > 0 ? (
@@ -170,10 +170,10 @@ export default async function DashboardPage() {
                 <div key={attempt.id} className="py-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900">
-                      {attempt.ecgs?.title || 'ECG Case'}
+                      ECG #{attempt.ecgs?.title || 'Caso'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {new Date(attempt.created_at).toLocaleDateString('en-US', {
+                      {new Date(attempt.created_at).toLocaleDateString('pt-BR', {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -197,9 +197,9 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No practice sessions yet</p>
+              <p className="text-gray-500 mb-4">Nenhuma sessão de prática ainda</p>
               <Link href="/practice">
-                <Button variant="outline">Start your first session</Button>
+                <Button variant="outline">Comece sua primeira sessão</Button>
               </Link>
             </div>
           )}

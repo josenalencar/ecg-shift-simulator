@@ -11,11 +11,15 @@ export default async function DashboardLayout({
 
   let profile = null
   if (user) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single()
+
+    if (error) {
+      console.error('Profile fetch error:', error)
+    }
     profile = data
   }
 

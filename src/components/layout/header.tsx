@@ -53,11 +53,18 @@ export function Header({ profile }: HeaderProps) {
                 {profile.role === 'admin' && (
                   <Link
                     href="/admin"
-                    className="text-gray-600 hover:text-gray-900 font-medium"
+                    className="text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Admin
                   </Link>
                 )}
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-red-600 font-medium flex items-center gap-1"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
               </>
             ) : (
               <>

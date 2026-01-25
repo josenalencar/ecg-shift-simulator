@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle, Button, Select } from '@/components/ui'
 import { ImageUpload, ReportForm, type ReportFormData } from '@/components/ecg'
 import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
 import { ArrowLeft } from 'lucide-react'
@@ -24,15 +24,30 @@ export default function NewECGPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [category, setCategory] = useState<Category>('other')
 
+  // Auto-generate title on load
+  useEffect(() => {
+    async function generateTitle() {
+      const { count, error } = await supabase
+        .from('ecgs')
+        .select('*', { count: 'exact', head: true })
+
+      if (!error && count !== null) {
+        const nextNumber = count + 1
+        setTitle(String(nextNumber).padStart(5, '0'))
+      }
+    }
+    generateTitle()
+  }, [supabase])
+
   async function handleReportSubmit(reportData: ReportFormData) {
     if (!title.trim()) {
-      setError('Please enter a title')
+      setError('Título é obrigatório')
       setStep(1)
       return
     }
 
     if (!imageUrl) {
-      setError('Please upload an ECG image')
+      setError('Por favor, faça upload de uma imagem de ECG')
       setStep(1)
       return
     }
@@ -44,7 +59,7 @@ export default function NewECGPage() {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setError('You must be logged in')
+        setError('Você precisa estar logado')
         return
       }
 
@@ -65,7 +80,7 @@ export default function NewECGPage() {
       const ecg = ecgData as { id: string } | null
 
       if (ecgError || !ecg) {
-        throw ecgError || new Error('Failed to create ECG')
+        throw ecgError || new Error('Falha ao criar ECG')
       }
 
       // Create official report
@@ -94,8 +109,8 @@ export default function NewECGPage() {
       router.push('/admin/ecgs')
       router.refresh()
     } catch (err) {
-      console.error('Error creating ECG:', err)
-      setError('Failed to create ECG. Please try again.')
+      console.error('Erro ao criar ECG:', err)
+      setError('Falha ao criar ECG. Por favor, tente novamente.')
     } finally {
       setIsSubmitting(false)
     }
@@ -107,10 +122,10 @@ export default function NewECGPage() {
         <Link href="/admin/ecgs">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Voltar
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Add New ECG</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Adicionar Novo ECG</h1>
       </div>
 
       {/* Progress Steps */}
@@ -121,7 +136,7 @@ export default function NewECGPage() {
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
             1
           </div>
-          <span className="font-medium">ECG Details</span>
+          <span className="font-medium">Detalhes do ECG</span>
         </div>
         <div className="flex-1 h-px bg-gray-200" />
         <div
@@ -130,7 +145,7 @@ export default function NewECGPage() {
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
             2
           </div>
-          <span className="font-medium">Official Report</span>
+          <span className="font-medium">Laudo Oficial</span>
         </div>
       </div>
 
@@ -144,7 +159,7 @@ export default function NewECGPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>ECG Image</CardTitle>
+              <CardTitle>Imagem do ECG</CardTitle>
             </CardHeader>
             <CardContent>
               <ImageUpload value={imageUrl} onChange={setImageUrl} />
@@ -153,22 +168,22 @@ export default function NewECGPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>ECG Details</CardTitle>
+              <CardTitle>Detalhes do ECG</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Input
-                id="title"
-                label="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Case #001 - Anterior STEMI"
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título (gerado automaticamente)
+                </label>
+                <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700 font-mono">
+                  {title || 'Carregando...'}
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                   id="difficulty"
-                  label="Difficulty"
+                  label="Dificuldade"
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value as Difficulty)}
                   options={DIFFICULTIES}
@@ -176,7 +191,7 @@ export default function NewECGPage() {
 
                 <Select
                   id="category"
-                  label="Category"
+                  label="Categoria"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as Category)}
                   options={CATEGORIES}
@@ -188,12 +203,8 @@ export default function NewECGPage() {
           <div className="flex justify-end">
             <Button
               onClick={() => {
-                if (!title.trim()) {
-                  setError('Please enter a title')
-                  return
-                }
                 if (!imageUrl) {
-                  setError('Please upload an ECG image')
+                  setError('Por favor, faça upload de uma imagem de ECG')
                   return
                 }
                 setError(null)
@@ -201,7 +212,7 @@ export default function NewECGPage() {
               }}
               size="lg"
             >
-              Continue to Official Report
+              Continuar para Laudo Oficial
             </Button>
           </div>
         </div>
@@ -209,32 +220,28 @@ export default function NewECGPage() {
 
       {step === 2 && (
         <div className="space-y-6">
-          {/* Preview of ECG */}
+          {/* Large ECG Preview */}
           <Card>
             <CardHeader>
-              <CardTitle>ECG Preview</CardTitle>
+              <CardTitle>ECG #{title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 items-start">
-                <img
-                  src={imageUrl}
-                  alt={title}
-                  className="w-48 rounded-lg border"
-                />
-                <div>
-                  <h3 className="font-semibold text-lg">{title}</h3>
-                  <p className="text-gray-600">
-                    <span className="capitalize">{difficulty}</span> • <span className="capitalize">{category}</span>
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setStep(1)}
-                    className="mt-2"
-                  >
-                    Edit Details
-                  </Button>
-                </div>
+              <img
+                src={imageUrl}
+                alt={`ECG ${title}`}
+                className="w-full rounded-lg border"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-gray-600">
+                  <span className="capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span> • <span className="capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep(1)}
+                >
+                  Editar Detalhes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -243,7 +250,7 @@ export default function NewECGPage() {
           <ReportForm
             onSubmit={handleReportSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Create ECG Case"
+            submitLabel="Criar Caso de ECG"
           />
         </div>
       )}

@@ -70,14 +70,15 @@ CREATE INDEX idx_attempts_user_id ON attempts(user_id);
 CREATE INDEX idx_attempts_ecg_id ON attempts(ecg_id);
 CREATE INDEX idx_attempts_created_at ON attempts(created_at DESC);
 
--- Function to update updated_at timestamp
+-- Function to update updated_at timestamp (with fixed search_path)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql'
+SET search_path = public;
 
 -- Triggers for updated_at
 CREATE TRIGGER update_profiles_updated_at
@@ -92,11 +93,11 @@ CREATE TRIGGER update_official_reports_updated_at
   BEFORE UPDATE ON official_reports
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Function to automatically create profile on user signup
+-- Function to automatically create profile on user signup (with fixed search_path)
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name)
+  INSERT INTO public.profiles (id, email, full_name)
   VALUES (
     NEW.id,
     NEW.email,
@@ -104,7 +105,8 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ language 'plpgsql' SECURITY DEFINER;
+$$ language 'plpgsql' SECURITY DEFINER
+SET search_path = public;
 
 -- Trigger to create profile on auth.users insert
 CREATE TRIGGER on_auth_user_created
@@ -119,35 +121,35 @@ ALTER TABLE ecgs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE official_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attempts ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
+-- Profiles policies (optimized with select wrapper)
 CREATE POLICY "Users can view their own profile"
   ON profiles FOR SELECT
-  USING (auth.uid() = id);
+  USING ((select auth.uid()) = id);
 
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+  USING ((select auth.uid()) = id);
 
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
--- ECGs policies
+-- ECGs policies (optimized)
 CREATE POLICY "Anyone authenticated can view active ECGs"
   ON ecgs FOR SELECT
-  USING (auth.role() = 'authenticated' AND is_active = true);
+  USING ((select auth.role()) = 'authenticated' AND is_active = true);
 
 CREATE POLICY "Admins can view all ECGs"
   ON ecgs FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
@@ -156,7 +158,7 @@ CREATE POLICY "Admins can insert ECGs"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
@@ -165,7 +167,7 @@ CREATE POLICY "Admins can update ECGs"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
@@ -174,15 +176,15 @@ CREATE POLICY "Admins can delete ECGs"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
--- Official Reports policies
+-- Official Reports policies (optimized)
 CREATE POLICY "Authenticated users can view reports for active ECGs"
   ON official_reports FOR SELECT
   USING (
-    auth.role() = 'authenticated' AND
+    (select auth.role()) = 'authenticated' AND
     EXISTS (
       SELECT 1 FROM ecgs
       WHERE ecgs.id = official_reports.ecg_id AND ecgs.is_active = true
@@ -194,30 +196,30 @@ CREATE POLICY "Admins can manage all reports"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
--- Attempts policies
+-- Attempts policies (optimized)
 CREATE POLICY "Users can view their own attempts"
   ON attempts FOR SELECT
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert their own attempts"
   ON attempts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Admins can view all attempts"
   ON attempts FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+      WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
 
 -- View for user statistics
-CREATE OR REPLACE VIEW user_stats AS
+CREATE VIEW user_stats AS
 SELECT
   user_id,
   COUNT(*) as total_attempts,

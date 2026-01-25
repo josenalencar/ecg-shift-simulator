@@ -1,16 +1,16 @@
 import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category } from '@/types/database'
 
 export const RHYTHMS: { value: Rhythm; label: string }[] = [
-  { value: 'sinus', label: 'Sinus Rhythm' },
-  { value: 'afib', label: 'Atrial Fibrillation' },
-  { value: 'aflutter', label: 'Atrial Flutter' },
-  { value: 'svt', label: 'SVT' },
-  { value: 'vtach', label: 'Ventricular Tachycardia' },
-  { value: 'vfib', label: 'Ventricular Fibrillation' },
-  { value: 'junctional', label: 'Junctional Rhythm' },
-  { value: 'paced', label: 'Paced Rhythm' },
-  { value: 'asystole', label: 'Asystole' },
-  { value: 'other', label: 'Other' },
+  { value: 'sinus', label: 'Ritmo Sinusal' },
+  { value: 'afib', label: 'Fibrilação Atrial' },
+  { value: 'aflutter', label: 'Flutter Atrial' },
+  { value: 'svt', label: 'Taquicardia Supraventricular' },
+  { value: 'vtach', label: 'Taquicardia Ventricular' },
+  { value: 'vfib', label: 'Fibrilação Ventricular' },
+  { value: 'junctional', label: 'Ritmo Juncional' },
+  { value: 'paced', label: 'Ritmo de Marcapasso' },
+  { value: 'asystole', label: 'Assistolia' },
+  { value: 'other', label: 'Outro' },
 ]
 
 export const REGULARITIES: { value: Regularity; label: string }[] = [
@@ -19,82 +19,92 @@ export const REGULARITIES: { value: Regularity; label: string }[] = [
 ]
 
 export const AXES: { value: Axis; label: string }[] = [
-  { value: 'normal', label: 'Normal Axis' },
-  { value: 'left', label: 'Left Axis Deviation' },
-  { value: 'right', label: 'Right Axis Deviation' },
-  { value: 'extreme', label: 'Extreme Axis' },
+  { value: 'normal', label: 'Eixo Normal' },
+  { value: 'left', label: 'Desvio do Eixo para Esquerda' },
+  { value: 'right', label: 'Desvio do Eixo para Direita' },
+  { value: 'extreme', label: 'Eixo Indeterminado' },
 ]
 
 export const PR_INTERVALS: { value: Interval; label: string }[] = [
   { value: 'normal', label: 'Normal' },
-  { value: 'prolonged', label: 'Prolonged (1° AVB)' },
-  { value: 'short', label: 'Short (WPW)' },
+  { value: 'prolonged', label: 'Prolongado (BAV 1º grau)' },
+  { value: 'short', label: 'Curto (Pré-excitação)' },
 ]
 
 export const QRS_DURATIONS: { value: Interval; label: string }[] = [
   { value: 'normal', label: 'Normal' },
-  { value: 'wide', label: 'Wide' },
+  { value: 'wide', label: 'Alargado' },
 ]
 
 export const QT_INTERVALS: { value: Interval; label: string }[] = [
   { value: 'normal', label: 'Normal' },
-  { value: 'prolonged', label: 'Prolonged' },
+  { value: 'prolonged', label: 'Prolongado' },
 ]
 
 export const FINDINGS: { value: Finding; label: string; category: string }[] = [
-  // Chamber changes
-  { value: 'lvh', label: 'LVH (Left Ventricular Hypertrophy)', category: 'Chamber' },
-  { value: 'rvh', label: 'RVH (Right Ventricular Hypertrophy)', category: 'Chamber' },
-  { value: 'lae', label: 'LAE (Left Atrial Enlargement)', category: 'Chamber' },
-  { value: 'rae', label: 'RAE (Right Atrial Enlargement)', category: 'Chamber' },
+  // Alterações de câmaras
+  { value: 'lvh', label: 'Sobrecarga Ventricular Esquerda (SVE)', category: 'Câmaras' },
+  { value: 'rvh', label: 'Sobrecarga Ventricular Direita (SVD)', category: 'Câmaras' },
+  { value: 'lae', label: 'Sobrecarga Atrial Esquerda (SAE)', category: 'Câmaras' },
+  { value: 'rae', label: 'Sobrecarga Atrial Direita (SAD)', category: 'Câmaras' },
 
-  // Bundle branch blocks
-  { value: 'rbbb', label: 'RBBB (Right Bundle Branch Block)', category: 'Conduction' },
-  { value: 'lbbb', label: 'LBBB (Left Bundle Branch Block)', category: 'Conduction' },
-  { value: 'lafb', label: 'LAFB (Left Anterior Fascicular Block)', category: 'Conduction' },
-  { value: 'lpfb', label: 'LPFB (Left Posterior Fascicular Block)', category: 'Conduction' },
+  // Bloqueios de condução
+  { value: 'rbbb', label: 'Bloqueio de Ramo Direito (BRD)', category: 'Condução' },
+  { value: 'lbbb', label: 'Bloqueio de Ramo Esquerdo (BRE)', category: 'Condução' },
+  { value: 'lafb', label: 'Bloqueio Divisional Anterossuperior (BDAS)', category: 'Condução' },
+  { value: 'lpfb', label: 'Bloqueio Divisional Posteroinferior (BDPI)', category: 'Condução' },
+  { value: 'interatrial_block', label: 'Bloqueio Interatrial', category: 'Condução' },
 
-  // AV Blocks
-  { value: 'avb_1st', label: '1° AV Block', category: 'AV Block' },
-  { value: 'avb_2nd_type1', label: '2° AV Block Type I (Wenckebach)', category: 'AV Block' },
-  { value: 'avb_2nd_type2', label: '2° AV Block Type II', category: 'AV Block' },
-  { value: 'avb_3rd', label: '3° AV Block (Complete)', category: 'AV Block' },
+  // Bloqueios AV
+  { value: 'avb_1st', label: 'BAV 1º Grau', category: 'Bloqueio AV' },
+  { value: 'avb_2nd_type1', label: 'BAV 2º Grau Tipo I (Wenckebach)', category: 'Bloqueio AV' },
+  { value: 'avb_2nd_type2', label: 'BAV 2º Grau Tipo II', category: 'Bloqueio AV' },
+  { value: 'avb_3rd', label: 'BAV 3º Grau (BAVT)', category: 'Bloqueio AV' },
 
-  // Ischemia/Infarction
-  { value: 'stemi_anterior', label: 'STEMI - Anterior', category: 'Ischemia' },
-  { value: 'stemi_inferior', label: 'STEMI - Inferior', category: 'Ischemia' },
-  { value: 'stemi_lateral', label: 'STEMI - Lateral', category: 'Ischemia' },
-  { value: 'stemi_posterior', label: 'STEMI - Posterior', category: 'Ischemia' },
-  { value: 'nstemi', label: 'NSTEMI / Ischemia', category: 'Ischemia' },
-  { value: 'old_mi', label: 'Old MI (Q waves)', category: 'Ischemia' },
+  // Isquemia/Infarto
+  { value: 'stemi_anterior', label: 'IAMCSST Anterior', category: 'Isquemia' },
+  { value: 'stemi_inferior', label: 'IAMCSST Inferior', category: 'Isquemia' },
+  { value: 'stemi_lateral', label: 'IAMCSST Lateral', category: 'Isquemia' },
+  { value: 'stemi_posterior', label: 'IAMCSST Posterior', category: 'Isquemia' },
+  { value: 'stemi_septal', label: 'IAMCSST Septal', category: 'Isquemia' },
+  { value: 'oca_anterior', label: 'Infarto por OCA - Anterior', category: 'Isquemia' },
+  { value: 'oca_inferior', label: 'Infarto por OCA - Inferior', category: 'Isquemia' },
+  { value: 'oca_septal', label: 'Infarto por OCA - Septal', category: 'Isquemia' },
+  { value: 'oca_lateral', label: 'Infarto por OCA - Lateral', category: 'Isquemia' },
+  { value: 'nstemi', label: 'IAMSSST / Isquemia', category: 'Isquemia' },
+  { value: 'old_mi', label: 'Área Inativa (Ondas Q)', category: 'Isquemia' },
 
-  // Other
-  { value: 'pericarditis', label: 'Pericarditis', category: 'Other' },
-  { value: 'early_repolarization', label: 'Early Repolarization', category: 'Other' },
-  { value: 'hyperkalemia', label: 'Hyperkalemia', category: 'Electrolyte' },
-  { value: 'hypokalemia', label: 'Hypokalemia', category: 'Electrolyte' },
-  { value: 'digitalis', label: 'Digitalis Effect', category: 'Drug Effect' },
-  { value: 'pe_pattern', label: 'PE Pattern (S1Q3T3)', category: 'Other' },
-  { value: 'wpw', label: 'WPW (Delta Wave)', category: 'Other' },
-  { value: 'long_qt', label: 'Long QT', category: 'Other' },
-  { value: 'brugada', label: 'Brugada Pattern', category: 'Other' },
+  // Alterações de repolarização
+  { value: 'secondary_t_wave', label: 'Alteração Secundária da Onda T', category: 'Repolarização' },
+  { value: 'primary_t_wave', label: 'Alteração Primária da Onda T', category: 'Repolarização' },
+  { value: 'early_repolarization', label: 'Repolarização Precoce', category: 'Repolarização' },
+
+  // Outros
+  { value: 'pericarditis', label: 'Pericardite', category: 'Outros' },
+  { value: 'hyperkalemia', label: 'Hipercalemia', category: 'Eletrólitos' },
+  { value: 'hypokalemia', label: 'Hipocalemia', category: 'Eletrólitos' },
+  { value: 'digitalis', label: 'Efeito Digitálico', category: 'Medicamentos' },
+  { value: 'pe_pattern', label: 'Padrão de TEP (S1Q3T3)', category: 'Outros' },
+  { value: 'preexcitation', label: 'Pré-excitação Ventricular', category: 'Outros' },
+  { value: 'long_qt', label: 'QT Longo', category: 'Outros' },
+  { value: 'brugada', label: 'Padrão de Brugada', category: 'Outros' },
 
   // Normal
-  { value: 'normal', label: 'Normal ECG', category: 'Normal' },
+  { value: 'normal', label: 'ECG Normal', category: 'Normal' },
 ]
 
 export const DIFFICULTIES: { value: Difficulty; label: string }[] = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'hard', label: 'Hard' },
+  { value: 'easy', label: 'Fácil' },
+  { value: 'medium', label: 'Médio' },
+  { value: 'hard', label: 'Difícil' },
 ]
 
 export const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'arrhythmia', label: 'Arrhythmia' },
-  { value: 'ischemia', label: 'Ischemia' },
-  { value: 'conduction', label: 'Conduction' },
+  { value: 'arrhythmia', label: 'Arritmia' },
+  { value: 'ischemia', label: 'Isquemia' },
+  { value: 'conduction', label: 'Condução' },
   { value: 'normal', label: 'Normal' },
-  { value: 'other', label: 'Other' },
+  { value: 'other', label: 'Outro' },
 ]
 
 // Group findings by category for display

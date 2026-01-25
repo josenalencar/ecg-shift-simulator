@@ -22,10 +22,10 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
               {score}%
             </div>
             <p className={`text-lg mt-2 ${isPassings ? 'text-green-700' : 'text-red-700'}`}>
-              {isPassings ? 'Good job!' : 'Keep practicing!'}
+              {isPassings ? 'Muito bem!' : 'Continue praticando!'}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              {result.totalPoints} / {result.maxPoints} points
+              {result.totalPoints} / {result.maxPoints} pontos
             </p>
           </div>
         </CardContent>
@@ -34,7 +34,7 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
       {/* Field-by-field comparison */}
       <Card>
         <CardHeader>
-          <CardTitle>Detailed Comparison</CardTitle>
+          <CardTitle>Comparação Detalhada</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="divide-y">
@@ -55,14 +55,14 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
 
                     <div className="mt-2 ml-7 space-y-1">
                       <div className="flex gap-2 text-sm">
-                        <span className="text-gray-500 w-20">Your answer:</span>
+                        <span className="text-gray-500 w-24">Sua resposta:</span>
                         <span className={comparison.isCorrect ? 'text-green-700' : 'text-gray-900'}>
                           {comparison.userValue}
                         </span>
                       </div>
                       {!comparison.isCorrect && (
                         <div className="flex gap-2 text-sm">
-                          <span className="text-gray-500 w-20">Correct:</span>
+                          <span className="text-gray-500 w-24">Correto:</span>
                           <span className="text-blue-700 font-medium">
                             {comparison.correctValue}
                           </span>
@@ -85,7 +85,7 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
                     </span>
                     {comparison.partialCredit !== undefined && !comparison.isCorrect && (
                       <p className="text-xs text-gray-500">
-                        Partial credit
+                        Crédito parcial
                       </p>
                     )}
                   </div>
@@ -100,7 +100,7 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
       {notes && (
         <Card>
           <CardHeader>
-            <CardTitle>Official Report Notes</CardTitle>
+            <CardTitle>Observações do Laudo Oficial</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-700 whitespace-pre-wrap">{notes}</p>
@@ -111,36 +111,36 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
       {/* Scoring Legend */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Scoring Breakdown</CardTitle>
+          <CardTitle className="text-sm">Distribuição de Pontos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Rhythm</span>
+              <span className="text-gray-500">Ritmo</span>
               <span className="font-medium ml-2">25 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Findings</span>
+              <span className="text-gray-500">Achados</span>
               <span className="font-medium ml-2">35 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Heart Rate</span>
+              <span className="text-gray-500">Frequência</span>
               <span className="font-medium ml-2">10 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Axis</span>
+              <span className="text-gray-500">Eixo</span>
               <span className="font-medium ml-2">10 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Intervals</span>
+              <span className="text-gray-500">Intervalos</span>
               <span className="font-medium ml-2">15 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Regularity</span>
+              <span className="text-gray-500">Regularidade</span>
               <span className="font-medium ml-2">5 pts</span>
             </div>
             <div className="col-span-2">
-              <span className="text-gray-500">Passing Score</span>
+              <span className="text-gray-500">Nota para aprovação</span>
               <span className="font-medium ml-2">80%+</span>
             </div>
           </div>

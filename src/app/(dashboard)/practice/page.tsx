@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
 import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
+import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
 import { Loader2, ArrowRight, RotateCcw, Home } from 'lucide-react'
 import type { ECG, OfficialReport } from '@/types/database'
 
@@ -121,13 +122,16 @@ export default function PracticePage() {
     }
   }
 
+  const diffLabel = currentECG ? DIFFICULTIES.find(d => d.value === currentECG.difficulty)?.label : ''
+  const catLabel = currentECG ? CATEGORIES.find(c => c.value === currentECG.category)?.label : ''
+
   if (state === 'loading') {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading ECG...</p>
+            <p className="text-gray-600">Carregando ECG...</p>
           </div>
         </div>
       </div>
@@ -141,21 +145,21 @@ export default function PracticePage() {
           <CardContent className="py-12 text-center">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              All caught up!
+              Tudo em dia!
             </h2>
             <p className="text-gray-600 mb-6">
-              You&apos;ve completed all available ECG cases. Check back later for more!
+              Você completou todos os casos de ECG disponíveis. Volte mais tarde para mais!
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/dashboard">
                 <Button variant="outline">
                   <Home className="h-4 w-4 mr-2" />
-                  Go to Dashboard
+                  Ir para Dashboard
                 </Button>
               </Link>
               <Button onClick={loadNextECG}>
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Try Again
+                Tentar Novamente
               </Button>
             </div>
           </CardContent>
@@ -168,8 +172,8 @@ export default function PracticePage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Results</h1>
-          <p className="text-gray-600">{currentECG?.title}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Resultado</h1>
+          <p className="text-gray-600">ECG #{currentECG?.title}</p>
         </div>
 
         {/* ECG Image (smaller) */}
@@ -195,7 +199,7 @@ export default function PracticePage() {
             </Button>
           </Link>
           <Button onClick={loadNextECG}>
-            Next ECG
+            Próximo ECG
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -207,8 +211,8 @@ export default function PracticePage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Practice Session</h1>
-          <p className="text-gray-600">{currentECG?.title}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Sessão de Prática</h1>
+          <p className="text-gray-600">ECG #{currentECG?.title}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className={`
@@ -220,38 +224,34 @@ export default function PracticePage() {
                 : 'bg-red-100 text-red-700'
             }
           `}>
-            {currentECG?.difficulty}
+            {diffLabel}
           </span>
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 capitalize">
-            {currentECG?.category}
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+            {catLabel}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ECG Viewer */}
-        <div className="lg:sticky lg:top-4 lg:self-start">
-          {currentECG && (
-            <ECGViewer imageUrl={currentECG.image_url} title={currentECG.title} />
-          )}
-        </div>
-
-        {/* Report Form */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Interpretation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ReportForm
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-                submitLabel="Submit Interpretation"
-              />
-            </CardContent>
-          </Card>
-        </div>
+      {/* ECG Viewer - Full Width */}
+      <div className="mb-6">
+        {currentECG && (
+          <ECGViewer imageUrl={currentECG.image_url} title={currentECG.title} />
+        )}
       </div>
+
+      {/* Report Form - Below ECG */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sua Interpretação</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ReportForm
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            submitLabel="Enviar Interpretação"
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
