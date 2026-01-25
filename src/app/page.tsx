@@ -24,7 +24,7 @@ export default async function LandingPage() {
                 href="/pricing"
                 className="text-gray-600 hover:text-gray-900 font-medium"
               >
-                Precos
+                Preços
               </Link>
               {user ? (
                 <Link href="/dashboard">
@@ -187,7 +187,7 @@ export default async function LandingPage() {
               'Fibrilacao e Flutter Atrial',
               'Bloqueios AV (1o, 2o, 3o grau)',
               'Bloqueios de Ramo',
-              'Reconhecimento de IAMCSST',
+              'Reconhecimento avançado de infartos oclusivos',
               'Desvio de Eixo',
               'Sobrecarga de Camaras',
               'Disturbios Eletroliticos',
