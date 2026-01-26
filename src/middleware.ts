@@ -1,22 +1,19 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Allowed domains (production only allows official domain)
-const ALLOWED_HOSTS = ['plantaoecg.com.br', 'www.plantaoecg.com.br', 'localhost:3000']
-
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
 
   // Block access from vercel.app domains in production
   if (process.env.NODE_ENV === 'production' && host.includes('vercel.app')) {
-    // Redirect to official domain
     const url = new URL(request.url)
     url.host = 'plantaoecg.com.br'
     url.port = ''
     return NextResponse.redirect(url, { status: 301 })
   }
 
-  let supabaseResponse = NextResponse.next({
+  // Create response early so we can modify cookies
+  let response = NextResponse.next({
     request,
   })
 
@@ -32,44 +29,54 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({
+          response = NextResponse.next({
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           )
         },
       },
     }
   )
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+  // Get user - this also refreshes the session if needed
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  // If there's an auth error, treat as no user (invalid/expired session)
-  const validUser = error ? null : user
+  // Determine if we have a valid authenticated user
+  // Both error AND missing user should be treated as not authenticated
+  const isAuthenticated = !error && user !== null
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/practice', '/admin']
-  const isProtectedPath = protectedPaths.some(path =>
-    request.nextUrl.pathname.startsWith(path)
-  )
+  const pathname = request.nextUrl.pathname
 
-  if (isProtectedPath && !validUser) {
+  // Define route types
+  const protectedPaths = ['/dashboard', '/practice', '/admin', '/settings', '/plano']
+  const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+
+  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
+  const isAuthPath = authPaths.some(path => pathname === path)
+
+  // CASE 1: Protected route + NOT authenticated → redirect to login
+  if (isProtectedPath && !isAuthenticated) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-  // Admin routes - check role
-  if (request.nextUrl.pathname.startsWith('/admin') && validUser) {
+  // CASE 2: Auth route + authenticated → redirect to dashboard
+  if (isAuthPath && isAuthenticated) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // CASE 3: Admin route + authenticated → check admin role
+  if (pathname.startsWith('/admin') && isAuthenticated) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', validUser.id)
+      .eq('id', user!.id)
       .single()
 
     if (profile?.role !== 'admin') {
@@ -79,19 +86,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from auth pages
-  const authPaths = ['/login', '/register']
-  const isAuthPath = authPaths.some(path =>
-    request.nextUrl.pathname === path
-  )
-
-  if (isAuthPath && validUser) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  return supabaseResponse
+  return response
 }
 
 export const config = {
