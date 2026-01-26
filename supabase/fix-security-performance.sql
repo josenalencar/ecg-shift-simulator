@@ -1,5 +1,8 @@
--- Fix Security and Performance Issues
--- Run this in Supabase SQL Editor after the initial schema
+-- =============================================
+-- COMPREHENSIVE SECURITY & PERFORMANCE FIXES
+-- Run this in Supabase Dashboard > SQL Editor
+-- Last updated: Jan 2026
+-- =============================================
 
 -- ============================================
 -- FIX 1: Functions with mutable search_path
@@ -28,6 +31,16 @@ BEGIN
   RETURN NEW;
 END;
 $$ language 'plpgsql' SECURITY DEFINER
+SET search_path = public;
+
+-- Fix update_subscription_updated_at function
+CREATE OR REPLACE FUNCTION update_subscription_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql'
 SET search_path = public;
 
 -- ============================================
@@ -163,3 +176,65 @@ CREATE POLICY "Admins can view all attempts"
       WHERE profiles.id = (select auth.uid()) AND profiles.role = 'admin'
     )
   );
+
+-- ============================================
+-- FIX 4: Subscriptions policies
+-- Remove unrestricted service role policy
+-- ============================================
+
+DROP POLICY IF EXISTS "Service role can manage subscriptions" ON subscriptions;
+DROP POLICY IF EXISTS "Users can view own subscription" ON subscriptions;
+DROP POLICY IF EXISTS "Users can view their own subscription" ON subscriptions;
+
+-- Users can only view their own subscription
+CREATE POLICY "Users can view own subscription"
+  ON subscriptions FOR SELECT
+  USING (user_id = (select auth.uid()));
+
+-- Note: Service role (used by webhooks) bypasses RLS automatically
+-- so we don't need a policy for it
+
+-- ============================================
+-- FIX 5: Remove additional duplicate policies
+-- ============================================
+
+DROP POLICY IF EXISTS "Admins can update any profile" ON profiles;
+DROP POLICY IF EXISTS "Admins can update all profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+DROP POLICY IF EXISTS "Allow profile creation on signup" ON profiles;
+
+-- Create consolidated profile policies if they don't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'profiles' AND policyname = 'Users can view their own profile'
+  ) THEN
+    CREATE POLICY "Users can view their own profile"
+      ON profiles FOR SELECT
+      USING ((select auth.uid()) = id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'profiles' AND policyname = 'Users can update their own profile'
+  ) THEN
+    CREATE POLICY "Users can update their own profile"
+      ON profiles FOR UPDATE
+      USING ((select auth.uid()) = id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'profiles' AND policyname = 'Users can insert their own profile'
+  ) THEN
+    CREATE POLICY "Users can insert their own profile"
+      ON profiles FOR INSERT
+      WITH CHECK ((select auth.uid()) = id);
+  END IF;
+END $$;
+
+-- ============================================
+-- DONE! Refresh the dashboard to verify fixes
+-- ============================================
