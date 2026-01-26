@@ -26,14 +26,26 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message)
+        // Handle rate limit errors with a friendly message
+        if (error.message.toLowerCase().includes('rate limit') || error.status === 429) {
+          setError('Muitas tentativas de login. Por favor, aguarde alguns minutos e tente novamente.')
+        } else if (error.message.includes('Invalid login credentials')) {
+          setError('E-mail ou senha incorretos. Verifique seus dados e tente novamente.')
+        } else {
+          setError(error.message)
+        }
         return
       }
 
       router.push('/dashboard')
       router.refresh()
-    } catch {
-      setError('An unexpected error occurred')
+    } catch (err) {
+      // Handle network/fetch errors that may also be rate limits
+      if (err instanceof Error && (err.message.includes('429') || err.message.includes('rate'))) {
+        setError('Muitas tentativas de login. Por favor, aguarde alguns minutos e tente novamente.')
+      } else {
+        setError('Ocorreu um erro inesperado. Por favor, tente novamente.')
+      }
     } finally {
       setIsLoading(false)
     }
