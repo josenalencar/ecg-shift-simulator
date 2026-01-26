@@ -7,9 +7,36 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
 import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
-import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
+import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
 import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown, Info, X } from 'lucide-react'
-import type { ECG, OfficialReport } from '@/types/database'
+import type { ECG, OfficialReport, MedicalHistory, FamilyHistory, Medication, HospitalType } from '@/types/database'
+
+type ECGWithPatientInfo = ECG & {
+  patient_age?: number | null
+  patient_sex?: string | null
+  clinical_presentation?: string[] | null
+  medical_history?: MedicalHistory[] | null
+  family_history?: FamilyHistory[] | null
+  medications?: Medication[] | null
+}
+
+const CLINICAL_PRESENTATIONS = [
+  { value: 'dor_toracica', label: 'Dor Torácica' },
+  { value: 'dispneia', label: 'Dispneia' },
+  { value: 'palpitacoes', label: 'Palpitações' },
+  { value: 'sincope', label: 'Síncope' },
+  { value: 'pre_sincope', label: 'Pré-síncope' },
+  { value: 'tontura', label: 'Tontura' },
+  { value: 'fadiga', label: 'Fadiga' },
+  { value: 'edema', label: 'Edema de MMII' },
+  { value: 'nega_sintomas', label: 'Nega Sintomas' },
+  { value: 'checkup', label: 'Check-up / Rotina' },
+  { value: 'pre_operatorio', label: 'Pré-operatório' },
+  { value: 'dor_epigastrica', label: 'Dor Epigástrica' },
+  { value: 'mal_estar', label: 'Mal-estar' },
+  { value: 'sudorese', label: 'Sudorese' },
+  { value: 'nausea_vomito', label: 'Náusea / Vômito' },
+]
 
 const FREE_MONTHLY_LIMIT = 5
 
@@ -25,7 +52,7 @@ export default function PracticePage() {
   const supabase = createClient()
 
   const [state, setState] = useState<PracticeState>('loading')
-  const [currentECG, setCurrentECG] = useState<ECG | null>(null)
+  const [currentECG, setCurrentECG] = useState<ECGWithPatientInfo | null>(null)
   const [officialReport, setOfficialReport] = useState<OfficialReport | null>(null)
   const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -115,7 +142,7 @@ export default function PracticePage() {
       return
     }
 
-    type ECGWithReport = ECG & { official_reports: OfficialReport | null }
+    type ECGWithReport = ECGWithPatientInfo & { official_reports: OfficialReport | null }
     const typedECGs = ecgs as ECGWithReport[] | null
 
     if (!typedECGs || typedECGs.length === 0) {
@@ -123,9 +150,58 @@ export default function PracticePage() {
       return
     }
 
-    // Pick a random ECG
-    const randomIndex = Math.floor(Math.random() * typedECGs.length)
-    const selectedECG = typedECGs[randomIndex]
+    // Get user's hospital type preference for Pro users
+    let hospitalType: HospitalType | null = null
+    if (subInfo.isActive) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('hospital_type')
+        .eq('id', user.id)
+        .single()
+
+      const profile = profileData as { hospital_type: HospitalType | null } | null
+      hospitalType = profile?.hospital_type || null
+    }
+
+    // Prioritize ECGs based on hospital type
+    let selectedECG: typeof typedECGs[0]
+
+    if (hospitalType) {
+      const hospitalConfig = HOSPITAL_TYPES.find(h => h.value === hospitalType)
+
+      if (hospitalConfig) {
+        // Separate ECGs into priority and non-priority groups
+        const priorityECGs = typedECGs.filter(ecg =>
+          hospitalConfig.priorityCategories.includes(ecg.category) ||
+          hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
+        )
+        const otherECGs = typedECGs.filter(ecg =>
+          !hospitalConfig.priorityCategories.includes(ecg.category) &&
+          !hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
+        )
+
+        // 70% chance to pick from priority ECGs if available
+        if (priorityECGs.length > 0 && Math.random() < 0.7) {
+          const randomIndex = Math.floor(Math.random() * priorityECGs.length)
+          selectedECG = priorityECGs[randomIndex]
+        } else if (otherECGs.length > 0) {
+          const randomIndex = Math.floor(Math.random() * otherECGs.length)
+          selectedECG = otherECGs[randomIndex]
+        } else {
+          // Fallback to priority if no other ECGs
+          const randomIndex = Math.floor(Math.random() * priorityECGs.length)
+          selectedECG = priorityECGs[randomIndex]
+        }
+      } else {
+        // No config found, pick random
+        const randomIndex = Math.floor(Math.random() * typedECGs.length)
+        selectedECG = typedECGs[randomIndex]
+      }
+    } else {
+      // No hospital type preference, pick random
+      const randomIndex = Math.floor(Math.random() * typedECGs.length)
+      selectedECG = typedECGs[randomIndex]
+    }
 
     setCurrentECG(selectedECG)
     setOfficialReport(selectedECG.official_reports)
@@ -428,6 +504,76 @@ export default function PracticePage() {
           </span>
         </div>
       </div>
+
+      {/* Patient Context */}
+      {currentECG && (currentECG.patient_age || currentECG.clinical_presentation?.length || currentECG.medical_history?.length || currentECG.family_history?.length || currentECG.medications?.length) && (
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Contexto Clínico</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm">
+              {/* Patient demographics and chief complaint */}
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {currentECG.patient_age && currentECG.patient_sex && (
+                  <div>
+                    <span className="text-gray-500">Paciente:</span>
+                    <span className="ml-2 font-medium">
+                      {currentECG.patient_sex === 'masculino' ? 'Masculino' : 'Feminino'}, {currentECG.patient_age} anos
+                    </span>
+                  </div>
+                )}
+                {currentECG.clinical_presentation && currentECG.clinical_presentation.length > 0 && (
+                  <div>
+                    <span className="text-gray-500">Queixa:</span>
+                    <span className="ml-2 font-medium">
+                      {currentECG.clinical_presentation.map(p =>
+                        CLINICAL_PRESENTATIONS.find(cp => cp.value === p)?.label || p
+                      ).join(', ')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Medical history section */}
+              {(currentECG.medical_history?.length || currentECG.family_history?.length || currentECG.medications?.length) && (
+                <div className="pt-2 border-t border-gray-200 flex flex-wrap gap-x-6 gap-y-2">
+                  {currentECG.medical_history && currentECG.medical_history.length > 0 && (
+                    <div>
+                      <span className="text-gray-500">Histórico:</span>
+                      <span className="ml-2 font-medium">
+                        {currentECG.medical_history.map(h =>
+                          MEDICAL_HISTORY_OPTIONS.find(mh => mh.value === h)?.label || h
+                        ).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {currentECG.family_history && currentECG.family_history.length > 0 && (
+                    <div>
+                      <span className="text-gray-500">Hist. Familiar:</span>
+                      <span className="ml-2 font-medium">
+                        {currentECG.family_history.map(h =>
+                          FAMILY_HISTORY_OPTIONS.find(fh => fh.value === h)?.label || h
+                        ).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {currentECG.medications && currentECG.medications.length > 0 && (
+                    <div>
+                      <span className="text-gray-500">Medicações:</span>
+                      <span className="ml-2 font-medium">
+                        {currentECG.medications.map(m =>
+                          MEDICATIONS_OPTIONS.find(med => med.value === m)?.label || m
+                        ).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ECG Viewer - Full Width */}
       <div className="mb-6">

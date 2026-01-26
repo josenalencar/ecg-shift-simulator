@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe/server'
 
-const PRICE_ID_PREMIUM = process.env.STRIPE_PRICE_ID!
-const PRICE_ID_AI = process.env.STRIPE_PRICE_ID_AI!
+// Monthly prices
+const PRICE_ID_PREMIUM_MONTHLY = process.env.STRIPE_PRICE_ID!
+const PRICE_ID_AI_MONTHLY = process.env.STRIPE_PRICE_ID_AI!
+
+// Yearly prices (20% discount)
+const PRICE_ID_PREMIUM_YEARLY = process.env.STRIPE_PRICE_ID_PREMIUM_YEARLY!
+const PRICE_ID_AI_YEARLY = process.env.STRIPE_PRICE_ID_AI_YEARLY!
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +19,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get plan from request body
+    // Get plan and billing cycle from request body
     const body = await request.json().catch(() => ({}))
     const plan = body.plan || 'premium'
-    const priceId = plan === 'ai' ? PRICE_ID_AI : PRICE_ID_PREMIUM
+    const billingCycle = body.billingCycle || 'monthly'
+
+    // Select the correct price ID based on plan and billing cycle
+    let priceId: string
+    if (plan === 'ai') {
+      priceId = billingCycle === 'yearly' ? PRICE_ID_AI_YEARLY : PRICE_ID_AI_MONTHLY
+    } else {
+      priceId = billingCycle === 'yearly' ? PRICE_ID_PREMIUM_YEARLY : PRICE_ID_PREMIUM_MONTHLY
+    }
 
     // Check if user already has a Stripe customer ID
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,6 +78,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           supabase_user_id: user.id,
           plan: plan,
+          billing_cycle: billingCycle,
         },
       },
     })

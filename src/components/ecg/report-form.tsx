@@ -48,14 +48,20 @@ const defaultData: ReportFormData = {
   notes: '',
 }
 
-// OCA wall findings
-const OCA_WALL_FINDINGS: Finding[] = ['oca_wall_anterior', 'oca_wall_inferior', 'oca_wall_lateral', 'oca_wall_septal']
+// OCA wall findings (including new walls)
+const OCA_WALL_FINDINGS: Finding[] = [
+  'oca_wall_anterior', 'oca_wall_inferior', 'oca_wall_lateral', 'oca_wall_septal',
+  'oca_wall_anteroapical', 'oca_wall_anteromedial', 'oca_wall_inferolateral', 'oca_wall_extensive_anterior'
+]
 
 // OCA ischemic signs
 const OCA_SIGN_FINDINGS: Finding[] = ['ste', 'hyperacute_t', 'std_v1v4', 'aslanger', 'de_winter', 'subtle_ste', 'terminal_qrs_distortion', 'sgarbossa_modified']
 
-// Pathological Q wall findings
-const PATHOLOGICAL_Q_WALL_FINDINGS: Finding[] = ['pathological_q_anterior', 'pathological_q_inferior', 'pathological_q_lateral', 'pathological_q_septal']
+// Pathological Q wall findings (including new walls)
+const PATHOLOGICAL_Q_WALL_FINDINGS: Finding[] = [
+  'pathological_q_anterior', 'pathological_q_inferior', 'pathological_q_lateral', 'pathological_q_septal',
+  'pathological_q_anteroapical', 'pathological_q_anteromedial', 'pathological_q_inferolateral', 'pathological_q_extensive_anterior'
+]
 
 // Pacemaker related findings
 const PACEMAKER_FINDINGS: Finding[] = ['pacemaker_normal', 'pacemaker_sense_failure', 'pacemaker_pace_failure']
@@ -93,10 +99,20 @@ export function ReportForm({
 
   function handleRhythmChange(rhythm: Rhythm) {
     setFormData((prev) => {
-      const newData = { ...prev, rhythm: [rhythm] }
+      // Toggle rhythm selection (multi-select)
+      const newRhythms = prev.rhythm.includes(rhythm)
+        ? prev.rhythm.filter((r) => r !== rhythm)
+        : [...prev.rhythm, rhythm]
 
-      // If switching away from pacemaker, remove pacemaker findings
-      if (rhythm !== 'paced') {
+      // Ensure at least one rhythm is selected
+      if (newRhythms.length === 0) {
+        return prev
+      }
+
+      const newData = { ...prev, rhythm: newRhythms }
+
+      // If pacemaker is no longer selected, remove pacemaker findings
+      if (!newRhythms.includes('paced')) {
         newData.findings = prev.findings.filter(f =>
           !PACEMAKER_FINDINGS.includes(f) && !PACEMAKER_CHAMBER_FINDINGS.includes(f)
         )
@@ -200,7 +216,7 @@ export function ReportForm({
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Ritmo Cardíaco (selecione apenas um)
+              Ritmo Cardíaco (selecione um ou mais)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {RHYTHMS.map((rhythm) => (
@@ -215,8 +231,7 @@ export function ReportForm({
                   `}
                 >
                   <input
-                    type="radio"
-                    name="rhythm"
+                    type="checkbox"
                     checked={formData.rhythm.includes(rhythm.value)}
                     onChange={() => handleRhythmChange(rhythm.value)}
                     className="sr-only"

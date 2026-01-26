@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui'
-import { Settings, Database, Image, Bell, Shield, Save, RefreshCw, Lock, Crown, UserPlus, UserMinus, Loader2 } from 'lucide-react'
+import { Settings, Database, Image, Bell, Shield, Save, RefreshCw, Lock, Crown, UserPlus, UserMinus, Loader2, Trophy } from 'lucide-react'
 
 type AdminProfile = {
   id: string
@@ -26,6 +26,12 @@ export default function AdminSettingsPage() {
     allowRetakes: true,
     showCorrectAnswers: true,
     emailNotifications: true,
+    // Ranking settings
+    rankingGradeWeight: 70,
+    rankingActivityWeight: 30,
+    rankingTopCount: 10,
+    rankingShowNames: true,
+    rankingMinAttempts: 3,
   })
 
   const router = useRouter()
@@ -296,6 +302,127 @@ export default function AdminSettingsPage() {
                   <p className="text-sm text-gray-700">Exibir o laudo oficial apos a tentativa</p>
                 </div>
               </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ranking Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Configuracoes do Ranking
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 mb-4">
+              Configure como o ranking e calculado e exibido para os usuarios.
+              O score ponderado e calculado como: (Media de Notas × Peso da Nota) + (Atividade Normalizada × Peso da Atividade)
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Peso da Nota (%)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={settings.rankingGradeWeight}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0
+                    setSettings({
+                      ...settings,
+                      rankingGradeWeight: value,
+                      rankingActivityWeight: 100 - value
+                    })
+                  }}
+                />
+                <p className="text-sm text-gray-700 mt-1">
+                  Importancia da media de notas no ranking
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Peso da Atividade (%)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={settings.rankingActivityWeight}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0
+                    setSettings({
+                      ...settings,
+                      rankingActivityWeight: value,
+                      rankingGradeWeight: 100 - value
+                    })
+                  }}
+                />
+                <p className="text-sm text-gray-700 mt-1">
+                  Importancia da quantidade de ECGs no ranking
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Usuarios no Top Ranking
+                </label>
+                <Input
+                  type="number"
+                  min="3"
+                  max="50"
+                  value={settings.rankingTopCount}
+                  onChange={(e) => setSettings({ ...settings, rankingTopCount: parseInt(e.target.value) || 10 })}
+                />
+                <p className="text-sm text-gray-700 mt-1">
+                  Quantos usuarios aparecem no ranking principal
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Minimo de Tentativas
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={settings.rankingMinAttempts}
+                  onChange={(e) => setSettings({ ...settings, rankingMinAttempts: parseInt(e.target.value) || 3 })}
+                />
+                <p className="text-sm text-gray-700 mt-1">
+                  Minimo de ECGs para aparecer no ranking
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.rankingShowNames}
+                  onChange={(e) => setSettings({ ...settings, rankingShowNames: e.target.checked })}
+                  className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="font-medium text-gray-900">Mostrar nomes no ranking</span>
+                  <p className="text-sm text-gray-700">Se desativado, apenas os top 3 terao nomes visiveis</p>
+                </div>
+              </label>
+            </div>
+
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mt-4">
+              <h4 className="font-medium text-blue-800 mb-2">Formula do Score Ponderado</h4>
+              <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                Score = (Media × {settings.rankingGradeWeight}%) + (Atividade × {settings.rankingActivityWeight}%)
+              </code>
+              <p className="text-xs text-blue-600 mt-2">
+                A atividade e normalizada em relacao ao usuario mais ativo do sistema.
+              </p>
             </div>
           </CardContent>
         </Card>

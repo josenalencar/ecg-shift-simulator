@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button, Select, Input } from '@/components/ui'
 import { ImageUpload, ReportForm, ECGViewer, type ReportFormData } from '@/components/ecg'
-import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
+import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS } from '@/lib/ecg-constants'
 import { ArrowLeft, Check } from 'lucide-react'
-import type { Difficulty, Category } from '@/types/database'
+import type { Difficulty, Category, MedicalHistory, FamilyHistory, Medication } from '@/types/database'
 
 const CLINICAL_PRESENTATIONS = [
   { value: 'dor_toracica', label: 'Dor Toracica' },
@@ -47,6 +47,11 @@ export default function NewECGPage() {
   const [patientSex, setPatientSex] = useState<'masculino' | 'feminino' | ''>('')
   const [clinicalPresentation, setClinicalPresentation] = useState<string[]>([])
 
+  // Medical history
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistory[]>([])
+  const [familyHistory, setFamilyHistory] = useState<FamilyHistory[]>([])
+  const [medications, setMedications] = useState<Medication[]>([])
+
   // Auto-generate title on load
   useEffect(() => {
     async function generateTitle() {
@@ -64,6 +69,30 @@ export default function NewECGPage() {
 
   function toggleClinicalPresentation(value: string) {
     setClinicalPresentation(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleMedicalHistory(value: MedicalHistory) {
+    setMedicalHistory(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleFamilyHistory(value: FamilyHistory) {
+    setFamilyHistory(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleMedication(value: Medication) {
+    setMedications(prev =>
       prev.includes(value)
         ? prev.filter(v => v !== value)
         : [...prev, value]
@@ -117,6 +146,9 @@ export default function NewECGPage() {
           patient_age: parseInt(patientAge),
           patient_sex: patientSex,
           clinical_presentation: clinicalPresentation,
+          medical_history: medicalHistory.length > 0 ? medicalHistory : null,
+          family_history: familyHistory.length > 0 ? familyHistory : null,
+          medications: medications.length > 0 ? medications : null,
           is_active: true,
           created_by: user.id,
         })
@@ -296,6 +328,91 @@ export default function NewECGPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Histórico</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Histórico Pessoal
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MEDICAL_HISTORY_OPTIONS.map((item) => {
+                    const isSelected = medicalHistory.includes(item.value)
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => toggleMedicalHistory(item.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Histórico Familiar
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {FAMILY_HISTORY_OPTIONS.map((item) => {
+                    const isSelected = familyHistory.includes(item.value)
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => toggleFamilyHistory(item.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Medicações em Uso
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MEDICATIONS_OPTIONS.map((item) => {
+                    const isSelected = medications.includes(item.value)
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => toggleMedication(item.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Classificacao do ECG</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -354,27 +471,63 @@ export default function NewECGPage() {
             </CardHeader>
             <CardContent>
               <ECGViewer imageUrl={imageUrl} title={title} />
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Paciente:</span>
-                  <span className="ml-2 font-medium">{patientSex === 'masculino' ? 'Masculino' : 'Feminino'}, {patientAge} anos</span>
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <span className="text-gray-500">Paciente:</span>
+                    <span className="ml-2 font-medium">{patientSex === 'masculino' ? 'Masculino' : 'Feminino'}, {patientAge} anos</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Quadro:</span>
+                    <span className="ml-2 font-medium">
+                      {clinicalPresentation.map(p =>
+                        CLINICAL_PRESENTATIONS.find(cp => cp.value === p)?.label
+                      ).join(', ')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Dificuldade:</span>
+                    <span className="ml-2 font-medium capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Categoria:</span>
+                    <span className="ml-2 font-medium capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-500">Quadro:</span>
-                  <span className="ml-2 font-medium">
-                    {clinicalPresentation.map(p =>
-                      CLINICAL_PRESENTATIONS.find(cp => cp.value === p)?.label
-                    ).join(', ')}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Dificuldade:</span>
-                  <span className="ml-2 font-medium capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Categoria:</span>
-                  <span className="ml-2 font-medium capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
-                </div>
+                {(medicalHistory.length > 0 || familyHistory.length > 0 || medications.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-200">
+                    {medicalHistory.length > 0 && (
+                      <div>
+                        <span className="text-gray-500">Hist. Pessoal:</span>
+                        <span className="ml-2 font-medium">
+                          {medicalHistory.map(h =>
+                            MEDICAL_HISTORY_OPTIONS.find(mh => mh.value === h)?.label
+                          ).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    {familyHistory.length > 0 && (
+                      <div>
+                        <span className="text-gray-500">Hist. Familiar:</span>
+                        <span className="ml-2 font-medium">
+                          {familyHistory.map(h =>
+                            FAMILY_HISTORY_OPTIONS.find(fh => fh.value === h)?.label
+                          ).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    {medications.length > 0 && (
+                      <div>
+                        <span className="text-gray-500">Medicações:</span>
+                        <span className="ml-2 font-medium">
+                          {medications.map(m =>
+                            MEDICATIONS_OPTIONS.find(med => med.value === m)?.label
+                          ).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="mt-4 flex justify-end">
                 <Button

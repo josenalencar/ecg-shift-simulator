@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from '@/components/ui'
 import { ImageUpload, ReportForm, ECGViewer, type ReportFormData } from '@/components/ecg'
-import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
+import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS } from '@/lib/ecg-constants'
 import { ArrowLeft, Loader2, Check } from 'lucide-react'
-import type { Difficulty, Category, ECG, OfficialReport } from '@/types/database'
+import type { Difficulty, Category, ECG, OfficialReport, MedicalHistory, FamilyHistory, Medication } from '@/types/database'
 
 const CLINICAL_PRESENTATIONS = [
   { value: 'dor_toracica', label: 'Dor Toracica' },
@@ -32,6 +32,9 @@ type ECGWithPatientInfo = ECG & {
   patient_age?: number | null
   patient_sex?: string | null
   clinical_presentation?: string[] | null
+  medical_history?: MedicalHistory[] | null
+  family_history?: FamilyHistory[] | null
+  medications?: Medication[] | null
 }
 
 export default function EditECGPage() {
@@ -55,6 +58,11 @@ export default function EditECGPage() {
   const [patientAge, setPatientAge] = useState<string>('')
   const [patientSex, setPatientSex] = useState<'masculino' | 'feminino' | ''>('')
   const [clinicalPresentation, setClinicalPresentation] = useState<string[]>([])
+
+  // Medical history
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistory[]>([])
+  const [familyHistory, setFamilyHistory] = useState<FamilyHistory[]>([])
+  const [medications, setMedications] = useState<Medication[]>([])
 
   useEffect(() => {
     async function loadECG() {
@@ -84,6 +92,11 @@ export default function EditECGPage() {
       setPatientSex((ecg.patient_sex as 'masculino' | 'feminino') || '')
       setClinicalPresentation(ecg.clinical_presentation || [])
 
+      // Load medical history
+      setMedicalHistory(ecg.medical_history || [])
+      setFamilyHistory(ecg.family_history || [])
+      setMedications(ecg.medications || [])
+
       setIsLoading(false)
     }
 
@@ -92,6 +105,30 @@ export default function EditECGPage() {
 
   function toggleClinicalPresentation(value: string) {
     setClinicalPresentation(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleMedicalHistory(value: MedicalHistory) {
+    setMedicalHistory(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleFamilyHistory(value: FamilyHistory) {
+    setFamilyHistory(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
+  function toggleMedication(value: Medication) {
+    setMedications(prev =>
       prev.includes(value)
         ? prev.filter(v => v !== value)
         : [...prev, value]
@@ -124,6 +161,9 @@ export default function EditECGPage() {
           patient_age: patientAge ? parseInt(patientAge) : null,
           patient_sex: patientSex || null,
           clinical_presentation: clinicalPresentation.length > 0 ? clinicalPresentation : null,
+          medical_history: medicalHistory.length > 0 ? medicalHistory : null,
+          family_history: familyHistory.length > 0 ? familyHistory : null,
+          medications: medications.length > 0 ? medications : null,
         })
         .eq('id', ecgId)
 
@@ -289,6 +329,91 @@ export default function EditECGPage() {
                     >
                       {isSelected && <Check className="h-4 w-4" />}
                       {presentation.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Histórico</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Histórico Pessoal
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {MEDICAL_HISTORY_OPTIONS.map((item) => {
+                  const isSelected = medicalHistory.includes(item.value)
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => toggleMedicalHistory(item.value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isSelected && <Check className="h-4 w-4" />}
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Histórico Familiar
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {FAMILY_HISTORY_OPTIONS.map((item) => {
+                  const isSelected = familyHistory.includes(item.value)
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => toggleFamilyHistory(item.value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                        isSelected
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isSelected && <Check className="h-4 w-4" />}
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medicações em Uso
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {MEDICATIONS_OPTIONS.map((item) => {
+                  const isSelected = medications.includes(item.value)
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => toggleMedication(item.value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                        isSelected
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isSelected && <Check className="h-4 w-4" />}
+                      {item.label}
                     </button>
                   )
                 })}

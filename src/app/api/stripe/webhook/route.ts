@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import {
+  sendSubscriptionActivatedEmail,
+  sendSubscriptionCanceledEmail,
+  sendPaymentFailedEmail,
+} from '@/lib/email'
 
 // Use service role for webhook to bypass RLS
 const supabaseAdmin = createClient(
@@ -39,7 +44,8 @@ export async function POST(request: NextRequest) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
           )
-          await handleSubscriptionChange(subscription)
+          // Send activation email for new subscriptions via checkout
+          await handleSubscriptionChange(subscription, true)
         }
         break
       }
@@ -64,6 +70,28 @@ export async function POST(request: NextRequest) {
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_subscription_id', invoice.subscription)
+
+          // Send payment failed email
+          const { data: subscriptionRecord } = await supabaseAdmin
+            .from('subscriptions')
+            .select('user_id')
+            .eq('stripe_subscription_id', invoice.subscription)
+            .single()
+
+          if (subscriptionRecord?.user_id) {
+            const { data: profile } = await supabaseAdmin
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', subscriptionRecord.user_id)
+              .single()
+
+            if (profile?.email) {
+              sendPaymentFailedEmail(
+                profile.email,
+                profile.full_name || ''
+              ).catch((err) => console.error('Failed to send payment failed email:', err))
+            }
+          }
         }
         break
       }
@@ -77,7 +105,7 @@ export async function POST(request: NextRequest) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleSubscriptionChange(subscription: any) {
+async function handleSubscriptionChange(subscription: any, sendEmail = false) {
   const userId = subscription.metadata?.supabase_user_id
   const plan = subscription.metadata?.plan || 'premium'
   const customerId = subscription.customer as string
@@ -113,6 +141,23 @@ async function handleSubscriptionChange(subscription: any) {
       .from('profiles')
       .update({ subscription_status: subscriptionData.status })
       .eq('id', userId)
+
+    // Send activation email if this is a new/activated subscription
+    if (sendEmail && subscriptionData.status === 'active') {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', userId)
+        .single()
+
+      if (profile?.email) {
+        sendSubscriptionActivatedEmail(
+          profile.email,
+          profile.full_name || '',
+          plan
+        ).catch((err) => console.error('Failed to send activation email:', err))
+      }
+    }
   } else {
     // Update by customer_id if no user_id in metadata
     await supabaseAdmin
@@ -142,6 +187,28 @@ async function handleSubscriptionDeleted(subscription: any) {
       .from('profiles')
       .update({ subscription_status: 'canceled' })
       .eq('id', userId)
+
+    // Send cancellation email
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', userId)
+      .single()
+
+    if (profile?.email) {
+      const endDate = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        : ''
+      sendSubscriptionCanceledEmail(
+        profile.email,
+        profile.full_name || '',
+        endDate
+      ).catch((err) => console.error('Failed to send cancellation email:', err))
+    }
   } else {
     await supabaseAdmin
       .from('subscriptions')

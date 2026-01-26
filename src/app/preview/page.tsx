@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital } from 'lucide-react'
+import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, Heart, Users, Zap, BookOpen, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital } from 'lucide-react'
 
 // Contact Modal Component
 function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -16,6 +16,7 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSending(true)
+    // Simulate sending
     await new Promise(resolve => setTimeout(resolve, 1000))
     setSending(false)
     setSent(true)
@@ -145,7 +146,7 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
   )
 }
 
-export default function HomePage() {
+export default function PreviewHomePage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
@@ -224,12 +225,12 @@ export default function HomePage() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/preview" className="flex items-center gap-2 group">
               <div className={`p-2 rounded-xl transition-all ${isScrolled ? 'bg-blue-100' : 'bg-white/20 backdrop-blur'}`}>
                 <Activity className="h-6 w-6 text-blue-600" />
               </div>
               <span className={`font-bold text-xl transition-colors ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>
-                Plantão de ECG
+                Plantao de ECG
               </span>
             </Link>
 
@@ -240,8 +241,8 @@ export default function HomePage() {
               <a href="#recursos" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
                 Recursos
               </a>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                Preços
+              <Link href="/preview/pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                Precos
               </Link>
               <button
                 onClick={() => setContactOpen(true)}
@@ -262,7 +263,7 @@ export default function HomePage() {
                 href="/register"
                 className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-all hover:shadow-lg"
               >
-                Começar Grátis
+                Comecar Gratis
               </Link>
             </div>
           </div>
@@ -295,7 +296,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 animate-slideUp" style={{ animationDelay: '0.2s' }}>
-                Pratique interpretação de eletrocardiogramas em um ambiente que simula um plantão real.
+                Pratique interpretacao de eletrocardiogramas em um ambiente que simula um plantao real.
                 Receba feedback imediato baseado em laudos de especialistas.
               </p>
 
@@ -304,7 +305,7 @@ export default function HomePage() {
                   href="/register"
                   className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
                 >
-                  Começar Plantão Simulado
+                  Comecar Plantao Simulado
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <button
@@ -332,11 +333,11 @@ export default function HomePage() {
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">Caso #127</p>
-                          <p className="text-sm text-gray-500">M, 62 anos - Dor torácica</p>
+                          <p className="text-sm text-gray-500">M, 62 anos - Dor toracica</p>
                         </div>
                       </div>
                       <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-medium rounded-full">
-                        Em análise
+                        Em analise
                       </span>
                     </div>
 
@@ -384,7 +385,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">Taxa de acerto</p>
-                    <p className="text-xs text-gray-500">Acompanhe sua evolução</p>
+                    <p className="text-xs text-gray-500">Acompanhe sua evolucao</p>
                   </div>
                 </div>
               </div>
@@ -412,7 +413,7 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-4xl md:text-5xl font-bold gradient-text">24/7</p>
-              <p className="text-gray-600 mt-2">Disponível sempre</p>
+              <p className="text-gray-600 mt-2">Disponivel sempre</p>
             </div>
           </div>
         </div>
@@ -431,7 +432,7 @@ export default function HomePage() {
                 ECGs personalizados para o seu dia a dia
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Selecione seu local de trabalho e o sistema prioriza automaticamente os ECGs mais relevantes para sua prática clínica.
+                Selecione seu local de trabalho e o sistema prioriza automaticamente os ECGs mais relevantes para sua pratica clinica.
               </p>
             </div>
           </ScrollReveal>
@@ -441,22 +442,22 @@ export default function HomePage() {
               {
                 icon: Hospital,
                 title: 'Pronto Socorro',
-                description: 'Prioriza casos de isquemia, arritmias e emergências cardiológicas que você encontra no PS.',
-                tags: ['Infarto', 'Arritmias', 'Emergências'],
+                description: 'Prioriza casos de isquemia, arritmias e emergencias cardiologicas que voce encontra no PS.',
+                tags: ['Infarto', 'Arritmias', 'Emergencias'],
                 color: 'red'
               },
               {
                 icon: Building2,
                 title: 'Hospital Geral',
-                description: 'Foco em ECGs normais, distúrbios de condução e achados comuns em enfermarias.',
-                tags: ['Normal', 'Condução', 'Rotina'],
+                description: 'Foco em ECGs normais, disturbios de conducao e achados comuns em enfermarias.',
+                tags: ['Normal', 'Conducao', 'Rotina'],
                 color: 'blue'
               },
               {
                 icon: Briefcase,
-                title: 'Hospital Cardiológico',
-                description: 'Casos difíceis e raros para quem quer dominar a eletrocardiografia avançada.',
-                tags: ['Difícil', 'Raro', 'Avançado'],
+                title: 'Hospital Cardiologico',
+                description: 'Casos dificeis e raros para quem quer dominar a eletrocardiografia avancada.',
+                tags: ['Dificil', 'Raro', 'Avancado'],
                 color: 'purple'
               }
             ].map((item, index) => (
@@ -493,12 +494,12 @@ export default function HomePage() {
 
           <ScrollReveal delay={400}>
             <div className="mt-12 text-center">
-              <p className="text-gray-600 mb-4">Mude seu perfil a qualquer momento nas configurações</p>
+              <p className="text-gray-600 mb-4">Mude seu perfil a qualquer momento nas configuracoes</p>
               <Link
                 href="/register"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
               >
-                Começar com ECGs personalizados
+                Comecar com ECGs personalizados
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
@@ -515,10 +516,10 @@ export default function HomePage() {
                 Como funciona
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                A experiência completa de um plantão
+                A experiencia completa de um plantao
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Pratique interpretação de ECG em 3 etapas
+                Pratique interpretacao de ECG em 3 etapas
               </p>
             </div>
           </ScrollReveal>
@@ -529,14 +530,14 @@ export default function HomePage() {
                 step: '01',
                 icon: Activity,
                 title: 'Receba o caso',
-                description: 'Como em um plantão real, você recebe o ECG com dados clínicos: idade, sexo, queixa principal e histórico.',
+                description: 'Como em um plantao real, voce recebe o ECG com dados clinicos: idade, sexo, queixa principal e historico.',
                 color: 'blue'
               },
               {
                 step: '02',
                 icon: Target,
                 title: 'Envie seu laudo',
-                description: 'Preencha sua interpretação completa: ritmo, eixo, intervalos e todos os achados do traçado.',
+                description: 'Preencha sua interpretacao completa: ritmo, eixo, intervalos e todos os achados do traco.',
                 color: 'purple'
               },
               {
@@ -577,33 +578,33 @@ export default function HomePage() {
                   Recursos
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                  Tudo que você precisa para dominar ECG
+                  Tudo que voce precisa para dominar ECG
                 </h2>
                 <p className="text-lg text-gray-600 mb-8">
-                  Desenvolvido por cardiologistas para oferecer a melhor experiência de aprendizado em eletrocardiografia.
+                  Desenvolvido por cardiologistas para oferecer a melhor experiencia de aprendizado em eletrocardiografia.
                 </p>
 
                 <div className="space-y-6">
                   {[
                     {
                       icon: Zap,
-                      title: 'Feedback instantâneo',
-                      description: 'Compare sua interpretação com o gabarito do especialista imediatamente.'
+                      title: 'Feedback instantaneo',
+                      description: 'Compare sua interpretacao com o gabarito do especialista imediatamente.'
                     },
                     {
                       icon: BarChart3,
                       title: 'Acompanhe seu progresso',
-                      description: 'Monitore sua taxa de acerto e identifique áreas que precisam de mais prática.'
+                      description: 'Monitore sua taxa de acerto e identifique areas que precisam de mais pratica.'
                     },
                     {
                       icon: Users,
                       title: 'Ranking competitivo',
-                      description: 'Compare seu desempenho com outros usuários e suba no ranking.'
+                      description: 'Compare seu desempenho com outros usuarios e suba no ranking.'
                     },
                     {
                       icon: Building2,
                       title: 'ECGs do seu dia a dia',
-                      description: 'Selecione seu hospital e receba ECGs priorizados para sua realidade clínica.'
+                      description: 'Selecione seu hospital e receba ECGs priorizados para sua realidade clinica.'
                     }
                   ].map((feature, index) => (
                     <div key={index} className="flex gap-4 group">
@@ -642,11 +643,11 @@ export default function HomePage() {
                     </div>
 
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
-                      <p className="text-sm text-yellow-300">Você errou o eixo - revise os critérios de desvio</p>
+                      <p className="text-sm text-yellow-300">Voce errou o eixo - revise os criterios de desvio</p>
                     </div>
 
                     <div className="flex items-center justify-between bg-white/5 rounded-xl p-4">
-                      <span className="text-gray-400">Sua pontuação</span>
+                      <span className="text-gray-400">Sua pontuacao</span>
                       <span className="text-2xl font-bold text-yellow-400">72%</span>
                     </div>
                   </div>
@@ -663,13 +664,13 @@ export default function HomePage() {
           <ScrollReveal>
             <div className="text-center mb-16">
               <span className="inline-block px-4 py-2 bg-white/10 backdrop-blur rounded-full text-sm font-medium mb-4">
-                Quem está por trás
+                Quem esta por tras
               </span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Feedback baseado em especialistas
               </h2>
               <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                Os gabaritos são elaborados por cardiologistas com reconhecimento internacional.
+                Os gabaritos sao elaborados por cardiologistas com reconhecimento internacional.
               </p>
             </div>
           </ScrollReveal>
@@ -680,14 +681,14 @@ export default function HomePage() {
                 <div className="w-40 h-40 rounded-full overflow-hidden flex-shrink-0 ring-4 ring-blue-500/30">
                   <Image
                     src="/dr-alencar.jpg"
-                    alt="Dr. José Alencar"
+                    alt="Dr. Jose Alencar"
                     width={160}
                     height={160}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-2">Dr. José Alencar</h3>
+                  <h3 className="text-2xl font-bold mb-2">Dr. Jose Alencar</h3>
                   <p className="text-blue-400 font-medium mb-4">Cardiologista e Eletrofisiologista</p>
                   <div className="space-y-2 text-gray-300">
                     <div className="flex items-center gap-2">
@@ -718,21 +719,21 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
               <div className="relative">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                  Comece seu plantão simulado agora
+                  Comece seu plantao simulado agora
                 </h2>
                 <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8">
-                  5 ECGs gratuitos por mês. Sem compromisso. Cancele quando quiser.
+                  5 ECGs gratuitos por mes. Sem compromisso. Cancele quando quiser.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/register"
                     className="group px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:shadow-xl transition-all flex items-center justify-center gap-2"
                   >
-                    Começar Gratuitamente
+                    Comecar Gratuitamente
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
-                    href="/pricing"
+                    href="/preview/pricing"
                     className="px-8 py-4 bg-white/10 backdrop-blur text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
                   >
                     Ver Planos
@@ -749,14 +750,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
+              <Link href="/preview" className="flex items-center gap-2 mb-4">
                 <div className="p-2 bg-white/10 rounded-xl">
                   <Activity className="h-6 w-6 text-blue-400" />
                 </div>
-                <span className="font-bold text-xl">Plantão de ECG</span>
+                <span className="font-bold text-xl">Plantao de ECG</span>
               </Link>
               <p className="text-gray-400 text-sm mb-4">
-                Simulador de plantão de tele-ECG com feedback de especialistas.
+                Simulador de plantao de tele-ECG com feedback de especialistas.
               </p>
               <div className="flex gap-3">
                 <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
@@ -774,9 +775,9 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a></li>
-                <li><a href="#recursos" className="hover:text-white transition-colors">Recursos</a></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Preços</Link></li>
+                <li><a href="#" className="hover:text-white transition-colors">Como funciona</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Recursos</a></li>
+                <li><Link href="/preview/pricing" className="hover:text-white transition-colors">Precos</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
               </ul>
             </div>
@@ -786,7 +787,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Guia de ECG</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Casos clínicos</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Casos clinicos</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Comunidade</a></li>
               </ul>
             </div>
@@ -808,7 +809,7 @@ export default function HomePage() {
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Plantão de ECG. Todos os direitos reservados.
+              2025 Plantao de ECG. Todos os direitos reservados.
             </p>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="#" className="hover:text-white transition-colors">Termos de uso</a>
@@ -838,7 +839,7 @@ export default function HomePage() {
             <div className="aspect-video bg-gray-900 flex items-center justify-center">
               <div className="text-center text-white">
                 <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-gray-400">Vídeo demo em breve</p>
+                <p className="text-gray-400">Video demo em breve</p>
               </div>
             </div>
           </div>

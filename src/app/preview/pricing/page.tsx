@@ -167,14 +167,14 @@ function PricingContent() {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, billingCycle }),
+        body: JSON.stringify({ plan }),
       })
       const data = await response.json()
 
       if (data.url) {
         window.location.href = data.url
       } else {
-        alert('Erro ao criar sessão de pagamento')
+        alert('Erro ao criar sessao de pagamento')
         setIsLoading(null)
       }
     } catch (error) {
@@ -198,26 +198,26 @@ function PricingContent() {
   }[] = [
     {
       name: 'Gratuito',
-      description: 'Para quem está começando',
+      description: 'Para quem esta comecando',
       price: { monthly: 0, yearly: 0 },
       icon: Zap,
       color: 'gray',
       popular: false,
       features: [
-        { text: '5 casos de ECG por mês', included: true },
-        { text: 'Feedback básico', included: true },
+        { text: '5 casos de ECG por mes', included: true },
+        { text: 'Feedback basico', included: true },
         { text: 'Acompanhamento de progresso', included: true },
         { text: 'Casos ilimitados', included: false },
-        { text: 'Casos avançados e raros', included: false },
+        { text: 'Casos avancados e raros', included: false },
         { text: 'Feedback com ECG-IA', included: false },
       ],
-      cta: 'Começar Grátis',
+      cta: 'Comecar Gratis',
       ctaLink: '/register'
     },
     {
       name: 'Premium',
-      description: 'Para quem quer evoluir rápido',
-      price: { monthly: 39.90, yearly: 31.92 },
+      description: 'Para quem quer evoluir rapido',
+      price: { monthly: 29.90, yearly: 23.90 },
       icon: Crown,
       color: 'blue',
       popular: true,
@@ -225,8 +225,8 @@ function PricingContent() {
         { text: 'Casos ilimitados', included: true, highlight: true },
         { text: 'Feedback completo e detalhado', included: true },
         { text: 'Acompanhamento de progresso', included: true },
-        { text: 'Casos avançados e raros', included: true },
-        { text: 'Personalização por tipo de hospital', included: true },
+        { text: 'Casos avancados e raros', included: true },
+        { text: 'Personalizacao por tipo de hospital', included: true },
         { text: 'Feedback com ECG-IA', included: false },
       ],
       cta: 'Assinar Premium',
@@ -234,8 +234,8 @@ function PricingContent() {
     },
     {
       name: 'Premium +AI',
-      description: 'Experiência completa com IA',
-      price: { monthly: 59.90, yearly: 47.92 },
+      description: 'Experiencia completa com IA',
+      price: { monthly: 49.90, yearly: 39.90 },
       icon: Sparkles,
       color: 'purple',
       popular: false,
@@ -243,9 +243,9 @@ function PricingContent() {
         { text: 'Tudo do Premium', included: true, highlight: true },
         { text: 'Feedback ilimitado da ECG-IA', included: true, highlight: true },
         { text: 'IA especializada em ECG', included: true },
-        { text: 'Explicações detalhadas por IA', included: true },
-        { text: 'Análise comparativa avançada', included: true },
-        { text: 'Sugestões de estudo personalizadas', included: true },
+        { text: 'Explicacoes detalhadas por IA', included: true },
+        { text: 'Analise comparativa avancada', included: true },
+        { text: 'Sugestoes de estudo personalizadas', included: true },
       ],
       cta: 'Assinar Premium +AI',
       onClick: () => handleSubscribe('ai')
@@ -254,24 +254,24 @@ function PricingContent() {
 
   const faqs = [
     {
-      question: 'Como funciona o período gratuito?',
-      answer: 'Você pode usar o plano gratuito por tempo indeterminado, com acesso a 5 casos de ECG por mês. Não precisa de cartão de crédito para começar.'
+      question: 'Como funciona o periodo gratuito?',
+      answer: 'Voce pode usar o plano gratuito por tempo indeterminado, com acesso a 5 casos de ECG por mes. Nao precisa de cartao de credito para comecar.'
     },
     {
       question: 'Posso cancelar a qualquer momento?',
-      answer: 'Sim! Você pode cancelar sua assinatura a qualquer momento. Você continuará tendo acesso até o fim do período pago.'
+      answer: 'Sim! Voce pode cancelar sua assinatura a qualquer momento. Voce continuara tendo acesso ate o fim do periodo pago.'
     },
     {
-      question: 'O que é a ECG-IA?',
-      answer: 'A ECG-IA é nossa inteligência artificial especializada em eletrocardiograma. Ela analisa suas respostas e fornece feedback personalizado, explicando cada detalhe do ECG.'
+      question: 'O que e a ECG-IA?',
+      answer: 'A ECG-IA e nossa inteligencia artificial especializada em eletrocardiograma. Ela analisa suas respostas e fornece feedback personalizado, explicando cada detalhe do ECG.'
     },
     {
-      question: 'Os ECGs são de pacientes reais?',
-      answer: 'Sim, todos os ECGs são de casos reais, cuidadosamente selecionados e anonimizados. Os laudos são revisados por especialistas.'
+      question: 'Os ECGs sao de pacientes reais?',
+      answer: 'Sim, todos os ECGs sao de casos reais, cuidadosamente selecionados e anonimizados. Os laudos sao revisados por especialistas.'
     },
     {
       question: 'Tem desconto para estudantes?',
-      answer: 'Entre em contato conosco informando sua situação acadêmica. Oferecemos condições especiais para estudantes de medicina.'
+      answer: 'Entre em contato conosco informando sua situacao academica. Oferecemos condicoes especiais para estudantes de medicina.'
     }
   ]
 
@@ -326,24 +326,24 @@ function PricingContent() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/preview" className="flex items-center gap-2 group">
               <div className={`p-2 rounded-xl transition-all ${isScrolled ? 'bg-blue-100' : 'bg-white/20 backdrop-blur'}`}>
                 <Activity className="h-6 w-6 text-blue-600" />
               </div>
               <span className={`font-bold text-xl transition-colors ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>
-                Plantão de ECG
+                Plantao de ECG
               </span>
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              <Link href="/#como-funciona" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              <Link href="/preview#como-funciona" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
                 Como funciona
               </Link>
-              <Link href="/#recursos" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              <Link href="/preview#recursos" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
                 Recursos
               </Link>
-              <Link href="/pricing" className="text-blue-600 font-medium">
-                Preços
+              <Link href="/preview/pricing" className="text-blue-600 font-medium">
+                Precos
               </Link>
               <button
                 onClick={() => setContactOpen(true)}
@@ -364,7 +364,7 @@ function PricingContent() {
                 href="/register"
                 className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-all hover:shadow-lg"
               >
-                Começar Grátis
+                Comecar Gratis
               </Link>
             </div>
           </div>
@@ -382,7 +382,7 @@ function PricingContent() {
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 text-center">
           {canceled && (
             <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 max-w-md mx-auto animate-slideUp">
-              Pagamento cancelado. Você pode tentar novamente quando quiser.
+              Pagamento cancelado. Voce pode tentar novamente quando quiser.
             </div>
           )}
 
@@ -395,11 +395,11 @@ function PricingContent() {
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 animate-slideUp" style={{ animationDelay: '0.1s' }}>
             Escolha o plano ideal{' '}
-            <span className="gradient-text">para você</span>
+            <span className="gradient-text">para voce</span>
           </h1>
 
           <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto animate-slideUp" style={{ animationDelay: '0.2s' }}>
-            Comece grátis e evolua quando estiver pronto. Cancele a qualquer momento.
+            Comece gratis e evolua quando estiver pronto. Cancele a qualquer momento.
           </p>
 
           {/* Billing Toggle */}
@@ -475,7 +475,7 @@ function PricingContent() {
                           R${plan.price[billingCycle].toFixed(2).replace('.', ',')}
                         </span>
                         {plan.price[billingCycle] > 0 && (
-                          <span className="text-gray-500">/mês</span>
+                          <span className="text-gray-500">/mes</span>
                         )}
                       </div>
                       {billingCycle === 'yearly' && plan.price.yearly > 0 && (
@@ -567,19 +567,19 @@ function PricingContent() {
                   Exclusivo Premium +AI
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Conheça a ECG-IA
+                  Conheca a ECG-IA
                 </h2>
                 <p className="text-lg text-gray-300 mb-8">
-                  Nossa inteligência artificial especializada em eletrocardiograma analisa suas
+                  Nossa inteligencia artificial especializada em eletrocardiograma analisa suas
                   respostas e fornece feedback personalizado, explicando cada detalhe do ECG
-                  e comparando sua interpretação com o laudo oficial.
+                  e comparando sua interpretacao com o laudo oficial.
                 </p>
                 <ul className="space-y-4">
                   {[
-                    'Explicações adaptadas ao seu nível',
-                    'Identifica padrões de erro',
+                    'Explicacoes adaptadas ao seu nivel',
+                    'Identifica padroes de erro',
                     'Sugere materiais de estudo',
-                    'Disponível 24/7'
+                    'Disponivel 24/7'
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-3">
                       <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
@@ -606,13 +606,13 @@ function PricingContent() {
                   <div className="space-y-4">
                     <div className="bg-white/5 rounded-xl p-4">
                       <p className="text-sm text-gray-400 mb-2">Sua resposta:</p>
-                      <p className="text-sm">&quot;Ritmo sinusal com BAV 1º grau&quot;</p>
+                      <p className="text-sm">&quot;Ritmo sinusal com BAV 1 grau&quot;</p>
                     </div>
                     <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
                       <p className="text-sm text-purple-300 mb-2">Feedback da ECG-IA:</p>
                       <p className="text-sm text-gray-300">
-                        &quot;Excelente! Você identificou corretamente o BAV 1º grau. O intervalo PR
-                        de 220ms confirma o diagnóstico. Note também a morfologia do QRS...&quot;
+                        &quot;Excelente! Voce identificou corretamente o BAV 1 grau. O intervalo PR
+                        de 220ms confirma o diagnostico. Note tambem a morfologia do QRS...&quot;
                       </p>
                     </div>
                   </div>
@@ -635,7 +635,7 @@ function PricingContent() {
                 Perguntas frequentes
               </h2>
               <p className="text-lg text-gray-600">
-                Ainda tem dúvidas? Entre em contato conosco.
+                Ainda tem duvidas? Entre em contato conosco.
               </p>
             </div>
           </ScrollReveal>
@@ -658,7 +658,7 @@ function PricingContent() {
 
           <ScrollReveal delay={300}>
             <div className="mt-12 text-center">
-              <p className="text-gray-600 mb-4">Não encontrou sua resposta?</p>
+              <p className="text-gray-600 mb-4">Nao encontrou sua resposta?</p>
               <button
                 onClick={() => setContactOpen(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-all"
@@ -679,16 +679,16 @@ function PricingContent() {
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
               <div className="relative">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                  Pronto para começar?
+                  Pronto para comecar?
                 </h2>
                 <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8">
-                  Comece gratuitamente hoje e dê o próximo passo na sua formação em ECG.
+                  Comece gratuitamente hoje e de o proximo passo na sua formacao em ECG.
                 </p>
                 <Link
                   href="/register"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:shadow-xl transition-all"
                 >
-                  Começar Gratuitamente
+                  Comecar Gratuitamente
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </div>
@@ -702,14 +702,14 @@ function PricingContent() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
+              <Link href="/preview" className="flex items-center gap-2 mb-4">
                 <div className="p-2 bg-white/10 rounded-xl">
                   <Activity className="h-6 w-6 text-blue-400" />
                 </div>
-                <span className="font-bold text-xl">Plantão de ECG</span>
+                <span className="font-bold text-xl">Plantao de ECG</span>
               </Link>
               <p className="text-gray-400 text-sm mb-4">
-                Simulador de plantão de tele-ECG com feedback de especialistas.
+                Simulador de plantao de tele-ECG com feedback de especialistas.
               </p>
               <div className="flex gap-3">
                 <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
@@ -727,9 +727,9 @@ function PricingContent() {
             <div>
               <h4 className="font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/" className="hover:text-white transition-colors">Como funciona</Link></li>
+                <li><Link href="/preview" className="hover:text-white transition-colors">Como funciona</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Recursos</a></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Preços</Link></li>
+                <li><Link href="/preview/pricing" className="hover:text-white transition-colors">Precos</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
               </ul>
             </div>
@@ -739,7 +739,7 @@ function PricingContent() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Guia de ECG</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Casos clínicos</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Casos clinicos</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Comunidade</a></li>
               </ul>
             </div>
@@ -761,7 +761,7 @@ function PricingContent() {
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © 2025 Plantão de ECG. Todos os direitos reservados.
+              2025 Plantao de ECG. Todos os direitos reservados.
             </p>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="#" className="hover:text-white transition-colors">Termos de uso</a>
@@ -777,7 +777,7 @@ function PricingContent() {
   )
 }
 
-export default function PricingPage() {
+export default function PreviewPricingPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-[#FAFBFC]">

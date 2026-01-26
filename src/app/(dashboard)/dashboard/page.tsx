@@ -164,23 +164,17 @@ export default async function DashboardPage() {
     .map((entry, index) => ({ ...entry, rank: index + 1 }))
 
   const currentUserRank = rankings.find(r => r.isCurrentUser)?.rank || 0
+  const totalUsers = rankings.length
 
-  // Build display ranking: top 3, then ellipsis, then around current user
-  const displayRanking: (typeof rankings[0] | { type: 'ellipsis' })[] = []
+  // Calculate percentile (better than X% of users)
+  const percentile = totalUsers > 1 && currentUserRank > 0
+    ? Math.round(((totalUsers - currentUserRank) / (totalUsers - 1)) * 100)
+    : 0
 
-  // Always show top 3
-  rankings.slice(0, 3).forEach(r => displayRanking.push(r))
-
-  if (currentUserRank > 5) {
-    displayRanking.push({ type: 'ellipsis' } as { type: 'ellipsis' })
-    // Show users around current user position (5 before and 5 after)
-    const start = Math.max(currentUserRank - 5, 4)
-    const end = Math.min(currentUserRank + 5, rankings.length)
-    rankings.slice(start - 1, end).forEach(r => displayRanking.push(r))
-  } else if (rankings.length > 3) {
-    // Show remaining users up to 10
-    rankings.slice(3, 10).forEach(r => displayRanking.push(r))
-  }
+  // Build display ranking: top 10, and if user not in top 10, show them separately
+  const top10 = rankings.slice(0, 10)
+  const currentUserInTop10 = top10.some(r => r.isCurrentUser)
+  const currentUserEntry = rankings.find(r => r.isCurrentUser)
 
   // Get monthly attempt count for free users
   const startOfMonth = new Date()
@@ -354,17 +348,9 @@ export default async function DashboardPage() {
           <CardContent>
             {rankings.length > 0 ? (
               <div className="space-y-2">
-                {displayRanking.map((entry, index) => {
-                  if ('type' in entry && entry.type === 'ellipsis') {
-                    return (
-                      <div key={`ellipsis-${index}`} className="text-center text-gray-500 py-1">
-                        ...
-                      </div>
-                    )
-                  }
-                  const r = entry as typeof rankings[0]
+                {/* Top 10 users */}
+                {top10.map((r) => {
                   const isTop3 = r.rank <= 3
-                  const showName = isTop3 || r.isCurrentUser
 
                   return (
                     <div
@@ -382,8 +368,8 @@ export default async function DashboardPage() {
                         }`}>
                           {r.rank <= 3 ? <Medal className="h-4 w-4" /> : r.rank}
                         </div>
-                        <span className={`text-sm ${r.isCurrentUser ? 'font-bold text-blue-700' : 'text-gray-900'}`}>
-                          {showName ? r.name : '••••••'}
+                        <span className={`text-sm ${r.isCurrentUser ? 'font-bold text-blue-700' : isTop3 ? 'text-gray-900' : 'text-gray-700'}`}>
+                          {isTop3 || r.isCurrentUser ? r.name : '••••••'}
                           {r.isCurrentUser && ' (Voce)'}
                         </span>
                       </div>
@@ -394,10 +380,46 @@ export default async function DashboardPage() {
                     </div>
                   )
                 })}
-                {currentUserRank > 0 && (
-                  <p className="text-xs text-center text-gray-600 pt-2 border-t">
-                    Sua posicao: <span className="font-bold">#{currentUserRank}</span> de {rankings.length}
-                  </p>
+
+                {/* Show current user if not in top 10 */}
+                {!currentUserInTop10 && currentUserEntry && (
+                  <>
+                    <div className="text-center text-gray-400 py-1">• • •</div>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-blue-100 border border-blue-300">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
+                          {currentUserEntry.rank}
+                        </div>
+                        <span className="text-sm font-bold text-blue-700">
+                          {currentUserEntry.name} (Voce)
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-900">{currentUserEntry.avgScore}%</p>
+                        <p className="text-xs text-gray-600">{currentUserEntry.attemptCount} ECGs</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Percentile display */}
+                {currentUserRank > 0 && totalUsers > 1 && (
+                  <div className="pt-3 mt-2 border-t border-gray-200">
+                    {currentUserInTop10 ? (
+                      <p className="text-xs text-center text-gray-600">
+                        Sua posicao: <span className="font-bold">#{currentUserRank}</span> de {totalUsers} usuarios
+                      </p>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-blue-600">
+                          Voce esta melhor que {percentile}% dos usuarios!
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Posicao #{currentUserRank} de {totalUsers} usuarios
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (

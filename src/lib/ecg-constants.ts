@@ -1,15 +1,23 @@
-import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category } from '@/types/database'
+import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category, MedicalHistory, FamilyHistory, Medication, HospitalType } from '@/types/database'
 
 export const RHYTHMS: { value: Rhythm; label: string }[] = [
   { value: 'sinus', label: 'Ritmo Sinusal' },
+  { value: 'sinus_arrhythmia', label: 'Arritmia Sinusal' },
+  { value: 'sinus_bradycardia', label: 'Bradicardia Sinusal' },
   { value: 'afib', label: 'Fibrilação Atrial' },
   { value: 'aflutter', label: 'Flutter Atrial' },
   { value: 'svt', label: 'Taquicardia Supraventricular' },
+  { value: 'mat', label: 'Taquicardia Atrial Multifocal' },
   { value: 'vtach', label: 'Taquicardia Ventricular' },
+  { value: 'polymorphic_vtach', label: 'Taquicardia Ventricular Polimórfica' },
+  { value: 'torsades', label: 'Torsades de Pointes' },
   { value: 'vfib', label: 'Fibrilação Ventricular' },
   { value: 'junctional', label: 'Ritmo Juncional' },
+  { value: 'ventricular_escape', label: 'Ritmo Ventricular de Escape' },
+  { value: 'riva', label: 'RIVA (Ritmo Idioventricular Acelerado)' },
   { value: 'paced', label: 'Ritmo de Marcapasso' },
   { value: 'asystole', label: 'Assistolia' },
+  { value: 'isorhythmic_dissociation', label: 'Dissociação Isorrítmica' },
   { value: 'other', label: 'Outro' },
 ]
 
@@ -44,11 +52,12 @@ export const QT_INTERVALS: { value: Interval; label: string }[] = [
 ]
 
 export const FINDINGS: { value: Finding; label: string; category: string }[] = [
-  // Alterações de câmaras
-  { value: 'lvh', label: 'Sobrecarga Ventricular Esquerda (SVE)', category: 'Câmaras' },
-  { value: 'rvh', label: 'Sobrecarga Ventricular Direita (SVD)', category: 'Câmaras' },
-  { value: 'lae', label: 'Sobrecarga Atrial Esquerda (SAE)', category: 'Câmaras' },
-  { value: 'rae', label: 'Sobrecarga Atrial Direita (SAD)', category: 'Câmaras' },
+  // Alterações de câmaras - renamed from SVE/SVD/SAE/SAD
+  { value: 'amplitude_criteria', label: 'Critérios de amplitude', category: 'Câmaras' },
+  { value: 'tall_r_right_precordial', label: 'Onda R alta em precordiais direitas', category: 'Câmaras' },
+  { value: 'left_atrial_enlargement', label: 'Alargamento atrial esquerdo', category: 'Câmaras' },
+  { value: 'right_atrial_enlargement', label: 'Alargamento atrial direito', category: 'Câmaras' },
+  { value: 'low_voltage', label: 'Baixa voltagem', category: 'Câmaras' },
 
   // Bloqueios de condução
   { value: 'rbbb', label: 'Bloqueio de Ramo Direito (BRD)', category: 'Condução' },
@@ -67,6 +76,10 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'sab_2nd_type1', label: 'BSA 2º Grau Tipo 1', category: 'Bloqueio SA' },
   { value: 'sab_2nd_type2', label: 'BSA 2º Grau Tipo 2', category: 'Bloqueio SA' },
   { value: 'sab_3rd', label: 'BSA 3º Grau', category: 'Bloqueio SA' },
+
+  // Extrassístoles - new section
+  { value: 'ventricular_extrasystole', label: 'Extrassístole ventricular', category: 'Extrassístoles' },
+  { value: 'supraventricular_extrasystole', label: 'Extrassístole supraventricular', category: 'Extrassístoles' },
 
   // Infarto Oclusivo (single parent finding - walls selected separately)
   { value: 'oca', label: 'Infarto Oclusivo', category: 'Infarto Oclusivo' },
@@ -96,7 +109,6 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'hypokalemia', label: 'Hipocalemia', category: 'Eletrólitos' },
   { value: 'digitalis', label: 'Efeito Digitálico', category: 'Medicamentos' },
   { value: 'preexcitation', label: 'Pré-excitação Ventricular', category: 'Outros' },
-  { value: 'long_qt', label: 'QT Longo', category: 'Outros' },
   { value: 'brugada', label: 'Padrão de Brugada', category: 'Outros' },
   { value: 'spodick_sign', label: 'Sinal de Spodick', category: 'Outros' },
   { value: 'pq_depression', label: 'Infradesnivelamento do PQ', category: 'Outros' },
@@ -136,6 +148,10 @@ export const WALL_OPTIONS: { value: string; label: string }[] = [
   { value: 'inferior', label: 'Inferior' },
   { value: 'lateral', label: 'Lateral' },
   { value: 'septal', label: 'Septal' },
+  { value: 'anteroapical', label: 'Anteroapical' },
+  { value: 'anteromedial', label: 'Anterior média / Anteromedial' },
+  { value: 'inferolateral', label: 'Inferolateral' },
+  { value: 'extensive_anterior', label: 'Anterior extensa' },
 ]
 
 // Pacemaker options
@@ -161,4 +177,58 @@ export const OCA_SIGNS: { value: Finding; label: string }[] = [
   { value: 'subtle_ste', label: 'Supra sutil' },
   { value: 'terminal_qrs_distortion', label: 'Distorção terminal do QRS' },
   { value: 'sgarbossa_modified', label: 'Sgarbossa modificado' },
+]
+
+// Medical History options
+export const MEDICAL_HISTORY_OPTIONS: { value: MedicalHistory; label: string }[] = [
+  { value: 'diabetes', label: 'Diabetes' },
+  { value: 'hypertension', label: 'Hipertensão sistêmica' },
+  { value: 'cad', label: 'Doença coronariana' },
+  { value: 'smoking', label: 'Tabagismo' },
+  { value: 'dyslipidemia', label: 'Dislipidemia' },
+]
+
+// Family History options
+export const FAMILY_HISTORY_OPTIONS: { value: FamilyHistory; label: string }[] = [
+  { value: 'sudden_death', label: 'Morte súbita familiar' },
+  { value: 'cardiomyopathy', label: 'Cardiomiopatia familiar' },
+]
+
+// Medications options
+export const MEDICATIONS_OPTIONS: { value: Medication; label: string }[] = [
+  { value: 'betablocker', label: 'Betabloqueador' },
+  { value: 'asa', label: 'AAS' },
+  { value: 'antiarrhythmic', label: 'Antiarrítmico' },
+  { value: 'digitalis', label: 'Digital' },
+  { value: 'ace_inhibitor', label: 'IECA/BRA' },
+  { value: 'calcium_blocker', label: 'Bloqueador de canal de cálcio' },
+  { value: 'diuretic', label: 'Diurético' },
+  { value: 'anticoagulant', label: 'Anticoagulante' },
+  { value: 'statin', label: 'Estatina' },
+  { value: 'antidepressant', label: 'Antidepressivo' },
+]
+
+// Hospital types for Pro users (affects ECG prioritization)
+export const HOSPITAL_TYPES: { value: HospitalType; label: string; description: string; priorityCategories: Category[]; priorityDifficulties: Difficulty[] }[] = [
+  {
+    value: 'pronto_socorro',
+    label: 'Pronto Socorro',
+    description: 'Prioriza casos de isquemia e arritmia',
+    priorityCategories: ['ischemia', 'arrhythmia'],
+    priorityDifficulties: ['medium', 'hard'],
+  },
+  {
+    value: 'hospital_geral',
+    label: 'Hospital Geral',
+    description: 'Prioriza casos normais, condução e outros',
+    priorityCategories: ['normal', 'other', 'conduction'],
+    priorityDifficulties: ['easy', 'medium'],
+  },
+  {
+    value: 'hospital_cardiologico',
+    label: 'Hospital Cardiológico',
+    description: 'Prioriza casos difíceis de todas as categorias',
+    priorityCategories: ['ischemia', 'arrhythmia', 'conduction', 'other'],
+    priorityDifficulties: ['hard'],
+  },
 ]
