@@ -170,13 +170,25 @@ export default function PracticePage() {
       const hospitalConfig = HOSPITAL_TYPES.find(h => h.value === hospitalType)
 
       if (hospitalConfig) {
+        // Helper function to check if ECG matches priority categories
+        // Supports both single category (backward compat) and categories array
+        const matchesPriorityCategory = (ecg: typeof typedECGs[0]) => {
+          // Check new categories array first
+          const ecgCategories = (ecg as { categories?: string[] }).categories
+          if (ecgCategories && ecgCategories.length > 0) {
+            return ecgCategories.some(cat => hospitalConfig.priorityCategories.includes(cat as never))
+          }
+          // Fallback to single category for backward compatibility
+          return hospitalConfig.priorityCategories.includes(ecg.category)
+        }
+
         // Separate ECGs into priority and non-priority groups
         const priorityECGs = typedECGs.filter(ecg =>
-          hospitalConfig.priorityCategories.includes(ecg.category) ||
+          matchesPriorityCategory(ecg) ||
           hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
         )
         const otherECGs = typedECGs.filter(ecg =>
-          !hospitalConfig.priorityCategories.includes(ecg.category) &&
+          !matchesPriorityCategory(ecg) &&
           !hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
         )
 
@@ -231,6 +243,7 @@ export default function PracticePage() {
         qrs_duration: userReport.qrs_duration,
         qt_interval: userReport.qt_interval,
         findings: userReport.findings,
+        electrode_swap: userReport.electrode_swap.length > 0 ? userReport.electrode_swap : null,
         score: result.score,
         feedback: result.comparisons,
       })

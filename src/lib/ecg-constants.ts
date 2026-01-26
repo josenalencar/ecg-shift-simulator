@@ -1,4 +1,4 @@
-import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category, MedicalHistory, FamilyHistory, Medication, HospitalType } from '@/types/database'
+import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category, MedicalHistory, FamilyHistory, Medication, HospitalType, ElectrodeSwap } from '@/types/database'
 
 export const RHYTHMS: { value: Rhythm; label: string }[] = [
   { value: 'sinus', label: 'Ritmo Sinusal' },
@@ -128,7 +128,11 @@ export const DIFFICULTIES: { value: Difficulty; label: string }[] = [
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'arrhythmia', label: 'Arritmia' },
   { value: 'ischemia', label: 'Isquemia' },
-  { value: 'conduction', label: 'Condução' },
+  { value: 'structural', label: 'Estrutural' },
+  { value: 'emergency', label: 'Emergência' },
+  { value: 'routine', label: 'Rotina' },
+  { value: 'advanced', label: 'Avançado' },
+  { value: 'rare', label: 'Raro' },
   { value: 'normal', label: 'Normal' },
   { value: 'other', label: 'Outro' },
 ]
@@ -213,22 +217,31 @@ export const HOSPITAL_TYPES: { value: HospitalType; label: string; description: 
   {
     value: 'pronto_socorro',
     label: 'Pronto Socorro',
-    description: 'Prioriza casos de isquemia e arritmia',
-    priorityCategories: ['ischemia', 'arrhythmia'],
+    description: 'Prioriza casos de emergência, isquemia e arritmia',
+    priorityCategories: ['emergency', 'ischemia', 'arrhythmia'],
     priorityDifficulties: ['medium', 'hard'],
   },
   {
     value: 'hospital_geral',
     label: 'Hospital Geral',
-    description: 'Prioriza casos normais, condução e outros',
-    priorityCategories: ['normal', 'other', 'conduction'],
+    description: 'Prioriza casos de rotina, normais e estruturais',
+    priorityCategories: ['routine', 'normal', 'structural', 'other'],
     priorityDifficulties: ['easy', 'medium'],
   },
   {
     value: 'hospital_cardiologico',
     label: 'Hospital Cardiológico',
-    description: 'Prioriza casos difíceis de todas as categorias',
-    priorityCategories: ['ischemia', 'arrhythmia', 'conduction', 'other'],
+    description: 'Prioriza casos avançados, raros e difíceis',
+    priorityCategories: ['advanced', 'rare', 'ischemia', 'arrhythmia', 'structural'],
     priorityDifficulties: ['hard'],
   },
+]
+
+// Electrode swap options for technical issues
+export const ELECTRODE_SWAP_OPTIONS: { value: ElectrodeSwap; label: string; description: string }[] = [
+  { value: 'swap_la_ra', label: 'BE-BD', description: 'Troca entre braço esquerdo e braço direito' },
+  { value: 'swap_la_ll', label: 'BE-PE', description: 'Troca entre braço esquerdo e perna esquerda' },
+  { value: 'swap_la_rl', label: 'BE-PD', description: 'Troca entre braço esquerdo e perna direita' },
+  { value: 'swap_rl_involved', label: 'Perna direita', description: 'Troca envolvendo perna direita' },
+  { value: 'swap_precordial', label: 'Precordiais', description: 'Troca de eletrodos precordiais' },
 ]

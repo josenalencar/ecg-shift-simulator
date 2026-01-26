@@ -14,8 +14,9 @@ import {
   OCA_SIGNS,
   PACEMAKER_OPTIONS,
   CHAMBER_OPTIONS,
+  ELECTRODE_SWAP_OPTIONS,
 } from '@/lib/ecg-constants'
-import type { Rhythm, Finding, Axis, Interval, Regularity } from '@/types/database'
+import type { Rhythm, Finding, Axis, Interval, Regularity, ElectrodeSwap } from '@/types/database'
 
 export interface ReportFormData {
   rhythm: Rhythm[]
@@ -26,6 +27,7 @@ export interface ReportFormData {
   qrs_duration: Interval
   qt_interval: Interval
   findings: Finding[]
+  electrode_swap: ElectrodeSwap[]
   notes: string
 }
 
@@ -45,6 +47,7 @@ const defaultData: ReportFormData = {
   qrs_duration: 'normal',
   qt_interval: 'normal',
   findings: [],
+  electrode_swap: [],
   notes: '',
 }
 
@@ -727,6 +730,48 @@ export function ReportForm({
                 </div>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Electrode Swap Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg text-gray-900">Troca de Eletrodos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-3">
+            Selecione se houver suspeita de troca de eletrodos no traçado
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ELECTRODE_SWAP_OPTIONS.map((swap) => (
+              <label
+                key={swap.value}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
+                  ${formData.electrode_swap.includes(swap.value)
+                    ? 'bg-orange-100 border-orange-500 text-orange-800 font-medium'
+                    : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                  }
+                `}
+                title={swap.description}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.electrode_swap.includes(swap.value)}
+                  onChange={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      electrode_swap: prev.electrode_swap.includes(swap.value)
+                        ? prev.electrode_swap.filter((s) => s !== swap.value)
+                        : [...prev.electrode_swap, swap.value]
+                    }))
+                  }}
+                  className="sr-only"
+                />
+                {swap.label}
+              </label>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -40,7 +40,7 @@ export default function NewECGPage() {
   const [title, setTitle] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
-  const [category, setCategory] = useState<Category>('other')
+  const [categories, setCategories] = useState<Category[]>(['other'])
 
   // Patient info
   const [patientAge, setPatientAge] = useState<string>('')
@@ -99,6 +99,16 @@ export default function NewECGPage() {
     )
   }
 
+  function toggleCategory(value: Category) {
+    setCategories(prev => {
+      const newCategories = prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+      // Ensure at least one category is selected
+      return newCategories.length === 0 ? [value] : newCategories
+    })
+  }
+
   async function handleReportSubmit(reportData: ReportFormData) {
     if (!title.trim()) {
       setError('Título é obrigatório')
@@ -142,7 +152,8 @@ export default function NewECGPage() {
           title,
           image_url: imageUrl,
           difficulty,
-          category,
+          category: categories[0], // Keep first category for backward compatibility
+          categories, // New: array of categories
           patient_age: parseInt(patientAge),
           patient_sex: patientSex,
           clinical_presentation: clinicalPresentation,
@@ -174,6 +185,7 @@ export default function NewECGPage() {
           qrs_duration: reportData.qrs_duration,
           qt_interval: reportData.qt_interval,
           findings: reportData.findings,
+          electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
           notes: reportData.notes || null,
         })
 
@@ -413,25 +425,41 @@ export default function NewECGPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Classificacao do ECG</CardTitle>
+              <CardTitle>Classificação do ECG</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  id="difficulty"
-                  label="Dificuldade"
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                  options={DIFFICULTIES}
-                />
+              <Select
+                id="difficulty"
+                label="Dificuldade"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                options={DIFFICULTIES}
+              />
 
-                <Select
-                  id="category"
-                  label="Categoria"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
-                  options={CATEGORIES}
-                />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categorias (selecione uma ou mais)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((cat) => {
+                    const isSelected = categories.includes(cat.value)
+                    return (
+                      <button
+                        key={cat.value}
+                        type="button"
+                        onClick={() => toggleCategory(cat.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                        {cat.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -490,8 +518,10 @@ export default function NewECGPage() {
                     <span className="ml-2 font-medium capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Categoria:</span>
-                    <span className="ml-2 font-medium capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
+                    <span className="text-gray-500">Categorias:</span>
+                    <span className="ml-2 font-medium">
+                      {categories.map(c => CATEGORIES.find(cat => cat.value === c)?.label).join(', ')}
+                    </span>
                   </div>
                 </div>
                 {(medicalHistory.length > 0 || familyHistory.length > 0 || medications.length > 0) && (

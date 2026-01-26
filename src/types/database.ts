@@ -8,7 +8,14 @@ export type Json =
 
 export type UserRole = 'user' | 'admin'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Category = 'arrhythmia' | 'ischemia' | 'conduction' | 'normal' | 'other'
+export type Category = 'arrhythmia' | 'ischemia' | 'structural' | 'normal' | 'emergency' | 'routine' | 'advanced' | 'rare' | 'other'
+
+export type ElectrodeSwap =
+  | 'swap_la_ra'        // BE-BD (Left Arm - Right Arm)
+  | 'swap_la_ll'        // BE-PE (Left Arm - Left Leg)
+  | 'swap_la_rl'        // BE-PD (Left Arm - Right Leg)
+  | 'swap_rl_involved'  // Troca envolvendo perna direita
+  | 'swap_precordial'   // Troca de eletrodos precordiais
 export type Axis = 'normal' | 'left' | 'right' | 'extreme'
 export type Interval = 'normal' | 'prolonged' | 'short' | 'wide' | 'na'
 
@@ -192,7 +199,8 @@ export interface Database {
           title: string
           image_url: string
           difficulty: Difficulty
-          category: Category
+          category: Category // kept for backward compatibility
+          categories: Category[] | null // new: multiple categories
           is_active: boolean
           created_by: string | null
           created_at: string
@@ -210,6 +218,7 @@ export interface Database {
           image_url: string
           difficulty?: Difficulty
           category?: Category
+          categories?: Category[] | null
           is_active?: boolean
           created_by?: string | null
           created_at?: string
@@ -227,6 +236,7 @@ export interface Database {
           image_url?: string
           difficulty?: Difficulty
           category?: Category
+          categories?: Category[] | null
           is_active?: boolean
           created_by?: string | null
           created_at?: string
@@ -251,6 +261,7 @@ export interface Database {
           qrs_duration: Interval
           qt_interval: Interval
           findings: Finding[]
+          electrode_swap: ElectrodeSwap[] | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -266,6 +277,7 @@ export interface Database {
           qrs_duration?: Interval
           qt_interval?: Interval
           findings?: Finding[]
+          electrode_swap?: ElectrodeSwap[] | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -281,6 +293,7 @@ export interface Database {
           qrs_duration?: Interval
           qt_interval?: Interval
           findings?: Finding[]
+          electrode_swap?: ElectrodeSwap[] | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -299,6 +312,7 @@ export interface Database {
           qrs_duration: Interval
           qt_interval: Interval
           findings: Finding[]
+          electrode_swap: ElectrodeSwap[] | null
           score: number
           feedback: Json
           created_at: string
@@ -315,6 +329,7 @@ export interface Database {
           qrs_duration?: Interval
           qt_interval?: Interval
           findings?: Finding[]
+          electrode_swap?: ElectrodeSwap[] | null
           score?: number
           feedback?: Json
           created_at?: string
@@ -331,6 +346,7 @@ export interface Database {
           qrs_duration?: Interval
           qt_interval?: Interval
           findings?: Finding[]
+          electrode_swap?: ElectrodeSwap[] | null
           score?: number
           feedback?: Json
           created_at?: string

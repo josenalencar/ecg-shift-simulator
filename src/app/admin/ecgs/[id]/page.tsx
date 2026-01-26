@@ -51,7 +51,7 @@ export default function EditECGPage() {
   const [title, setTitle] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
-  const [category, setCategory] = useState<Category>('other')
+  const [categories, setCategories] = useState<Category[]>(['other'])
   const [existingReport, setExistingReport] = useState<OfficialReport | null>(null)
 
   // Patient info
@@ -84,7 +84,13 @@ export default function EditECGPage() {
       setTitle(ecg.title)
       setImageUrl(ecg.image_url)
       setDifficulty(ecg.difficulty)
-      setCategory(ecg.category)
+      // Load categories (new) or fallback to single category (backward compat)
+      const ecgWithCategories = ecg as { categories?: Category[] }
+      if (ecgWithCategories.categories && ecgWithCategories.categories.length > 0) {
+        setCategories(ecgWithCategories.categories)
+      } else {
+        setCategories([ecg.category])
+      }
       setExistingReport(ecg.official_reports)
 
       // Load patient info
@@ -135,6 +141,16 @@ export default function EditECGPage() {
     )
   }
 
+  function toggleCategory(value: Category) {
+    setCategories(prev => {
+      const newCategories = prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+      // Ensure at least one category is selected
+      return newCategories.length === 0 ? [value] : newCategories
+    })
+  }
+
   async function handleSubmit(reportData: ReportFormData) {
     if (!title.trim()) {
       setError('Por favor, insira um titulo')
@@ -157,7 +173,8 @@ export default function EditECGPage() {
           title,
           image_url: imageUrl,
           difficulty,
-          category,
+          category: categories[0], // Keep first category for backward compatibility
+          categories, // New: array of categories
           patient_age: patientAge ? parseInt(patientAge) : null,
           patient_sex: patientSex || null,
           clinical_presentation: clinicalPresentation.length > 0 ? clinicalPresentation : null,
@@ -184,6 +201,7 @@ export default function EditECGPage() {
             qrs_duration: reportData.qrs_duration,
             qt_interval: reportData.qt_interval,
             findings: reportData.findings,
+            electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
             notes: reportData.notes || null,
           })
           .eq('id', existingReport.id)
@@ -204,6 +222,7 @@ export default function EditECGPage() {
             qrs_duration: reportData.qrs_duration,
             qt_interval: reportData.qt_interval,
             findings: reportData.findings,
+            electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
             notes: reportData.notes || null,
           })
 
@@ -424,25 +443,41 @@ export default function EditECGPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Classificacao do ECG</CardTitle>
+            <CardTitle>Classificação do ECG</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                id="difficulty"
-                label="Dificuldade"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                options={DIFFICULTIES}
-              />
+            <Select
+              id="difficulty"
+              label="Dificuldade"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+              options={DIFFICULTIES}
+            />
 
-              <Select
-                id="category"
-                label="Categoria"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as Category)}
-                options={CATEGORIES}
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Categorias (selecione uma ou mais)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((cat) => {
+                  const isSelected = categories.includes(cat.value)
+                  return (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => toggleCategory(cat.value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isSelected && <Check className="h-4 w-4" />}
+                      {cat.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -459,6 +494,7 @@ export default function EditECGPage() {
             qrs_duration: existingReport.qrs_duration,
             qt_interval: existingReport.qt_interval,
             findings: existingReport.findings,
+            electrode_swap: existingReport.electrode_swap || [],
             notes: existingReport.notes || '',
           } : undefined}
           onSubmit={handleSubmit}

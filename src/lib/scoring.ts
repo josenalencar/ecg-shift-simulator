@@ -1,6 +1,6 @@
-import type { OfficialReport, Rhythm, Finding, Axis, Interval, Regularity } from '@/types/database'
+import type { OfficialReport, Rhythm, Finding, Axis, Interval, Regularity, ElectrodeSwap } from '@/types/database'
 import type { ReportFormData } from '@/components/ecg'
-import { RHYTHMS, FINDINGS } from './ecg-constants'
+import { RHYTHMS, FINDINGS, ELECTRODE_SWAP_OPTIONS } from './ecg-constants'
 
 interface FieldComparison {
   field: string
@@ -30,7 +30,8 @@ const POINTS = {
   pr_interval: 5,
   qrs_duration: 5,
   qt_interval: 5,
-  findings: 35,
+  findings: 30,
+  electrode_swap: 5,
 }
 
 function arraysEqual<T>(a: T[], b: T[]): boolean {
@@ -52,9 +53,16 @@ function formatRhythm(rhythms: Rhythm[]): string {
 }
 
 function formatFindings(findings: Finding[]): string {
-  if (findings.length === 0) return 'None'
+  if (findings.length === 0) return 'Nenhum'
   return findings
     .map(f => FINDINGS.find(finding => finding.value === f)?.label || f)
+    .join(', ')
+}
+
+function formatElectrodeSwap(swaps: ElectrodeSwap[]): string {
+  if (swaps.length === 0) return 'Nenhuma'
+  return swaps
+    .map(s => ELECTRODE_SWAP_OPTIONS.find(swap => swap.value === s)?.label || s)
     .join(', ')
 }
 
@@ -241,13 +249,46 @@ export function calculateScore(
 
   comparisons.push({
     field: 'findings',
-    label: 'Findings',
+    label: 'Achados',
     userValue: formatFindings(userReport.findings),
     correctValue: formatFindings(officialReport.findings),
     isCorrect: findingsCorrect,
     partialCredit: findingsCorrect ? undefined : findingsPartial,
     points: findingsPoints,
     maxPoints: POINTS.findings,
+  })
+
+  // Electrode swap comparison (5 points)
+  const officialSwap = officialReport.electrode_swap || []
+  const userSwap = userReport.electrode_swap || []
+  const swapCorrect = arraysEqual(userSwap, officialSwap)
+  const swapOverlap = arraysOverlap(userSwap, officialSwap)
+
+  let swapPartial: number
+  if (swapCorrect) {
+    swapPartial = 1
+  } else if (officialSwap.length === 0 && userSwap.length === 0) {
+    swapPartial = 1 // Both empty is correct
+  } else {
+    const totalExpected = officialSwap.length || 1
+    const baseScore = swapOverlap / totalExpected
+    const falsePositiveSwaps = userSwap.filter(s => !officialSwap.includes(s)).length
+    const penalty = falsePositiveSwaps * 0.2
+    swapPartial = Math.max(0, baseScore - penalty)
+  }
+
+  const swapPoints = Math.round(POINTS.electrode_swap * swapPartial)
+  totalPoints += swapPoints
+
+  comparisons.push({
+    field: 'electrode_swap',
+    label: 'Troca de Eletrodos',
+    userValue: formatElectrodeSwap(userSwap),
+    correctValue: formatElectrodeSwap(officialSwap),
+    isCorrect: swapCorrect,
+    partialCredit: swapCorrect ? undefined : swapPartial,
+    points: swapPoints,
+    maxPoints: POINTS.electrode_swap,
   })
 
   const maxPoints = Object.values(POINTS).reduce((a, b) => a + b, 0)
