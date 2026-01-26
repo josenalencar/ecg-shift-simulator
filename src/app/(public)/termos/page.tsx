@@ -157,22 +157,22 @@ export default function TermosPage() {
             <table className="w-full border-collapse border border-gray-300 mb-4 text-sm">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Situação</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Prazo</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900 font-semibold">Situação</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900 font-semibold">Prazo</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="text-gray-800">
                 <tr>
                   <td className="border border-gray-300 px-4 py-2">Confirmação do cancelamento</td>
-                  <td className="border border-gray-300 px-4 py-2">Até 48 horas úteis</td>
+                  <td className="border border-gray-300 px-4 py-2 font-medium">Até 48 horas úteis</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-300 px-4 py-2">Processamento do reembolso (cartão de crédito)</td>
-                  <td className="border border-gray-300 px-4 py-2">Até 10 dias úteis</td>
+                  <td className="border border-gray-300 px-4 py-2 font-medium">Até 10 dias úteis</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-300 px-4 py-2">Visualização do estorno na fatura</td>
-                  <td className="border border-gray-300 px-4 py-2">1 a 2 faturas subsequentes*</td>
+                  <td className="border border-gray-300 px-4 py-2 font-medium">1 a 2 faturas subsequentes*</td>
                 </tr>
               </tbody>
             </table>
