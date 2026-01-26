@@ -10,10 +10,34 @@ export const dynamic = 'force-dynamic'
 
 const FREE_MONTHLY_LIMIT = 5
 
+// Difficulty weights for scoring (ECGs more difficult give more points)
+const DIFFICULTY_WEIGHTS: Record<string, number> = {
+  easy: 1.0,
+  medium: 1.25,
+  hard: 1.5,
+}
+
 // Weighted score formula: 70% grade weight + 30% activity weight (normalized)
+// Grade is now weighted by ECG difficulty
 function calculateWeightedScore(avgScore: number, attemptCount: number, maxAttempts: number): number {
   const normalizedActivity = maxAttempts > 0 ? Math.min(attemptCount / maxAttempts, 1) : 0
   return (avgScore * 0.7) + (normalizedActivity * 100 * 0.3)
+}
+
+// Calculate difficulty-weighted average score
+function calculateDifficultyWeightedAvg(attempts: { score: number; difficulty: string | null }[]): number {
+  if (attempts.length === 0) return 0
+
+  let totalWeightedScore = 0
+  let totalWeight = 0
+
+  for (const attempt of attempts) {
+    const weight = DIFFICULTY_WEIGHTS[attempt.difficulty || 'medium'] || 1.0
+    totalWeightedScore += Number(attempt.score) * weight
+    totalWeight += weight
+  }
+
+  return totalWeight > 0 ? totalWeightedScore / totalWeight : 0
 }
 
 export default async function DashboardPage() {
@@ -125,37 +149,39 @@ export default async function DashboardPage() {
   type ProfileInfo = { id: string; full_name: string | null; email: string }
   const allProfiles = allProfilesData as ProfileInfo[] | null
 
-  // Get all attempts for ranking calculation
+  // Get all attempts for ranking calculation (including ECG difficulty)
   const { data: allAttemptsData } = await supabase
     .from('attempts')
-    .select('user_id, score')
+    .select('user_id, score, ecg_id, ecgs(difficulty)')
 
-  type AttemptData = { user_id: string; score: number }
+  type AttemptData = { user_id: string; score: number; ecg_id: string; ecgs: { difficulty: string } | null }
   const allAttempts = allAttemptsData as AttemptData[] | null
 
-  // Calculate user rankings
-  const userStatsMap = new Map<string, { totalScore: number; count: number }>()
+  // Calculate user rankings with difficulty weighting
+  const userAttemptsMap = new Map<string, { score: number; difficulty: string | null }[]>()
   allAttempts?.forEach(attempt => {
-    if (!userStatsMap.has(attempt.user_id)) {
-      userStatsMap.set(attempt.user_id, { totalScore: 0, count: 0 })
+    if (!userAttemptsMap.has(attempt.user_id)) {
+      userAttemptsMap.set(attempt.user_id, [])
     }
-    const stat = userStatsMap.get(attempt.user_id)!
-    stat.totalScore += Number(attempt.score)
-    stat.count++
+    userAttemptsMap.get(attempt.user_id)!.push({
+      score: Number(attempt.score),
+      difficulty: attempt.ecgs?.difficulty || null
+    })
   })
 
-  const maxAttempts = Math.max(...Array.from(userStatsMap.values()).map(s => s.count), 1)
+  const maxAttempts = Math.max(...Array.from(userAttemptsMap.values()).map(a => a.length), 1)
 
-  const rankings = Array.from(userStatsMap.entries())
-    .map(([userId, stats]) => {
+  const rankings = Array.from(userAttemptsMap.entries())
+    .map(([userId, userAttempts]) => {
       const profileInfo = allProfiles?.find(p => p.id === userId)
-      const avgScore = stats.count > 0 ? stats.totalScore / stats.count : 0
-      const weightedScore = calculateWeightedScore(avgScore, stats.count, maxAttempts)
+      // Calculate difficulty-weighted average
+      const avgScore = calculateDifficultyWeightedAvg(userAttempts)
+      const weightedScore = calculateWeightedScore(avgScore, userAttempts.length, maxAttempts)
       return {
         userId,
         name: profileInfo?.full_name || profileInfo?.email?.split('@')[0] || 'Anonimo',
         avgScore: Math.round(avgScore),
-        attemptCount: stats.count,
+        attemptCount: userAttempts.length,
         weightedScore: Math.round(weightedScore * 100) / 100,
         isCurrentUser: userId === user.id
       }
@@ -236,7 +262,7 @@ export default async function DashboardPage() {
               </div>
               <Link href="/pricing">
                 <Button>
-                  Assinar por R$29,90/mes
+                  Assinar por R$39,90/mês
                 </Button>
               </Link>
             </div>

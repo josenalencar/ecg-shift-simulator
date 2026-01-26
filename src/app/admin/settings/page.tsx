@@ -32,6 +32,10 @@ export default function AdminSettingsPage() {
     rankingTopCount: 10,
     rankingShowNames: true,
     rankingMinAttempts: 3,
+    // Difficulty weights for scoring
+    difficultyWeightEasy: 1.0,
+    difficultyWeightMedium: 1.25,
+    difficultyWeightHard: 1.5,
   })
 
   const router = useRouter()
@@ -415,13 +419,71 @@ export default function AdminSettingsPage() {
               </label>
             </div>
 
+            {/* Difficulty Weights */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium text-gray-900 mb-3">Peso por Dificuldade do ECG</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                ECGs mais difíceis valem mais pontos no ranking. Configure os multiplicadores abaixo.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Fácil (×)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="3"
+                    step="0.05"
+                    value={settings.difficultyWeightEasy}
+                    onChange={(e) => setSettings({ ...settings, difficultyWeightEasy: parseFloat(e.target.value) || 1.0 })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Base: 1.0</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Médio (×)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="3"
+                    step="0.05"
+                    value={settings.difficultyWeightMedium}
+                    onChange={(e) => setSettings({ ...settings, difficultyWeightMedium: parseFloat(e.target.value) || 1.25 })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Recomendado: 1.25</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Difícil (×)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="3"
+                    step="0.05"
+                    value={settings.difficultyWeightHard}
+                    onChange={(e) => setSettings({ ...settings, difficultyWeightHard: parseFloat(e.target.value) || 1.5 })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Recomendado: 1.5</p>
+                </div>
+              </div>
+            </div>
+
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mt-4">
-              <h4 className="font-medium text-blue-800 mb-2">Formula do Score Ponderado</h4>
-              <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                Score = (Media × {settings.rankingGradeWeight}%) + (Atividade × {settings.rankingActivityWeight}%)
+              <h4 className="font-medium text-blue-800 mb-2">Fórmula do Score Ponderado</h4>
+              <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded block mb-2">
+                Score = (Média Ponderada × {settings.rankingGradeWeight}%) + (Atividade × {settings.rankingActivityWeight}%)
               </code>
               <p className="text-xs text-blue-600 mt-2">
-                A atividade e normalizada em relacao ao usuario mais ativo do sistema.
+                <strong>Média Ponderada</strong> = Σ(nota × peso_dificuldade) / Σ(peso_dificuldade)
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Exemplo: ECG difícil com 80% = 80 × {settings.difficultyWeightHard} = {Math.round(80 * settings.difficultyWeightHard)} pontos ponderados
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                A atividade é normalizada em relação ao usuário mais ativo do sistema.
               </p>
             </div>
           </CardContent>
