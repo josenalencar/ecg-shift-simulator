@@ -11,7 +11,8 @@ import {
   Cloud,
   Database,
   ExternalLink,
-  HardDrive
+  HardDrive,
+  Mail
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -73,7 +74,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Visao Geral</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">Visão Geral</h1>
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -99,7 +100,7 @@ export default async function AdminOverviewPage() {
                 <Users className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-700">Total de Usuarios</p>
+                <p className="text-sm text-gray-700">Total de Usuários</p>
                 <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
                 <div className="flex gap-2 text-xs text-gray-700">
                   <span className="flex items-center gap-1">
@@ -124,7 +125,7 @@ export default async function AdminOverviewPage() {
                 <p className="text-sm text-gray-700">Total de Tentativas</p>
                 <p className="text-2xl font-bold text-gray-900">{attemptCount || 0}</p>
                 <p className="text-xs text-gray-700">
-                  {totalUsers > 0 ? Math.round((attemptCount || 0) / totalUsers) : 0} por usuario
+                  {totalUsers > 0 ? Math.round((attemptCount || 0) / totalUsers) : 0} por usuário
                 </p>
               </div>
             </div>
@@ -138,7 +139,7 @@ export default async function AdminOverviewPage() {
                 <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-700">Media Geral</p>
+                <p className="text-sm text-gray-700">Média Geral</p>
                 <p className="text-2xl font-bold text-gray-900">{averageScore}%</p>
                 <p className="text-xs text-gray-700">
                   {ecgsWithReportCount || 0} ECGs com laudo
@@ -151,7 +152,7 @@ export default async function AdminOverviewPage() {
 
       {/* Infrastructure Cards */}
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Infraestrutura</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Cloudinary Card */}
         <Card>
           <CardHeader className="pb-3">
@@ -165,7 +166,7 @@ export default async function AdminOverviewPage() {
                 target="_blank"
                 className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
               >
-                Abrir Console <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
           </CardHeader>
@@ -176,16 +177,12 @@ export default async function AdminOverviewPage() {
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded">dtmqhakgu</code>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Upload Preset</span>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">ecg_uploads</code>
-              </div>
-              <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">ECGs armazenados</span>
                 <span className="text-sm font-medium">{ecgCount || 0} imagens</span>
               </div>
               <div className="pt-2 border-t">
                 <p className="text-xs text-gray-700">
-                  Plano gratuito: 25 creditos/mes (~25GB de banda ou ~2.5GB de armazenamento)
+                  Plano gratuito: 25 créditos/mês
                 </p>
               </div>
             </div>
@@ -198,26 +195,22 @@ export default async function AdminOverviewPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Database className="h-5 w-5 text-green-500" />
-                Supabase (Banco de Dados)
+                Supabase (Banco)
               </CardTitle>
               <Link
                 href="https://supabase.com/dashboard/project/hwgsjpjbyydpittefnjd"
                 target="_blank"
                 className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
               >
-                Abrir Dashboard <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Projeto</span>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">hwgsjpjbyydpittefnjd</code>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Regiao</span>
-                <span className="text-sm font-medium">South America (Sao Paulo)</span>
+                <span className="text-sm text-gray-700">Região</span>
+                <span className="text-sm font-medium">São Paulo</span>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-2 bg-gray-50 rounded">
@@ -226,17 +219,59 @@ export default async function AdminOverviewPage() {
                 </div>
                 <div className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-lg font-bold text-gray-900">{totalUsers}</p>
-                  <p className="text-xs text-gray-700">Profiles</p>
+                  <p className="text-xs text-gray-700">Users</p>
                 </div>
                 <div className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-lg font-bold text-gray-900">{attemptCount || 0}</p>
-                  <p className="text-xs text-gray-700">Attempts</p>
+                  <p className="text-xs text-gray-700">Tries</p>
                 </div>
               </div>
               <div className="pt-2 border-t">
                 <p className="text-xs text-gray-700">
-                  Plano gratuito: 500MB banco de dados, 1GB storage, 2GB banda/mes
+                  Plano gratuito: 500MB DB
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resend Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mail className="h-5 w-5 text-purple-500" />
+                Resend (E-mails)
+              </CardTitle>
+              <Link
+                href="https://resend.com/emails"
+                target="_blank"
+                className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-700">Domínio</span>
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded">plantaoecg.com.br</code>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-700">E-mails enviados</span>
+                <span className="text-sm font-medium">Ver dashboard</span>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="text-xs text-gray-700">
+                  Plano gratuito: 100 e-mails/dia, 3.000/mês
+                </p>
+              </div>
+              <div className="space-y-1 text-xs text-gray-600">
+                <p>• Boas-vindas ao cadastrar</p>
+                <p>• Assinatura ativada</p>
+                <p>• Cancelamento</p>
+                <p>• Pagamento falhou</p>
               </div>
             </div>
           </CardContent>
@@ -288,7 +323,7 @@ export default async function AdminOverviewPage() {
             </div>
           </div>
           <p className="text-xs text-gray-700 mt-4">
-            * Estimativas baseadas nos limites do plano gratuito. Para uso real, consulte os dashboards de cada servico.
+            * Estimativas baseadas nos limites do plano gratuito. Para uso real, consulte os dashboards de cada serviço.
           </p>
         </CardContent>
       </Card>
@@ -304,7 +339,7 @@ export default async function AdminOverviewPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Usuario</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Usuário</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">ECG</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Nota</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Data</th>

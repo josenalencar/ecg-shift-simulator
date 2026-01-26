@@ -514,16 +514,16 @@ export default function PracticePage() {
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 {currentECG.patient_age && currentECG.patient_sex && (
                   <div>
-                    <span className="text-gray-500">Paciente:</span>
-                    <span className="ml-2 font-medium">
+                    <span className="text-gray-600 font-medium">Paciente:</span>
+                    <span className="ml-2 font-semibold text-gray-900">
                       {currentECG.patient_sex === 'masculino' ? 'Masculino' : 'Feminino'}, {currentECG.patient_age} anos
                     </span>
                   </div>
                 )}
                 {currentECG.clinical_presentation && currentECG.clinical_presentation.length > 0 && (
                   <div>
-                    <span className="text-gray-500">Queixa:</span>
-                    <span className="ml-2 font-medium">
+                    <span className="text-gray-600 font-medium">Queixa:</span>
+                    <span className="ml-2 font-semibold text-gray-900">
                       {currentECG.clinical_presentation.map(p =>
                         CLINICAL_PRESENTATIONS.find(cp => cp.value === p)?.label || p
                       ).join(', ')}
@@ -537,8 +537,8 @@ export default function PracticePage() {
                 <div className="pt-2 border-t border-gray-200 flex flex-wrap gap-x-6 gap-y-2">
                   {currentECG.medical_history && currentECG.medical_history.length > 0 && (
                     <div>
-                      <span className="text-gray-500">Histórico:</span>
-                      <span className="ml-2 font-medium">
+                      <span className="text-gray-600 font-medium">Histórico:</span>
+                      <span className="ml-2 font-semibold text-gray-900">
                         {currentECG.medical_history.map(h =>
                           MEDICAL_HISTORY_OPTIONS.find(mh => mh.value === h)?.label || h
                         ).join(', ')}
@@ -547,8 +547,8 @@ export default function PracticePage() {
                   )}
                   {currentECG.family_history && currentECG.family_history.length > 0 && (
                     <div>
-                      <span className="text-gray-500">Hist. Familiar:</span>
-                      <span className="ml-2 font-medium">
+                      <span className="text-gray-600 font-medium">Hist. Familiar:</span>
+                      <span className="ml-2 font-semibold text-gray-900">
                         {currentECG.family_history.map(h =>
                           FAMILY_HISTORY_OPTIONS.find(fh => fh.value === h)?.label || h
                         ).join(', ')}
@@ -557,8 +557,8 @@ export default function PracticePage() {
                   )}
                   {currentECG.medications && currentECG.medications.length > 0 && (
                     <div>
-                      <span className="text-gray-500">Medicações:</span>
-                      <span className="ml-2 font-medium">
+                      <span className="text-gray-600 font-medium">Medicações:</span>
+                      <span className="ml-2 font-semibold text-gray-900">
                         {currentECG.medications.map(m =>
                           MEDICATIONS_OPTIONS.find(med => med.value === m)?.label || m
                         ).join(', ')}
