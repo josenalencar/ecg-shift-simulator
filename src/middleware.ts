@@ -45,7 +45,11 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+
+  // If there's an auth error, treat as no user (invalid/expired session)
+  const validUser = error ? null : user
 
   // Protected routes
   const protectedPaths = ['/dashboard', '/practice', '/admin']
@@ -53,7 +57,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   )
 
-  if (isProtectedPath && !user) {
+  if (isProtectedPath && !validUser) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', request.nextUrl.pathname)
@@ -61,11 +65,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Admin routes - check role
-  if (request.nextUrl.pathname.startsWith('/admin') && user) {
+  if (request.nextUrl.pathname.startsWith('/admin') && validUser) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', validUser.id)
       .single()
 
     if (profile?.role !== 'admin') {
@@ -81,7 +85,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === path
   )
 
-  if (isAuthPath && user) {
+  if (isAuthPath && validUser) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
