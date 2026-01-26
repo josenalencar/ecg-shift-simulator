@@ -24,7 +24,7 @@ export default async function PlanoPage() {
     .from('subscriptions')
     .select('status, current_period_end, current_period_start, cancel_at_period_end, stripe_subscription_id, plan')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   const subscription = subscriptionData as {
     status?: string

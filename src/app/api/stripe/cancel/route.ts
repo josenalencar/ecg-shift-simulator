@@ -17,7 +17,7 @@ export async function POST() {
       .from('subscriptions')
       .select('stripe_subscription_id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     const subscription = subscriptionData as { stripe_subscription_id?: string } | null
 

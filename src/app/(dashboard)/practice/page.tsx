@@ -58,7 +58,7 @@ export default function PracticePage() {
       .from('subscriptions')
       .select('status')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     const subInfo = {
       status: (subData as { status?: string } | null)?.status || 'inactive',
