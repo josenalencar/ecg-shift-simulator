@@ -1,7 +1,21 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Allowed domains (production only allows official domain)
+const ALLOWED_HOSTS = ['plantaoecg.com.br', 'www.plantaoecg.com.br', 'localhost:3000']
+
 export async function middleware(request: NextRequest) {
+  const host = request.headers.get('host') || ''
+
+  // Block access from vercel.app domains in production
+  if (process.env.NODE_ENV === 'production' && host.includes('vercel.app')) {
+    // Redirect to official domain
+    const url = new URL(request.url)
+    url.host = 'plantaoecg.com.br'
+    url.port = ''
+    return NextResponse.redirect(url, { status: 301 })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })

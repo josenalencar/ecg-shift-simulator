@@ -811,8 +811,8 @@ export default function HomePage() {
               © 2025 Plantão de ECG. Todos os direitos reservados.
             </p>
             <div className="flex gap-6 text-sm text-gray-500">
-              <a href="#" className="hover:text-white transition-colors">Termos de uso</a>
-              <a href="#" className="hover:text-white transition-colors">Privacidade</a>
+              <Link href="/termos" className="hover:text-white transition-colors">Termos de uso</Link>
+              <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
             </div>
           </div>
         </div>
