@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/u
 import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
 import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
-import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown } from 'lucide-react'
+import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown, Info, X } from 'lucide-react'
 import type { ECG, OfficialReport } from '@/types/database'
 
 const FREE_MONTHLY_LIMIT = 5
@@ -32,6 +32,7 @@ export default function PracticePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false })
   const [monthlyAttempts, setMonthlyAttempts] = useState(0)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   useEffect(() => {
     loadNextECG()
@@ -314,10 +315,90 @@ export default function PracticePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Como usar o Plantao de ECG</h2>
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">1. Analise o ECG</h3>
+                <p className="text-gray-700">
+                  Use o visualizador para examinar o ECG com calma. Voce pode usar o scroll para dar zoom
+                  e arrastar para navegar pela imagem.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">2. Use o Compasso (Caliper)</h3>
+                <p className="text-gray-700 mb-2">
+                  Clique no icone de regua para ativar o compasso. Para calibrar:
+                </p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-2">
+                  <li>Clique no inicio de um quadradao (5mm = 200ms)</li>
+                  <li>Clique no fim do mesmo quadradao</li>
+                  <li>Agora clique em dois pontos para medir o intervalo em ms</li>
+                  <li>O sistema calcula automaticamente a FC correspondente</li>
+                </ul>
+                <p className="text-sm text-amber-700 mt-2">
+                  Obs: Se voce mudar o zoom, a calibracao e perdida.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">3. Preencha o Laudo</h3>
+                <p className="text-gray-700">
+                  Selecione o ritmo, regularidade, eixo, intervalos e todos os achados que identificar.
+                  Secoes dependentes abrirao automaticamente quando necessario.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">4. Envie e Aprenda</h3>
+                <p className="text-gray-700">
+                  Apos enviar, voce vera uma comparacao detalhada entre sua interpretacao e o laudo oficial,
+                  com feedback especifico para cada item.
+                </p>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Dica de Estudo</h3>
+                <p className="text-blue-800 text-sm">
+                  Practice makes perfect. Quanto mais casos voce interpretar, mais rapido e preciso voce se tornara.
+                  Use o feedback para entender onde pode melhorar.
+                </p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200">
+              <Button onClick={() => setShowTutorial(false)} className="w-full">
+                Entendido, vamos comecar!
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sessao de Pratica</h1>
-          <p className="text-gray-600">ECG #{currentECG?.title}</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Sessao de Pratica</h1>
+            <p className="text-gray-600">ECG #{currentECG?.title}</p>
+          </div>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="p-2 bg-blue-100 hover:bg-blue-200 rounded-full transition-colors"
+            title="Como usar"
+          >
+            <Info className="h-5 w-5 text-blue-600" />
+          </button>
         </div>
         <div className="flex items-center gap-2">
           {!subscription.isActive && (

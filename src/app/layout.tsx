@@ -8,8 +8,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'ECG Shift Simulator',
-  description: 'Practice ECG interpretation like a real tele-ECG shift',
+  title: 'Plantao de ECG - Simulador de Plantao de Tele-ECG',
+  description: 'Pratique interpretacao de ECG com feedback de especialistas. Simule um plantao real de tele-ECG.',
 }
 
 export default function RootLayout({

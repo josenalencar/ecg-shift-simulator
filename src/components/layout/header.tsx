@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui'
-import { Menu, X, User, LogOut, LayoutDashboard, Activity, CreditCard } from 'lucide-react'
+import { Menu, X, User, LogOut, LayoutDashboard, Activity, CreditCard, Settings } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 interface HeaderProps {
@@ -31,7 +31,7 @@ export function Header({ profile }: HeaderProps) {
           {/* Logo */}
           <Link href={profile ? '/dashboard' : '/'} className="flex items-center gap-2">
             <Activity className="h-8 w-8 text-blue-600" />
-            <span className="font-bold text-xl text-gray-900">ECG Shift</span>
+            <span className="font-bold text-xl text-gray-900">Plantao de ECG</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -103,6 +103,14 @@ export function Header({ profile }: HeaderProps) {
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    Configuracoes
                   </Link>
                   <Link
                     href="/plano"

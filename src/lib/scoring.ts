@@ -72,16 +72,32 @@ function formatInterval(interval: Interval, type: 'pr' | 'qrs' | 'qt'): string {
   if (type === 'pr') {
     const labels: Record<Interval, string> = {
       normal: 'Normal',
-      prolonged: 'Prolonged (1° AVB)',
-      short: 'Short (WPW)',
-      wide: 'Wide',
+      prolonged: 'Prolongado (BAV 1º grau)',
+      short: 'Curto (Pré-excitação)',
+      wide: 'Alargado',
+      na: 'Não se aplica',
     }
     return labels[interval]
   }
   if (type === 'qrs') {
-    return interval === 'normal' ? 'Normal' : 'Wide'
+    const labels: Record<Interval, string> = {
+      normal: 'Normal',
+      wide: 'Alargado',
+      prolonged: 'Alargado',
+      short: 'Normal',
+      na: 'Não se aplica',
+    }
+    return labels[interval]
   }
-  return interval === 'normal' ? 'Normal' : 'Prolonged'
+  // QT interval
+  const labels: Record<Interval, string> = {
+    normal: 'Normal',
+    short: 'Curto',
+    prolonged: 'Prolongado',
+    wide: 'Prolongado',
+    na: 'Não se aplica',
+  }
+  return labels[interval]
 }
 
 export function calculateScore(

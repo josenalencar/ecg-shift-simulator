@@ -172,7 +172,7 @@ export default async function AdminUsersPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <UserActions userId={profile.id} currentRole={profile.role} />
+                          <UserActions userId={profile.id} userEmail={profile.email} currentRole={profile.role} />
                         </td>
                       </tr>
                     )

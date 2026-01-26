@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleSubscriptionChange(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id
+  const plan = subscription.metadata?.plan || 'premium'
   const customerId = subscription.customer as string
 
   const subscriptionData = {
@@ -88,6 +89,7 @@ async function handleSubscriptionChange(subscription: any) {
       ? 'active'
       : subscription.status,
     price_id: subscription.items?.data?.[0]?.price?.id,
+    plan: plan,
     current_period_start: subscription.current_period_start
       ? new Date(subscription.current_period_start * 1000).toISOString()
       : null,

@@ -1,24 +1,27 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Plus, Eye, EyeOff } from 'lucide-react'
+import { Plus, Eye, EyeOff, User } from 'lucide-react'
 import { ECGActions } from './ecg-actions'
 import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
-import type { ECG, OfficialReport } from '@/types/database'
+import type { ECG, OfficialReport, Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
-type ECGWithReport = ECG & { official_reports: OfficialReport | null }
+type ECGWithReportAndCreator = ECG & {
+  official_reports: OfficialReport | null
+  profiles: Pick<Profile, 'full_name' | 'email'> | null
+}
 
 export default async function AdminECGsPage() {
   const supabase = await createClient()
 
   const { data: ecgsData, error } = await supabase
     .from('ecgs')
-    .select('*, official_reports(*)')
+    .select('*, official_reports(*), profiles!ecgs_created_by_fkey(full_name, email)')
     .order('created_at', { ascending: false })
 
-  const ecgs = ecgsData as ECGWithReport[] | null
+  const ecgs = ecgsData as ECGWithReportAndCreator[] | null
 
   if (error) {
     console.error('Error fetching ECGs:', error)
@@ -49,6 +52,7 @@ export default async function AdminECGsPage() {
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Título</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Dificuldade</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Categoria</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Enviado por</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Laudo</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Ações</th>
@@ -58,6 +62,7 @@ export default async function AdminECGsPage() {
                   {ecgs.map((ecg) => {
                     const diffLabel = DIFFICULTIES.find(d => d.value === ecg.difficulty)?.label || ecg.difficulty
                     const catLabel = CATEGORIES.find(c => c.value === ecg.category)?.label || ecg.category
+                    const creatorName = ecg.profiles?.full_name || ecg.profiles?.email?.split('@')[0] || 'Desconhecido'
 
                     return (
                       <tr key={ecg.id} className="border-b hover:bg-gray-50">
@@ -88,6 +93,12 @@ export default async function AdminECGsPage() {
                         </td>
                         <td className="py-3 px-4 text-gray-600">
                           {catLabel}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <User className="h-4 w-4" />
+                            <span className="text-sm">{creatorName}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           {ecg.official_reports ? (

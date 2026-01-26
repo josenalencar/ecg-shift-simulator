@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { stripe, PRICE_ID } from '@/lib/stripe/server'
+import { stripe } from '@/lib/stripe/server'
 
-export async function POST() {
+const PRICE_ID_PREMIUM = process.env.STRIPE_PRICE_ID!
+const PRICE_ID_AI = process.env.STRIPE_PRICE_ID_AI!
+
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -10,6 +13,11 @@ export async function POST() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get plan from request body
+    const body = await request.json().catch(() => ({}))
+    const plan = body.plan || 'premium'
+    const priceId = plan === 'ai' ? PRICE_ID_AI : PRICE_ID_PREMIUM
 
     // Check if user already has a Stripe customer ID
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +55,7 @@ export async function POST() {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -56,6 +64,7 @@ export async function POST() {
       subscription_data: {
         metadata: {
           supabase_user_id: user.id,
+          plan: plan,
         },
       },
     })

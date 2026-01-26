@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Crown, Check, Calendar, CreditCard, AlertTriangle } from 'lucide-react'
+import { Crown, Check, Calendar, CreditCard, AlertTriangle, Sparkles } from 'lucide-react'
 import { CancelSubscriptionButton } from './cancel-subscription-button'
 import { ManageSubscriptionButton } from './manage-subscription-button'
 
@@ -22,7 +22,7 @@ export default async function PlanoPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: subscriptionData } = await (supabase as any)
     .from('subscriptions')
-    .select('status, current_period_end, current_period_start, cancel_at_period_end, stripe_subscription_id')
+    .select('status, current_period_end, current_period_start, cancel_at_period_end, stripe_subscription_id, plan')
     .eq('user_id', user.id)
     .single()
 
@@ -32,10 +32,12 @@ export default async function PlanoPage() {
     current_period_start?: string
     cancel_at_period_end?: boolean
     stripe_subscription_id?: string
+    plan?: string
   } | null
 
   const isSubscribed = subscription?.status === 'active'
   const isCanceling = subscription?.cancel_at_period_end
+  const isAIPlan = subscription?.plan === 'ai'
 
   // Get monthly attempt count
   const startOfMonth = new Date()
@@ -60,15 +62,22 @@ export default async function PlanoPage() {
       </div>
 
       {/* Current Plan Card */}
-      <Card className={`mb-6 ${isSubscribed ? 'border-purple-200 bg-purple-50' : 'border-gray-200'}`}>
+      <Card className={`mb-6 ${isSubscribed ? (isAIPlan ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50' : 'border-blue-200 bg-blue-50') : 'border-gray-200'}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               {isSubscribed ? (
-                <>
-                  <Crown className="h-5 w-5 text-purple-600" />
-                  Plano Premium
-                </>
+                isAIPlan ? (
+                  <>
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    Plano Premium +AI
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-5 w-5 text-blue-600" />
+                    Plano Premium
+                  </>
+                )
               ) : (
                 <>
                   <CreditCard className="h-5 w-5 text-gray-600" />
@@ -93,12 +102,18 @@ export default async function PlanoPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Valor</span>
-                <span className="font-medium">R$ 29,90/mes</span>
+                <span className="font-medium">{isAIPlan ? 'R$ 49,90/mes' : 'R$ 29,90/mes'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Casos de ECG</span>
                 <span className="font-medium">Ilimitados</span>
               </div>
+              {isAIPlan && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-gray-600">Feedback ECG-IA</span>
+                  <span className="font-medium text-purple-600">Ilimitado</span>
+                </div>
+              )}
               {subscription?.current_period_start && (
                 <div className="flex items-center justify-between py-2 border-b">
                   <span className="text-gray-600">Inicio do periodo</span>
@@ -156,6 +171,53 @@ export default async function PlanoPage() {
       {/* Actions */}
       {isSubscribed ? (
         <div className="space-y-4">
+          {/* Upgrade to AI for Premium users */}
+          {!isAIPlan && !isCanceling && (
+            <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  Upgrade para Premium +AI
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Desbloqueie o poder da ECG-IA, nossa inteligencia artificial especializada em eletrocardiograma.
+                </p>
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-purple-600" />
+                    <span>Feedback ilimitado da ECG-IA</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-purple-600" />
+                    <span>Explicacoes detalhadas por IA</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-purple-600" />
+                    <span>Analise comparativa avancada</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-purple-600" />
+                    <span>Sugestoes de estudo personalizadas</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-4">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">+R$ 20,00</p>
+                    <p className="text-sm text-gray-500">R$ 49,90/mes no total</p>
+                  </div>
+                  <Link href="/pricing">
+                    <Button className="bg-purple-600 hover:bg-purple-700">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Fazer Upgrade
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Manage Payment */}
           <Card>
             <CardHeader>
@@ -177,7 +239,7 @@ export default async function PlanoPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">
-                  Ao cancelar, voce mantera acesso ao Premium ate o fim do periodo atual.
+                  Ao cancelar, voce mantera acesso ao {isAIPlan ? 'Premium +AI' : 'Premium'} ate o fim do periodo atual.
                   Nao havera cobrancas adicionais.
                 </p>
                 <CancelSubscriptionButton />
@@ -187,20 +249,17 @@ export default async function PlanoPage() {
         </div>
       ) : (
         /* Upgrade Section */
-        <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-purple-600" />
-              Atualize para Premium
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-6">
-              Desbloqueie todo o potencial do ECG Shift com acesso ilimitado.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Premium Plan */}
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-blue-600" />
+                Plano Premium
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
                   <span>Casos ilimitados por mes</span>
@@ -213,41 +272,81 @@ export default async function PlanoPage() {
                   <Check className="h-5 w-5 text-green-600" />
                   <span>Casos avancados e raros</span>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-green-600" />
-                  <span>Explicacoes detalhadas</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
                   <span>Suporte prioritario</span>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">R$ 29,90</p>
+                  <p className="text-sm text-gray-500">por mes</p>
+                </div>
+                <Link href="/pricing">
+                  <Button size="lg">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Assinar Premium
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Premium +AI Plan */}
+          <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                Plano Premium +AI
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                  Recomendado
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Cancele quando quiser</span>
+                  <span>Tudo do Premium</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-purple-600" />
+                  <span className="font-medium text-purple-700">Feedback ilimitado da ECG-IA</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-purple-600" />
+                  <span>IA especializada em ECG</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-purple-600" />
+                  <span>Explicacoes detalhadas por IA</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-purple-600" />
+                  <span>Sugestoes de estudo personalizadas</span>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-6">
-              <div>
-                <p className="text-2xl font-bold text-gray-900">R$ 29,90</p>
-                <p className="text-sm text-gray-500">por mes</p>
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">R$ 49,90</p>
+                  <p className="text-sm text-gray-500">por mes</p>
+                </div>
+                <Link href="/pricing">
+                  <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Assinar Premium +AI
+                  </Button>
+                </Link>
               </div>
-              <Link href="/pricing">
-                <Button size="lg">
-                  <Crown className="h-4 w-4 mr-2" />
-                  Assinar Agora
-                </Button>
-              </Link>
-            </div>
+            </CardContent>
+          </Card>
 
-            <p className="text-xs text-gray-500 text-center">
-              Pagamento seguro via Stripe. Cancele a qualquer momento sem burocracia.
-            </p>
-          </CardContent>
-        </Card>
+          <p className="text-xs text-gray-500 text-center">
+            Pagamento seguro via Stripe. Cancele a qualquer momento sem burocracia.
+          </p>
+        </div>
       )}
     </div>
   )

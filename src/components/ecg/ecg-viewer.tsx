@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
-import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
+import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Minimize2, Ruler, X, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 
 interface ECGViewerProps {
@@ -10,9 +10,42 @@ interface ECGViewerProps {
   title?: string
 }
 
+type CaliperMode = 'off' | 'calibrating' | 'measuring'
+
+interface CaliperPoint {
+  x: number
+  y: number
+}
+
 export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const transformRef = useRef<ReactZoomPanPinchRef>(null)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 1000, height: 500 })
+
+  // Caliper state
+  const [caliperMode, setCaliperMode] = useState<CaliperMode>('off')
+  const [calibrationPoints, setCalibrationPoints] = useState<CaliperPoint[]>([])
+  const [measurePoints, setMeasurePoints] = useState<CaliperPoint[]>([])
+  const [pixelsPerMs, setPixelsPerMs] = useState<number | null>(null)
+  const [currentScale, setCurrentScale] = useState(1)
+  const [measurement, setMeasurement] = useState<number | null>(null)
+
+  // Update container size when image loads or window resizes
+  const updateContainerSize = useCallback(() => {
+    if (imageContainerRef.current) {
+      const rect = imageContainerRef.current.getBoundingClientRect()
+      setContainerSize({ width: rect.width, height: rect.height })
+    }
+  }, [])
+
+  useEffect(() => {
+    updateContainerSize()
+    window.addEventListener('resize', updateContainerSize)
+    return () => window.removeEventListener('resize', updateContainerSize)
+  }, [updateContainerSize])
 
   function toggleFullscreen() {
     if (!containerRef.current) return
@@ -26,6 +59,82 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
     }
   }
 
+  function resetCaliper() {
+    setCaliperMode('off')
+    setCalibrationPoints([])
+    setMeasurePoints([])
+    setPixelsPerMs(null)
+    setMeasurement(null)
+  }
+
+  function startCalibration() {
+    setCaliperMode('calibrating')
+    setCalibrationPoints([])
+    setMeasurePoints([])
+    setPixelsPerMs(null)
+    setMeasurement(null)
+  }
+
+  const handleImageLoad = useCallback(() => {
+    // Update container size after image loads
+    setTimeout(updateContainerSize, 100)
+  }, [updateContainerSize])
+
+  const handleImageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (caliperMode === 'off') return
+
+    // Get click position relative to the image container
+    const rect = imageContainerRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    // Update container size on click for accuracy
+    setContainerSize({ width: rect.width, height: rect.height })
+
+    if (caliperMode === 'calibrating') {
+      const newPoints = [...calibrationPoints, { x, y }]
+      setCalibrationPoints(newPoints)
+
+      if (newPoints.length === 2) {
+        // Calculate pixels per 200ms (using horizontal distance only for standard ECG speed)
+        const distance = Math.abs(newPoints[1].x - newPoints[0].x)
+        const pxPerMs = distance / 200 // 200ms for 5mm big square
+        setPixelsPerMs(pxPerMs)
+        setCaliperMode('measuring')
+        setMeasurePoints([])
+        setMeasurement(null)
+      }
+    } else if (caliperMode === 'measuring' && pixelsPerMs) {
+      const newPoints = [...measurePoints, { x, y }]
+
+      if (newPoints.length > 2) {
+        // Reset measurement and start new one (5th click onwards)
+        setMeasurePoints([{ x, y }])
+        setMeasurement(null)
+      } else {
+        setMeasurePoints(newPoints)
+
+        if (newPoints.length === 2) {
+          // Calculate measurement (using horizontal distance)
+          const distance = Math.abs(newPoints[1].x - newPoints[0].x)
+          const ms = distance / pixelsPerMs
+          setMeasurement(Math.round(ms))
+        }
+      }
+    }
+  }, [caliperMode, calibrationPoints, measurePoints, pixelsPerMs])
+
+  const handleTransform = useCallback((ref: ReactZoomPanPinchRef) => {
+    const newScale = ref.state.scale
+    // If scale changed significantly, reset everything (calibration + measurement)
+    if (pixelsPerMs && Math.abs(newScale - currentScale) > 0.01) {
+      resetCaliper()
+    }
+    setCurrentScale(newScale)
+  }, [pixelsPerMs, currentScale])
+
   return (
     <div
       ref={containerRef}
@@ -35,15 +144,62 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
       `}
     >
       <TransformWrapper
+        ref={transformRef}
         initialScale={1}
         minScale={0.5}
         maxScale={4}
         centerOnInit
+        onTransformed={handleTransform}
+        panning={{ disabled: caliperMode !== 'off' }}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
+            {/* Help Tooltip */}
+            {showHelp && (
+              <div className="absolute top-16 right-4 z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+                <h4 className="font-semibold text-gray-900 mb-2">Como usar o Compasso</h4>
+                <ol className="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                  <li>Clique no icone <Ruler className="inline h-4 w-4" /> para ativar</li>
+                  <li><span className="text-red-600 font-medium">Calibracao (2 cliques):</span> Clique nas bordas de um quadradao (5mm = 200ms). Linhas verticais VERMELHAS aparecerao.</li>
+                  <li><span className="text-blue-600 font-medium">Medicao (2 cliques):</span> Apos calibrar, clique em dois pontos para medir. Linhas verticais AZUIS aparecerao.</li>
+                  <li>O resultado mostra o intervalo em ms e a FC correspondente.</li>
+                  <li>Clique novamente para nova medicao (azul reinicia).</li>
+                  <li>Zoom reseta tudo (vermelho e azul).</li>
+                </ol>
+                <button
+                  onClick={() => setShowHelp(false)}
+                  className="mt-3 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
+
             {/* Controls */}
             <div className="absolute top-4 right-4 z-10 flex gap-2">
+              {/* Help Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHelp(!showHelp)}
+                title="Como usar"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+              {/* Caliper Button */}
+              <Button
+                variant={caliperMode !== 'off' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => caliperMode === 'off' ? startCalibration() : resetCaliper()}
+                title={caliperMode === 'off' ? 'Calibrar Compasso' : 'Desativar Compasso'}
+                className={caliperMode !== 'off' ? 'bg-green-600 hover:bg-green-700' : ''}
+              >
+                {caliperMode === 'off' ? (
+                  <Ruler className="h-4 w-4" />
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -63,7 +219,10 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => resetTransform()}
+                onClick={() => {
+                  resetTransform()
+                  resetCaliper()
+                }}
                 title="Reset"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -89,6 +248,52 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
               </div>
             )}
 
+            {/* Caliper Instructions */}
+            {caliperMode !== 'off' && (
+              <div className="absolute top-16 left-4 z-10 bg-white/95 px-4 py-2 rounded-lg shadow-lg max-w-xs border-l-4 border-l-green-500">
+                {caliperMode === 'calibrating' && (
+                  <div>
+                    <p className="font-medium text-green-700 text-sm">Calibracao do Compasso</p>
+                    <p className="text-xs text-gray-700 mt-1">
+                      {calibrationPoints.length === 0
+                        ? 'Clique no INICIO de um quadradao (5mm = 200ms)'
+                        : 'Agora clique no FIM do mesmo quadradao'}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1 font-medium">
+                      Linhas verticais VERMELHAS marcam a calibracao
+                    </p>
+                    <div className="flex gap-1 mt-2">
+                      <div className={`w-3 h-3 rounded-full ${calibrationPoints.length >= 1 ? 'bg-red-500' : 'bg-gray-300'}`} />
+                      <div className={`w-3 h-3 rounded-full ${calibrationPoints.length >= 2 ? 'bg-red-500' : 'bg-gray-300'}`} />
+                    </div>
+                  </div>
+                )}
+                {caliperMode === 'measuring' && (
+                  <div>
+                    <p className="font-medium text-green-700 text-sm">Compasso Calibrado ✓</p>
+                    <p className="text-xs text-gray-700 mt-1">
+                      {measurePoints.length === 0
+                        ? 'Clique em dois pontos para medir'
+                        : measurePoints.length === 1
+                          ? 'Clique no segundo ponto'
+                          : 'Clique para nova medicao'}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                      Linhas verticais AZUIS marcam a medicao
+                    </p>
+                    {measurement !== null && (
+                      <div className="mt-2 p-2 bg-green-100 rounded">
+                        <p className="text-lg font-bold text-green-800">{measurement} ms</p>
+                        <p className="text-sm font-medium text-green-700">
+                          FC: {Math.round(60000 / measurement)} bpm
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Image */}
             <TransformComponent
               wrapperStyle={{
@@ -103,17 +308,126 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                 justifyContent: 'center',
               }}
             >
-              <img
-                src={imageUrl}
-                alt={title || 'ECG'}
-                className="max-w-full max-h-full object-contain"
-                draggable={false}
-              />
+              <div
+                ref={imageContainerRef}
+                onClick={handleImageClick}
+                className={`${caliperMode !== 'off' ? 'cursor-crosshair' : ''}`}
+                style={{ position: 'relative', overflow: 'visible' }}
+              >
+                <img
+                  src={imageUrl}
+                  alt={title || 'ECG'}
+                  className="max-w-full max-h-full object-contain"
+                  draggable={false}
+                  onLoad={handleImageLoad}
+                />
+
+                {/* Calibration VERTICAL lines (RED) */}
+                {caliperMode !== 'off' && calibrationPoints.map((point, i) => (
+                  <div
+                    key={`cal-vline-${i}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${point.x}px`,
+                      top: '-50%',
+                      width: '3px',
+                      height: '200%',
+                      backgroundColor: '#ef4444',
+                      pointerEvents: 'none',
+                      zIndex: 50,
+                      marginLeft: '-1.5px'
+                    }}
+                  />
+                ))}
+
+                {/* Measurement VERTICAL lines (BLUE) */}
+                {caliperMode === 'measuring' && measurePoints.map((point, i) => (
+                  <div
+                    key={`meas-vline-${i}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${point.x}px`,
+                      top: '-50%',
+                      width: '3px',
+                      height: '200%',
+                      backgroundColor: '#3b82f6',
+                      pointerEvents: 'none',
+                      zIndex: 50,
+                      marginLeft: '-1.5px'
+                    }}
+                  />
+                ))}
+
+                {/* Measurement label */}
+                {caliperMode === 'measuring' && measurePoints.length === 2 && measurement !== null && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${(measurePoints[0].x + measurePoints[1].x) / 2}px`,
+                      top: '20px',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'white',
+                      border: '2px solid #3b82f6',
+                      borderRadius: '4px',
+                      padding: '4px 8px',
+                      pointerEvents: 'none',
+                      zIndex: 60,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    <span style={{ color: '#1d4ed8', fontWeight: 'bold', fontSize: '14px' }}>{measurement} ms</span>
+                  </div>
+                )}
+
+                {/* Calibration Points (RED) */}
+                {caliperMode !== 'off' && calibrationPoints.map((point, i) => (
+                  <div
+                    key={`cal-${i}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${point.x}px`,
+                      top: `${point.y}px`,
+                      width: '16px',
+                      height: '16px',
+                      backgroundColor: '#ef4444',
+                      borderRadius: '50%',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      pointerEvents: 'none',
+                      zIndex: 60,
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  />
+                ))}
+
+                {/* Measurement Points (BLUE) */}
+                {caliperMode === 'measuring' && measurePoints.map((point, i) => (
+                  <div
+                    key={`meas-${i}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${point.x}px`,
+                      top: `${point.y}px`,
+                      width: '16px',
+                      height: '16px',
+                      backgroundColor: '#3b82f6',
+                      borderRadius: '50%',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      pointerEvents: 'none',
+                      zIndex: 60,
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  />
+                ))}
+              </div>
             </TransformComponent>
 
             {/* Instructions */}
-            <div className="absolute bottom-4 left-4 z-10 text-xs text-gray-500 bg-white/90 px-2 py-1 rounded">
-              Scroll to zoom • Drag to pan
+            <div className="absolute bottom-4 left-4 z-10 text-xs text-gray-700 bg-white/90 px-2 py-1 rounded">
+              {caliperMode === 'off'
+                ? 'Scroll para zoom • Arraste para mover • Clique em ? para ajuda'
+                : 'Compasso ativo • Vermelho = calibracao • Azul = medicao'}
             </div>
           </>
         )}

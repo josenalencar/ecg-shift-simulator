@@ -10,7 +10,7 @@ export type UserRole = 'user' | 'admin'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type Category = 'arrhythmia' | 'ischemia' | 'conduction' | 'normal' | 'other'
 export type Axis = 'normal' | 'left' | 'right' | 'extreme'
-export type Interval = 'normal' | 'prolonged' | 'short' | 'wide'
+export type Interval = 'normal' | 'prolonged' | 'short' | 'wide' | 'na'
 
 export type Rhythm =
   | 'sinus'
@@ -41,28 +41,49 @@ export type Finding =
   | 'avb_2nd_type1'
   | 'avb_2nd_type2'
   | 'avb_3rd'
-  | 'stemi_anterior'
-  | 'stemi_inferior'
-  | 'stemi_lateral'
-  | 'stemi_posterior'
-  | 'stemi_septal'
-  | 'oca_anterior'
-  | 'oca_inferior'
-  | 'oca_septal'
-  | 'oca_lateral'
-  | 'nstemi'
-  | 'old_mi'
+  | 'sab_2nd_type1'
+  | 'sab_2nd_type2'
+  | 'sab_3rd'
+  | 'oca'
+  | 'oca_wall_anterior'
+  | 'oca_wall_inferior'
+  | 'oca_wall_lateral'
+  | 'oca_wall_septal'
+  | 'ste'
+  | 'hyperacute_t'
+  | 'std_v1v4'
+  | 'aslanger'
+  | 'de_winter'
+  | 'subtle_ste'
+  | 'terminal_qrs_distortion'
+  | 'sgarbossa_modified'
   | 'secondary_t_wave'
   | 'primary_t_wave'
-  | 'pericarditis'
   | 'early_repolarization'
+  | 'giant_negative_t'
   | 'hyperkalemia'
   | 'hypokalemia'
   | 'digitalis'
-  | 'pe_pattern'
   | 'preexcitation'
   | 'long_qt'
   | 'brugada'
+  | 'spodick_sign'
+  | 'pq_depression'
+  | 'spiked_helmet'
+  | 'dagger_q'
+  | 'pathological_q'
+  | 'pathological_q_anterior'
+  | 'pathological_q_inferior'
+  | 'pathological_q_lateral'
+  | 'pathological_q_septal'
+  | 'fragmented_qrs'
+  | 'pacemaker_normal'
+  | 'pacemaker_sense_failure'
+  | 'pacemaker_pace_failure'
+  | 'pacemaker_sense_failure_atrio'
+  | 'pacemaker_sense_failure_ventriculo'
+  | 'pacemaker_pace_failure_atrio'
+  | 'pacemaker_pace_failure_ventriculo'
 
 export interface Database {
   public: {
@@ -72,7 +93,9 @@ export interface Database {
           id: string
           email: string
           full_name: string | null
+          bio: string | null
           role: UserRole
+          is_master_admin: boolean
           created_at: string
           updated_at: string
         }
@@ -80,7 +103,9 @@ export interface Database {
           id: string
           email: string
           full_name?: string | null
+          bio?: string | null
           role?: UserRole
+          is_master_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -88,7 +113,9 @@ export interface Database {
           id?: string
           email?: string
           full_name?: string | null
+          bio?: string | null
           role?: UserRole
+          is_master_admin?: boolean
           created_at?: string
           updated_at?: string
         }

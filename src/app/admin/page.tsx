@@ -84,9 +84,9 @@ export default async function AdminOverviewPage() {
                 <FileImage className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total de ECGs</p>
+                <p className="text-sm text-gray-700">Total de ECGs</p>
                 <p className="text-2xl font-bold text-gray-900">{ecgCount || 0}</p>
-                <p className="text-xs text-gray-500">{activeEcgCount || 0} ativos</p>
+                <p className="text-xs text-gray-700">{activeEcgCount || 0} ativos</p>
               </div>
             </div>
           </CardContent>
@@ -99,9 +99,9 @@ export default async function AdminOverviewPage() {
                 <Users className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total de Usuarios</p>
+                <p className="text-sm text-gray-700">Total de Usuarios</p>
                 <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
-                <div className="flex gap-2 text-xs text-gray-500">
+                <div className="flex gap-2 text-xs text-gray-700">
                   <span className="flex items-center gap-1">
                     <Shield className="h-3 w-3" /> {adminCount || 0} admins
                   </span>
@@ -121,9 +121,9 @@ export default async function AdminOverviewPage() {
                 <Activity className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total de Tentativas</p>
+                <p className="text-sm text-gray-700">Total de Tentativas</p>
                 <p className="text-2xl font-bold text-gray-900">{attemptCount || 0}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-700">
                   {totalUsers > 0 ? Math.round((attemptCount || 0) / totalUsers) : 0} por usuario
                 </p>
               </div>
@@ -138,9 +138,9 @@ export default async function AdminOverviewPage() {
                 <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Media Geral</p>
+                <p className="text-sm text-gray-700">Media Geral</p>
                 <p className="text-2xl font-bold text-gray-900">{averageScore}%</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-700">
                   {ecgsWithReportCount || 0} ECGs com laudo
                 </p>
               </div>
@@ -172,19 +172,19 @@ export default async function AdminOverviewPage() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Cloud Name</span>
+                <span className="text-sm text-gray-700">Cloud Name</span>
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded">dtmqhakgu</code>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Upload Preset</span>
+                <span className="text-sm text-gray-700">Upload Preset</span>
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded">ecg_uploads</code>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">ECGs armazenados</span>
+                <span className="text-sm text-gray-700">ECGs armazenados</span>
                 <span className="text-sm font-medium">{ecgCount || 0} imagens</span>
               </div>
               <div className="pt-2 border-t">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-700">
                   Plano gratuito: 25 creditos/mes (~25GB de banda ou ~2.5GB de armazenamento)
                 </p>
               </div>
@@ -212,29 +212,29 @@ export default async function AdminOverviewPage() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Projeto</span>
+                <span className="text-sm text-gray-700">Projeto</span>
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded">hwgsjpjbyydpittefnjd</code>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Regiao</span>
+                <span className="text-sm text-gray-700">Regiao</span>
                 <span className="text-sm font-medium">South America (Sao Paulo)</span>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-lg font-bold text-gray-900">{ecgCount || 0}</p>
-                  <p className="text-xs text-gray-500">ECGs</p>
+                  <p className="text-xs text-gray-700">ECGs</p>
                 </div>
                 <div className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-lg font-bold text-gray-900">{totalUsers}</p>
-                  <p className="text-xs text-gray-500">Profiles</p>
+                  <p className="text-xs text-gray-700">Profiles</p>
                 </div>
                 <div className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-lg font-bold text-gray-900">{attemptCount || 0}</p>
-                  <p className="text-xs text-gray-500">Attempts</p>
+                  <p className="text-xs text-gray-700">Attempts</p>
                 </div>
               </div>
               <div className="pt-2 border-t">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-700">
                   Plano gratuito: 500MB banco de dados, 1GB storage, 2GB banda/mes
                 </p>
               </div>
@@ -255,7 +255,7 @@ export default async function AdminOverviewPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-600">Banco de Dados (Supabase)</span>
+                <span className="text-sm text-gray-700">Banco de Dados (Supabase)</span>
                 <span className="text-sm font-medium">&lt;1MB / 500MB</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -264,7 +264,7 @@ export default async function AdminOverviewPage() {
             </div>
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-600">Imagens (Cloudinary)</span>
+                <span className="text-sm text-gray-700">Imagens (Cloudinary)</span>
                 <span className="text-sm font-medium">~{((ecgCount || 0) * 0.5).toFixed(1)}MB / 2500MB</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -276,7 +276,7 @@ export default async function AdminOverviewPage() {
             </div>
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-600">Usuarios Autenticados</span>
+                <span className="text-sm text-gray-700">Usuarios Autenticados</span>
                 <span className="text-sm font-medium">{totalUsers} / 50.000</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -287,7 +287,7 @@ export default async function AdminOverviewPage() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
+          <p className="text-xs text-gray-700 mt-4">
             * Estimativas baseadas nos limites do plano gratuito. Para uso real, consulte os dashboards de cada servico.
           </p>
         </CardContent>
@@ -304,10 +304,10 @@ export default async function AdminOverviewPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Usuario</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">ECG</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Nota</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Data</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Usuario</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">ECG</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Nota</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Data</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -318,7 +318,7 @@ export default async function AdminOverviewPage() {
                           <p className="font-medium text-gray-900">
                             {attempt.profiles?.full_name || 'Desconhecido'}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-700">
                             {attempt.profiles?.email}
                           </p>
                         </div>
@@ -339,7 +339,7 @@ export default async function AdminOverviewPage() {
                           {Math.round(Number(attempt.score))}%
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-gray-700">
                         {new Date(attempt.created_at).toLocaleDateString('pt-BR', {
                           month: 'short',
                           day: 'numeric',
@@ -353,7 +353,7 @@ export default async function AdminOverviewPage() {
               </table>
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">Nenhuma atividade recente</p>
+            <p className="text-gray-700 text-center py-8">Nenhuma atividade recente</p>
           )}
         </CardContent>
       </Card>

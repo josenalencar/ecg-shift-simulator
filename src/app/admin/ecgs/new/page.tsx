@@ -4,11 +4,29 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle, Button, Select } from '@/components/ui'
-import { ImageUpload, ReportForm, type ReportFormData } from '@/components/ecg'
+import { Card, CardContent, CardHeader, CardTitle, Button, Select, Input } from '@/components/ui'
+import { ImageUpload, ReportForm, ECGViewer, type ReportFormData } from '@/components/ecg'
 import { DIFFICULTIES, CATEGORIES } from '@/lib/ecg-constants'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import type { Difficulty, Category } from '@/types/database'
+
+const CLINICAL_PRESENTATIONS = [
+  { value: 'dor_toracica', label: 'Dor Toracica' },
+  { value: 'dispneia', label: 'Dispneia' },
+  { value: 'palpitacoes', label: 'Palpitacoes' },
+  { value: 'sincope', label: 'Sincope' },
+  { value: 'pre_sincope', label: 'Pre-sincope' },
+  { value: 'tontura', label: 'Tontura' },
+  { value: 'fadiga', label: 'Fadiga' },
+  { value: 'edema', label: 'Edema de MMII' },
+  { value: 'nega_sintomas', label: 'Nega Sintomas' },
+  { value: 'checkup', label: 'Check-up / Rotina' },
+  { value: 'pre_operatorio', label: 'Pre-operatorio' },
+  { value: 'dor_epigastrica', label: 'Dor Epigastrica' },
+  { value: 'mal_estar', label: 'Mal-estar' },
+  { value: 'sudorese', label: 'Sudorese' },
+  { value: 'nausea_vomito', label: 'Nausea / Vomito' },
+]
 
 export default function NewECGPage() {
   const router = useRouter()
@@ -23,6 +41,11 @@ export default function NewECGPage() {
   const [imageUrl, setImageUrl] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [category, setCategory] = useState<Category>('other')
+
+  // Patient info
+  const [patientAge, setPatientAge] = useState<string>('')
+  const [patientSex, setPatientSex] = useState<'masculino' | 'feminino' | ''>('')
+  const [clinicalPresentation, setClinicalPresentation] = useState<string[]>([])
 
   // Auto-generate title on load
   useEffect(() => {
@@ -39,6 +62,14 @@ export default function NewECGPage() {
     generateTitle()
   }, [supabase])
 
+  function toggleClinicalPresentation(value: string) {
+    setClinicalPresentation(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    )
+  }
+
   async function handleReportSubmit(reportData: ReportFormData) {
     if (!title.trim()) {
       setError('Título é obrigatório')
@@ -48,6 +79,18 @@ export default function NewECGPage() {
 
     if (!imageUrl) {
       setError('Por favor, faça upload de uma imagem de ECG')
+      setStep(1)
+      return
+    }
+
+    if (!patientAge || !patientSex) {
+      setError('Por favor, preencha idade e sexo do paciente')
+      setStep(1)
+      return
+    }
+
+    if (clinicalPresentation.length === 0) {
+      setError('Por favor, selecione pelo menos um quadro clínico')
       setStep(1)
       return
     }
@@ -71,6 +114,9 @@ export default function NewECGPage() {
           image_url: imageUrl,
           difficulty,
           category,
+          patient_age: parseInt(patientAge),
+          patient_sex: patientSex,
+          clinical_presentation: clinicalPresentation,
           is_active: true,
           created_by: user.id,
         })
@@ -108,9 +154,12 @@ export default function NewECGPage() {
 
       router.push('/admin/ecgs')
       router.refresh()
-    } catch (err) {
-      console.error('Erro ao criar ECG:', err)
-      setError('Falha ao criar ECG. Por favor, tente novamente.')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message || JSON.stringify(err)
+      console.error('Erro ao criar ECG:', errorMessage, err)
+      setError(`Falha ao criar ECG: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -166,20 +215,90 @@ export default function NewECGPage() {
             </CardContent>
           </Card>
 
+          {/* ECG Viewer with Caliper - show after image upload */}
+          {imageUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Visualizador com Compasso</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ECGViewer imageUrl={imageUrl} title={title} />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
-              <CardTitle>Detalhes do ECG</CardTitle>
+              <CardTitle>Dados do Paciente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Título (gerado automaticamente)
-                </label>
-                <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700 font-mono">
-                  {title || 'Carregando...'}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  id="patient-age"
+                  label="Idade (anos)"
+                  type="number"
+                  min="0"
+                  max="120"
+                  value={patientAge}
+                  onChange={(e) => setPatientAge(e.target.value)}
+                  placeholder="Ex: 65"
+                />
+
+                <Select
+                  id="patient-sex"
+                  label="Sexo"
+                  value={patientSex}
+                  onChange={(e) => setPatientSex(e.target.value as 'masculino' | 'feminino' | '')}
+                  options={[
+                    { value: '', label: 'Selecione...' },
+                    { value: 'masculino', label: 'Masculino' },
+                    { value: 'feminino', label: 'Feminino' },
+                  ]}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título (gerado automaticamente)
+                  </label>
+                  <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700 font-mono h-10 flex items-center">
+                    {title || 'Carregando...'}
+                  </div>
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quadro Clinico (selecione um ou mais)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CLINICAL_PRESENTATIONS.map((presentation) => {
+                    const isSelected = clinicalPresentation.includes(presentation.value)
+                    return (
+                      <button
+                        key={presentation.value}
+                        type="button"
+                        onClick={() => toggleClinicalPresentation(presentation.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                        {presentation.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Classificacao do ECG</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                   id="difficulty"
@@ -207,6 +326,14 @@ export default function NewECGPage() {
                   setError('Por favor, faça upload de uma imagem de ECG')
                   return
                 }
+                if (!patientAge || !patientSex) {
+                  setError('Por favor, preencha idade e sexo do paciente')
+                  return
+                }
+                if (clinicalPresentation.length === 0) {
+                  setError('Por favor, selecione pelo menos um quadro clínico')
+                  return
+                }
                 setError(null)
                 setStep(2)
               }}
@@ -220,21 +347,36 @@ export default function NewECGPage() {
 
       {step === 2 && (
         <div className="space-y-6">
-          {/* Large ECG Preview */}
+          {/* Large ECG Preview with Caliper */}
           <Card>
             <CardHeader>
               <CardTitle>ECG #{title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <img
-                src={imageUrl}
-                alt={`ECG ${title}`}
-                className="w-full rounded-lg border"
-              />
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-gray-600">
-                  <span className="capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span> • <span className="capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
-                </p>
+              <ECGViewer imageUrl={imageUrl} title={title} />
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Paciente:</span>
+                  <span className="ml-2 font-medium">{patientSex === 'masculino' ? 'Masculino' : 'Feminino'}, {patientAge} anos</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Quadro:</span>
+                  <span className="ml-2 font-medium">
+                    {clinicalPresentation.map(p =>
+                      CLINICAL_PRESENTATIONS.find(cp => cp.value === p)?.label
+                    ).join(', ')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Dificuldade:</span>
+                  <span className="ml-2 font-medium capitalize">{DIFFICULTIES.find(d => d.value === difficulty)?.label}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Categoria:</span>
+                  <span className="ml-2 font-medium capitalize">{CATEGORIES.find(c => c.value === category)?.label}</span>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
