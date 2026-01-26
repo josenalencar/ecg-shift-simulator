@@ -57,7 +57,7 @@ export default async function PlanoPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Meu Plano</h1>
         <p className="text-gray-600 mt-1">
-          Gerencie sua assinatura e informacoes de pagamento
+          Gerencie sua assinatura e informações de pagamento
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default async function PlanoPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Valor</span>
-                <span className="font-medium">{isAIPlan ? 'R$ 49,90/mes' : 'R$ 29,90/mes'}</span>
+                <span className="font-medium">{isAIPlan ? 'R$ 59,90/mês' : 'R$ 39,90/mês'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Casos de ECG</span>
@@ -116,7 +116,7 @@ export default async function PlanoPage() {
               )}
               {subscription?.current_period_start && (
                 <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-600">Inicio do periodo</span>
+                  <span className="text-gray-600">Início do período</span>
                   <span className="font-medium">
                     {new Date(subscription.current_period_start).toLocaleDateString('pt-BR')}
                   </span>
@@ -126,7 +126,7 @@ export default async function PlanoPage() {
                 <div className="flex items-center justify-between py-2 border-b">
                   <span className="text-gray-600 flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {isCanceling ? 'Acesso ate' : 'Proxima cobranca'}
+                    {isCanceling ? 'Acesso até' : 'Próxima cobrança'}
                   </span>
                   <span className="font-medium">
                     {new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}
@@ -141,8 +141,8 @@ export default async function PlanoPage() {
                     <div>
                       <p className="font-medium text-orange-800">Cancelamento agendado</p>
                       <p className="text-sm text-orange-700">
-                        Sua assinatura sera cancelada em {new Date(subscription.current_period_end!).toLocaleDateString('pt-BR')}.
-                        Voce ainda tem acesso a todos os recursos ate essa data.
+                        Sua assinatura será cancelada em {new Date(subscription.current_period_end!).toLocaleDateString('pt-BR')}.
+                        Você ainda tem acesso a todos os recursos até essa data.
                       </p>
                     </div>
                   </div>
@@ -157,7 +157,7 @@ export default async function PlanoPage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Casos de ECG</span>
-                <span className="font-medium">{FREE_MONTHLY_LIMIT} por mes</span>
+                <span className="font-medium">{FREE_MONTHLY_LIMIT} por mês</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Usados este mes</span>
@@ -182,7 +182,7 @@ export default async function PlanoPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">
-                  Desbloqueie o poder da ECG-IA, nossa inteligencia artificial especializada em eletrocardiograma.
+                  Desbloqueie o poder da ECG-IA, nossa inteligência artificial especializada em eletrocardiograma.
                 </p>
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center gap-2">
@@ -191,21 +191,21 @@ export default async function PlanoPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Explicacoes detalhadas por IA</span>
+                    <span>Explicações detalhadas por IA</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Analise comparativa avancada</span>
+                    <span>Análise comparativa avançada</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Sugestoes de estudo personalizadas</span>
+                    <span>Sugestões de estudo personalizadas</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-4">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">+R$ 20,00</p>
-                    <p className="text-sm text-gray-500">R$ 49,90/mes no total</p>
+                    <p className="text-sm text-gray-500">R$ 59,90/mês no total</p>
                   </div>
                   <Link href="/pricing">
                     <Button className="bg-purple-600 hover:bg-purple-700">
@@ -225,7 +225,7 @@ export default async function PlanoPage() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">
-                Atualize seu cartao de credito ou veja seu historico de faturas.
+                Atualize seu cartão de crédito ou veja seu histórico de faturas.
               </p>
               <ManageSubscriptionButton />
             </CardContent>
@@ -239,8 +239,8 @@ export default async function PlanoPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">
-                  Ao cancelar, voce mantera acesso ao {isAIPlan ? 'Premium +AI' : 'Premium'} ate o fim do periodo atual.
-                  Nao havera cobrancas adicionais.
+                  Ao cancelar, você manterá acesso ao {isAIPlan ? 'Premium +AI' : 'Premium'} até o fim do período atual.
+                  Não haverá cobranças adicionais.
                 </p>
                 <CancelSubscriptionButton />
               </CardContent>
@@ -262,7 +262,7 @@ export default async function PlanoPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Casos ilimitados por mes</span>
+                  <span>Casos ilimitados por mês</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
@@ -270,11 +270,11 @@ export default async function PlanoPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Casos avancados e raros</span>
+                  <span>Casos avançados e raros</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Suporte prioritario</span>
+                  <span>Suporte prioritário</span>
                 </div>
               </div>
 
@@ -320,11 +320,11 @@ export default async function PlanoPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
-                  <span>Explicacoes detalhadas por IA</span>
+                  <span>Explicações detalhadas por IA</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
-                  <span>Sugestoes de estudo personalizadas</span>
+                  <span>Sugestões de estudo personalizadas</span>
                 </div>
               </div>
 

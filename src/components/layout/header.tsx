@@ -44,12 +44,6 @@ export function Header({ profile }: HeaderProps) {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  href="/practice"
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Practice
-                </Link>
                 {profile.role === 'admin' && (
                   <Link
                     href="/admin"
@@ -110,7 +104,7 @@ export function Header({ profile }: HeaderProps) {
                     onClick={() => setIsUserMenuOpen(false)}
                   >
                     <Settings className="h-4 w-4" />
-                    Configuracoes
+                    Configurações
                   </Link>
                   <Link
                     href="/plano"
@@ -159,13 +153,6 @@ export function Header({ profile }: HeaderProps) {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
-                </Link>
-                <Link
-                  href="/practice"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Practice
                 </Link>
                 {profile.role === 'admin' && (
                   <Link

@@ -13,7 +13,7 @@ export type Category = 'arrhythmia' | 'ischemia' | 'structural' | 'normal' | 'em
 export type ElectrodeSwap =
   | 'swap_la_ra'        // BE-BD (Left Arm - Right Arm)
   | 'swap_la_ll'        // BE-PE (Left Arm - Left Leg)
-  | 'swap_la_rl'        // BE-PD (Left Arm - Right Leg)
+  | 'swap_ra_ll'        // BD-PE (Right Arm - Left Leg)
   | 'swap_rl_involved'  // Troca envolvendo perna direita
   | 'swap_precordial'   // Troca de eletrodos precordiais
 export type Axis = 'normal' | 'left' | 'right' | 'extreme'

@@ -2,9 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Medal } from 'lucide-react'
+import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Medal, Building2 } from 'lucide-react'
 import { ManageSubscriptionButton } from './manage-subscription-button'
-import { FINDINGS, RHYTHMS } from '@/lib/ecg-constants'
+import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,14 +48,14 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Get user profile
+  // Get user profile including hospital type
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('id, full_name, role, subscription_status')
+    .select('id, full_name, role, subscription_status, hospital_type')
     .eq('id', user.id)
     .single()
 
-  const profile = profileData as { id: string; full_name: string | null; role: string; subscription_status?: string } | null
+  const profile = profileData as { id: string; full_name: string | null; role: string; subscription_status?: string; hospital_type?: string | null } | null
 
   // Get subscription info
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -230,7 +230,7 @@ export default async function DashboardPage() {
             Bem-vindo(a), {profile?.full_name || 'Doutor(a)'}!
           </h1>
           <p className="text-gray-700 mt-1">
-            Continue sua pratica de interpretacao de ECG
+            Continue sua prática de interpretação de ECG
           </p>
         </div>
         {isSubscribed && (
@@ -254,8 +254,8 @@ export default async function DashboardPage() {
                   <h3 className="font-semibold text-gray-900">Atualize para Premium</h3>
                   <p className="text-sm text-gray-700">
                     {remainingFree > 0
-                      ? `Voce tem ${remainingFree} caso${remainingFree !== 1 ? 's' : ''} gratuito${remainingFree !== 1 ? 's' : ''} restante${remainingFree !== 1 ? 's' : ''} este mes`
-                      : 'Voce atingiu o limite mensal de casos gratuitos'
+                      ? `Você tem ${remainingFree} caso${remainingFree !== 1 ? 's' : ''} gratuito${remainingFree !== 1 ? 's' : ''} restante${remainingFree !== 1 ? 's' : ''} este mês`
+                      : 'Você atingiu o limite mensal de casos gratuitos'
                     }
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
                 <Target className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-700">Media de Acertos</p>
+                <p className="text-sm text-gray-700">Média de Acertos</p>
                 <p className="text-2xl font-bold text-gray-900">{averageScore}%</p>
               </div>
             </div>
@@ -332,7 +332,7 @@ export default async function DashboardPage() {
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-700">ECGs Disponiveis</p>
+                <p className="text-sm text-gray-700">ECGs Disponíveis</p>
                 <p className="text-2xl font-bold text-gray-900">{ecgCount || 0}</p>
               </div>
             </div>
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-700">
-                  {isSubscribed ? 'Restantes' : 'Este Mes'}
+                  {isSubscribed ? 'Restantes' : 'Este Mês'}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {isSubscribed
@@ -396,7 +396,7 @@ export default async function DashboardPage() {
                         </div>
                         <span className={`text-sm ${r.isCurrentUser ? 'font-bold text-blue-700' : isTop3 ? 'text-gray-900' : 'text-gray-700'}`}>
                           {isTop3 || r.isCurrentUser ? r.name : '••••••'}
-                          {r.isCurrentUser && ' (Voce)'}
+                          {r.isCurrentUser && ' (Você)'}
                         </span>
                       </div>
                       <div className="text-right">
@@ -417,7 +417,7 @@ export default async function DashboardPage() {
                           {currentUserEntry.rank}
                         </div>
                         <span className="text-sm font-bold text-blue-700">
-                          {currentUserEntry.name} (Voce)
+                          {currentUserEntry.name} (Você)
                         </span>
                       </div>
                       <div className="text-right">
@@ -433,15 +433,15 @@ export default async function DashboardPage() {
                   <div className="pt-3 mt-2 border-t border-gray-200">
                     {currentUserInTop10 ? (
                       <p className="text-xs text-center text-gray-600">
-                        Sua posicao: <span className="font-bold">#{currentUserRank}</span> de {totalUsers} usuarios
+                        Sua posição: <span className="font-bold">#{currentUserRank}</span> de {totalUsers} usuários
                       </p>
                     ) : (
                       <div className="text-center">
                         <p className="text-sm font-semibold text-blue-600">
-                          Voce esta melhor que {percentile}% dos usuarios!
+                          Você está melhor que {percentile}% dos usuários!
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Posicao #{currentUserRank} de {totalUsers} usuarios
+                          Posição #{currentUserRank} de {totalUsers} usuários
                         </p>
                       </div>
                     )}
@@ -449,7 +449,7 @@ export default async function DashboardPage() {
                 )}
               </div>
             ) : (
-              <p className="text-gray-600 text-center py-4">Nenhum dado disponivel</p>
+              <p className="text-gray-600 text-center py-4">Nenhum dado disponível</p>
             )}
           </CardContent>
         </Card>
@@ -457,18 +457,26 @@ export default async function DashboardPage() {
         {/* Start Practice */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Iniciar Pratica</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Iniciar Plantão</span>
+              {profile?.hospital_type && (
+                <span className="flex items-center gap-2 text-sm font-normal text-gray-600">
+                  <Building2 className="h-4 w-4" />
+                  {HOSPITAL_TYPES.find(h => h.value === profile.hospital_type)?.label}
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-700 mb-4">
-              Entre em uma sessao de pratica e interprete ECGs como em um plantao real de tele-ECG.
+              Entre em uma sessão de prática e interprete ECGs como em um plantão real de tele-ECG.
               Receba feedback imediato e aprenda com seus erros.
             </p>
             <Link href="/practice">
               <Button size="lg" disabled={!isSubscribed && remainingFree <= 0}>
                 {!isSubscribed && remainingFree <= 0
                   ? 'Limite Atingido'
-                  : 'Iniciar Sessao de Pratica'
+                  : 'Iniciar Plantão'
                 }
               </Button>
             </Link>
@@ -483,7 +491,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-500" />
-              Melhores Diagnosticos
+              Melhores Diagnósticos
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -511,7 +519,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <p className="text-gray-600 text-center py-4">
-                Complete mais ECGs para ver estatisticas
+                Complete mais ECGs para ver estatísticas
               </p>
             )}
           </CardContent>
@@ -522,7 +530,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-500" />
-              Diagnosticos a Melhorar
+              Diagnósticos a Melhorar
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -550,7 +558,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <p className="text-gray-600 text-center py-4">
-                Complete mais ECGs para ver estatisticas
+                Complete mais ECGs para ver estatísticas
               </p>
             )}
           </CardContent>
@@ -596,9 +604,9 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">Nenhuma sessao de pratica ainda</p>
+              <p className="text-gray-600 mb-4">Nenhuma sessão de prática ainda</p>
               <Link href="/practice">
-                <Button variant="outline">Comece sua primeira sessao</Button>
+                <Button variant="outline">Comece sua primeira sessão</Button>
               </Link>
             </div>
           )}

@@ -76,7 +76,7 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      setMessage({ type: 'error', text: 'Sessao expirada. Faca login novamente.' })
+      setMessage({ type: 'error', text: 'Sessão expirada. Faça login novamente.' })
       setSaving(false)
       return
     }
@@ -103,7 +103,7 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      setHospitalMessage({ type: 'error', text: 'Sessao expirada. Faca login novamente.' })
+      setHospitalMessage({ type: 'error', text: 'Sessão expirada. Faça login novamente.' })
       setSavingHospital(false)
       return
     }
@@ -129,7 +129,7 @@ export default function SettingsPage() {
     setPasswordMessage(null)
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'As senhas nao coincidem.' })
+      setPasswordMessage({ type: 'error', text: 'As senhas não coincidem.' })
       setChangingPassword(false)
       return
     }
@@ -168,14 +168,14 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Configuracoes do Perfil</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">Configurações do Perfil</h1>
 
       {/* Profile Info */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Informacoes Pessoais
+            Informações Pessoais
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -193,18 +193,18 @@ export default function SettingsPage() {
                 htmlFor="bio"
                 className="block text-sm font-medium text-gray-900 mb-1"
               >
-                Mini Curriculo
+                Mini Currículo
               </label>
               <textarea
                 id="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Conte um pouco sobre voce, sua formacao, especialidade..."
+                placeholder="Conte um pouco sobre você, sua formação, especialidade..."
                 rows={4}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Opcional. Maximo de 500 caracteres.
+                Opcional. Máximo de 500 caracteres.
               </p>
             </div>
 
@@ -227,7 +227,7 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alteracoes
+                  Salvar Alterações
                 </>
               )}
             </Button>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
           {isProUser ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-600 mb-4">
-                Selecione o tipo de hospital onde voce trabalha. O sistema ira priorizar os ECGs mais relevantes para sua pratica.
+                Selecione o tipo de hospital onde você trabalha. O sistema irá priorizar os ECGs mais relevantes para sua prática.
               </p>
 
               <div className="grid gap-3">
@@ -303,7 +303,7 @@ export default function SettingsPage() {
               <Crown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-600 mb-2">Recurso exclusivo para assinantes Premium</p>
               <p className="text-sm text-gray-500 mb-4">
-                Com o Premium, voce pode personalizar os ECGs que aparecem de acordo com seu local de trabalho.
+                Com o Premium, você pode personalizar os ECGs que aparecem de acordo com seu local de trabalho.
               </p>
               <Button variant="secondary" onClick={() => router.push('/pricing')}>
                 <Crown className="h-4 w-4 mr-2" />

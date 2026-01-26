@@ -241,7 +241,7 @@ export const HOSPITAL_TYPES: { value: HospitalType; label: string; description: 
 export const ELECTRODE_SWAP_OPTIONS: { value: ElectrodeSwap; label: string; description: string }[] = [
   { value: 'swap_la_ra', label: 'BE-BD', description: 'Troca entre braço esquerdo e braço direito' },
   { value: 'swap_la_ll', label: 'BE-PE', description: 'Troca entre braço esquerdo e perna esquerda' },
-  { value: 'swap_la_rl', label: 'BE-PD', description: 'Troca entre braço esquerdo e perna direita' },
+  { value: 'swap_ra_ll', label: 'BD-PE', description: 'Troca entre braço direito e perna esquerda' },
   { value: 'swap_rl_involved', label: 'Perna direita', description: 'Troca envolvendo perna direita' },
   { value: 'swap_precordial', label: 'Precordiais', description: 'Troca de eletrodos precordiais' },
 ]

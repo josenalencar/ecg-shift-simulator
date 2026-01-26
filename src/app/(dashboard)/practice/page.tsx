@@ -286,7 +286,7 @@ export default function PracticePage() {
               Limite Mensal Atingido
             </h2>
             <p className="text-gray-600 mb-2">
-              Voce utilizou seus {FREE_MONTHLY_LIMIT} casos gratuitos deste mes.
+              Você utilizou seus {FREE_MONTHLY_LIMIT} casos gratuitos deste mês.
             </p>
             <p className="text-gray-600 mb-6">
               Assine o Premium para acesso ilimitado a todos os casos de ECG!
@@ -321,7 +321,7 @@ export default function PracticePage() {
               Tudo em dia!
             </h2>
             <p className="text-gray-600 mb-6">
-              Voce completou todos os casos de ECG disponiveis. Volte mais tarde para mais!
+              Você completou todos os casos de ECG disponíveis. Volte mais tarde para mais!
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/dashboard">
@@ -346,7 +346,6 @@ export default function PracticePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Resultado</h1>
-          <p className="text-gray-600">ECG #{currentECG?.title}</p>
         </div>
 
         {/* ECG Image (smaller) */}
@@ -370,7 +369,7 @@ export default function PracticePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-orange-800">
-                    Voce tem {remainingFree} caso{remainingFree !== 1 ? 's' : ''} gratuito{remainingFree !== 1 ? 's' : ''} restante{remainingFree !== 1 ? 's' : ''} este mes
+                    Você tem {remainingFree} caso{remainingFree !== 1 ? 's' : ''} gratuito{remainingFree !== 1 ? 's' : ''} restante{remainingFree !== 1 ? 's' : ''} este mês
                   </p>
                   <p className="text-sm text-orange-600">Assine o Premium para casos ilimitados</p>
                 </div>
@@ -394,7 +393,7 @@ export default function PracticePage() {
             </Button>
           </Link>
           <Button onClick={loadNextECG}>
-            Proximo ECG
+            Próximo ECG
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -409,7 +408,7 @@ export default function PracticePage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Como usar o Plantao de ECG</h2>
+              <h2 className="text-xl font-bold text-gray-900">Como usar o Plantão de ECG</h2>
               <button
                 onClick={() => setShowTutorial(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -421,7 +420,7 @@ export default function PracticePage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">1. Analise o ECG</h3>
                 <p className="text-gray-700">
-                  Use o visualizador para examinar o ECG com calma. Voce pode usar o scroll para dar zoom
+                  Use o visualizador para examinar o ECG com calma. Você pode usar o scroll para dar zoom
                   e arrastar para navegar pela imagem.
                 </p>
               </div>
@@ -438,7 +437,7 @@ export default function PracticePage() {
                   <li>O sistema calcula automaticamente a FC correspondente</li>
                 </ul>
                 <p className="text-sm text-amber-700 mt-2">
-                  Obs: Se voce mudar o zoom, a calibracao e perdida.
+                  Obs: Se você mudar o zoom, a calibração é perdida.
                 </p>
               </div>
 
@@ -446,29 +445,29 @@ export default function PracticePage() {
                 <h3 className="font-semibold text-gray-900 mb-2">3. Preencha o Laudo</h3>
                 <p className="text-gray-700">
                   Selecione o ritmo, regularidade, eixo, intervalos e todos os achados que identificar.
-                  Secoes dependentes abrirao automaticamente quando necessario.
+                  Seções dependentes abrirão automaticamente quando necessário.
                 </p>
               </div>
 
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">4. Envie e Aprenda</h3>
                 <p className="text-gray-700">
-                  Apos enviar, voce vera uma comparacao detalhada entre sua interpretacao e o laudo oficial,
-                  com feedback especifico para cada item.
+                  Após enviar, você verá uma comparação detalhada entre sua interpretação e o laudo oficial,
+                  com feedback específico para cada item.
                 </p>
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-blue-900 mb-2">Dica de Estudo</h3>
                 <p className="text-blue-800 text-sm">
-                  Practice makes perfect. Quanto mais casos voce interpretar, mais rapido e preciso voce se tornara.
+                  Practice makes perfect. Quanto mais casos você interpretar, mais rápido e preciso você se tornará.
                   Use o feedback para entender onde pode melhorar.
                 </p>
               </div>
             </div>
             <div className="p-6 border-t border-gray-200">
               <Button onClick={() => setShowTutorial(false)} className="w-full">
-                Entendido, vamos comecar!
+                Entendido, vamos começar!
               </Button>
             </div>
           </div>
@@ -478,8 +477,7 @@ export default function PracticePage() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Sessao de Pratica</h1>
-            <p className="text-gray-600">ECG #{currentECG?.title}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Plantão de ECG</h1>
           </div>
           <button
             onClick={() => setShowTutorial(true)}
@@ -501,20 +499,6 @@ export default function PracticePage() {
               Premium
             </span>
           )}
-          <span className={`
-            px-2 py-1 rounded-full text-xs font-medium
-            ${currentECG?.difficulty === 'easy'
-              ? 'bg-green-100 text-green-700'
-              : currentECG?.difficulty === 'medium'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-red-100 text-red-700'
-            }
-          `}>
-            {diffLabel}
-          </span>
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-            {catLabel}
-          </span>
         </div>
       </div>
 
@@ -598,13 +582,13 @@ export default function PracticePage() {
       {/* Report Form - Below ECG */}
       <Card>
         <CardHeader>
-          <CardTitle>Sua Interpretacao</CardTitle>
+          <CardTitle>Sua Interpretação</CardTitle>
         </CardHeader>
         <CardContent>
           <ReportForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Enviar Interpretacao"
+            submitLabel="Enviar Interpretação"
           />
         </CardContent>
       </Card>
