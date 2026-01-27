@@ -78,6 +78,9 @@ export default function RegisterPage() {
         return
       }
 
+      // Send welcome email (don't block on failure)
+      fetch('/api/email/welcome', { method: 'POST' }).catch(() => {})
+
       // Force a full page reload to ensure cookies are properly read by middleware
       window.location.href = '/dashboard'
     } catch (err) {

@@ -10,6 +10,9 @@ const FROM_EMAIL = process.env.EMAIL_FROM || 'onboarding@resend.dev'
 const FROM_NAME = 'Plantao ECG'
 
 export async function sendWelcomeEmail(email: string, name: string) {
+  console.log('[Email] Sending welcome email to:', email, 'name:', name)
+  console.log('[Email] From:', `${FROM_NAME} <${FROM_EMAIL}>`)
+
   try {
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -19,13 +22,14 @@ export async function sendWelcomeEmail(email: string, name: string) {
     })
 
     if (error) {
-      console.error('Failed to send welcome email:', error)
+      console.error('[Email] Failed to send welcome email:', error)
       return { success: false, error }
     }
 
+    console.log('[Email] Welcome email sent successfully:', data)
     return { success: true, data }
   } catch (error) {
-    console.error('Failed to send welcome email:', error)
+    console.error('[Email] Exception sending welcome email:', error)
     return { success: false, error }
   }
 }
