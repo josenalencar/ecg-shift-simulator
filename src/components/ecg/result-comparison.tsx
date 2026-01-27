@@ -116,32 +116,32 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Ritmo</span>
-              <span className="font-medium ml-2">25 pts</span>
+              <span className="text-gray-600">Ritmo</span>
+              <span className="font-semibold text-gray-900 ml-2">25 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Achados</span>
-              <span className="font-medium ml-2">35 pts</span>
+              <span className="text-gray-600">Achados</span>
+              <span className="font-semibold text-gray-900 ml-2">35 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Frequência</span>
-              <span className="font-medium ml-2">10 pts</span>
+              <span className="text-gray-600">Frequência</span>
+              <span className="font-semibold text-gray-900 ml-2">10 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Eixo</span>
-              <span className="font-medium ml-2">10 pts</span>
+              <span className="text-gray-600">Eixo</span>
+              <span className="font-semibold text-gray-900 ml-2">10 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Intervalos</span>
-              <span className="font-medium ml-2">15 pts</span>
+              <span className="text-gray-600">Intervalos</span>
+              <span className="font-semibold text-gray-900 ml-2">15 pts</span>
             </div>
             <div>
-              <span className="text-gray-500">Regularidade</span>
-              <span className="font-medium ml-2">5 pts</span>
+              <span className="text-gray-600">Regularidade</span>
+              <span className="font-semibold text-gray-900 ml-2">5 pts</span>
             </div>
             <div className="col-span-2">
-              <span className="text-gray-500">Nota para aprovação</span>
-              <span className="font-medium ml-2">80%+</span>
+              <span className="text-gray-600">Nota para aprovação</span>
+              <span className="font-semibold text-gray-900 ml-2">80%+</span>
             </div>
           </div>
         </CardContent>
