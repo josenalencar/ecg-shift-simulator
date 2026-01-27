@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
 import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Medal, Building2 } from 'lucide-react'
 import { ManageSubscriptionButton } from './manage-subscription-button'
+import { PaymentSuccessHandler } from './payment-success-handler'
 import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
 
 export const dynamic = 'force-dynamic'
@@ -224,6 +225,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Payment Success Handler - polls for subscription after Stripe redirect */}
+      <PaymentSuccessHandler />
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
