@@ -3,27 +3,66 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, ChevronUp, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital, FileDown, BookOpen } from 'lucide-react'
+import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, ChevronUp, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital, FileDown, BookOpen, Baby, HeartPulse } from 'lucide-react'
 
 // Contact Modal Component
-function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function ContactModal({ isOpen, onClose, type = 'contact' }: { isOpen: boolean; onClose: () => void; type?: 'contact' | 'parceria' | 'suporte' }) {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' })
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
   if (!isOpen) return null
+
+  const modalConfig = {
+    contact: {
+      title: 'Fale Conosco',
+      subtitle: 'Envie sua mensagem e responderemos em breve.',
+      placeholder: 'Como podemos ajudar?'
+    },
+    parceria: {
+      title: 'Parcerias',
+      subtitle: 'Interessado em parceria? Conte-nos sobre sua proposta.',
+      placeholder: 'Descreva sua proposta de parceria...'
+    },
+    suporte: {
+      title: 'Suporte',
+      subtitle: 'Precisa de ajuda? Descreva seu problema.',
+      placeholder: 'Descreva o problema que está enfrentando...'
+    }
+  }
+
+  const { title, subtitle, placeholder } = modalConfig[type]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSending(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setSending(false)
-    setSent(true)
-    setTimeout(() => {
-      onClose()
-      setSent(false)
-      setFormData({ name: '', email: '', message: '' })
-    }, 2000)
+    setError('')
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, type }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao enviar mensagem')
+      }
+
+      setSent(true)
+      setTimeout(() => {
+        onClose()
+        setSent(false)
+        setFormData({ name: '', email: '', message: '' })
+      }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao enviar mensagem')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -42,8 +81,8 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         </button>
 
         <div className="p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Fale Conosco</h3>
-          <p className="text-gray-600 mb-6">Envie sua mensagem e responderemos em breve.</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600 mb-6">{subtitle}</p>
 
           {sent ? (
             <div className="text-center py-8 animate-fadeIn">
@@ -54,6 +93,11 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
                 <input
@@ -84,7 +128,7 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                  placeholder="Como podemos ajudar?"
+                  placeholder={placeholder}
                 />
               </div>
               <button
@@ -148,6 +192,7 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
 export default function HomePage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [contactType, setContactType] = useState<'contact' | 'parceria' | 'suporte'>('contact')
   const [videoPlaying, setVideoPlaying] = useState(false)
 
   useEffect(() => {
@@ -246,7 +291,7 @@ export default function HomePage() {
                 Preços
               </Link>
               <button
-                onClick={() => setContactOpen(true)}
+                onClick={() => { setContactType('contact'); setContactOpen(true); }}
                 className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 Contato
@@ -438,7 +483,8 @@ export default function HomePage() {
             </div>
           </ScrollReveal>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Adult Hospitals */}
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             {[
               {
                 icon: Hospital,
@@ -493,7 +539,76 @@ export default function HomePage() {
             ))}
           </div>
 
-          <ScrollReveal delay={400}>
+          {/* Pediatric ECG Highlight */}
+          <ScrollReveal delay={350}>
+            <div className="p-8 bg-gradient-to-r from-green-50 via-teal-50 to-cyan-50 rounded-3xl border-2 border-green-200 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-green-100 rounded-2xl">
+                    <Baby className="h-10 w-10 text-green-600" />
+                  </div>
+                  <div>
+                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full uppercase tracking-wide">Novo</span>
+                    <h3 className="text-2xl font-bold text-gray-900 mt-2">ECGs Pediátricos</h3>
+                  </div>
+                </div>
+                <div className="flex-grow">
+                  <p className="text-gray-600 text-lg">
+                    Agora com casos exclusivos de pediatria! Aprenda a interpretar ECGs em crianças,
+                    com suas particularidades de frequência, eixo e variantes normais da idade.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {/* Pediatric Hospitals */}
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              {
+                icon: Baby,
+                title: 'Hospital Pediátrico Geral',
+                description: 'ECGs pediátricos com frequências e eixos próprios da infância. Aprenda as particularidades do coração em desenvolvimento.',
+                tags: ['Pediátrico', 'Normal', 'Rotina'],
+                color: 'green'
+              },
+              {
+                icon: HeartPulse,
+                title: 'Hospital Pediátrico Cardiológico',
+                description: 'Cardiopatias congênitas e arritmias pediátricas complexas. Para quem quer se especializar em cardiologia pediátrica.',
+                tags: ['Cardiopatia', 'Congênito', 'Avançado'],
+                color: 'pink'
+              }
+            ].map((item, index) => (
+              <ScrollReveal key={index} delay={400 + index * 100}>
+                <div className="relative group h-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-teal-500 rounded-3xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity" />
+                  <div className="relative bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all border border-gray-100 h-full flex flex-col">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${
+                      item.color === 'green' ? 'bg-green-100' : 'bg-pink-100'
+                    }`}>
+                      <item.icon className={`h-7 w-7 ${
+                        item.color === 'green' ? 'text-green-600' : 'text-pink-600'
+                      }`} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                    <p className="text-gray-600 leading-relaxed mb-4 flex-grow">{item.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {item.tags.map((tag, i) => (
+                        <span key={i} className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          item.color === 'green' ? 'bg-green-50 text-green-700' : 'bg-pink-50 text-pink-700'
+                        }`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          <ScrollReveal delay={600}>
             <div className="mt-12 text-center">
               <p className="text-gray-600 mb-4">Mude seu perfil a qualquer momento nas configurações</p>
               <Link
@@ -829,10 +944,9 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Recursos</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Guia de ECG</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Casos clínicos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Comunidade</a></li>
+                <li><a href="https://substack.com/@mbedescomplicada" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="https://www.manole.com.br/curso-de-eletrocardiograma-com-jose-alencar-2-edicao/p?utm_source=site_jose_alencar&utm_medium=referral&utm_campaign=curso_ecg&utm_content=banner_home" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Curso de ECG com José Alencar</a></li>
+                <li><a href="https://concelhojedi.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Comunidade</a></li>
               </ul>
             </div>
 
@@ -840,21 +954,30 @@ export default function HomePage() {
               <h4 className="font-semibold mb-4">Contato</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
-                  <button onClick={() => setContactOpen(true)} className="hover:text-white transition-colors flex items-center gap-2">
+                  <button onClick={() => { setContactType('contact'); setContactOpen(true); }} className="hover:text-white transition-colors flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     Fale conosco
                   </button>
                 </li>
-                <li><a href="#" className="hover:text-white transition-colors">Suporte</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Parcerias</a></li>
+                <li>
+                  <button onClick={() => { setContactType('suporte'); setContactOpen(true); }} className="hover:text-white transition-colors">
+                    Suporte
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => { setContactType('parceria'); setContactOpen(true); }} className="hover:text-white transition-colors">
+                    Parcerias
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
-              © 2025 Plantão de ECG. Todos os direitos reservados.
-            </p>
+            <div className="text-sm text-gray-500 text-center md:text-left">
+              <p>© 2026 Plantão de ECG. Todos os direitos reservados.</p>
+              <p className="text-xs mt-1">JOSÉ NUNES DE ALENCAR NETO SERVIÇOS MÉDICOS LTDA - CNPJ: 39.815.339/0001-81</p>
+            </div>
             <div className="flex gap-6 text-sm text-gray-500">
               <Link href="/termos" className="hover:text-white transition-colors">Termos de uso</Link>
               <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
@@ -864,7 +987,7 @@ export default function HomePage() {
       </footer>
 
       {/* Contact Modal */}
-      <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} />
+      <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} type={contactType} />
 
       {/* Video Modal */}
       {videoPlaying && (
