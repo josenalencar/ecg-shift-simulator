@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/u
 import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
 import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
-import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown, Info, X } from 'lucide-react'
-import type { ECG, OfficialReport, MedicalHistory, FamilyHistory, Medication, HospitalType } from '@/types/database'
+import { onAttemptComplete, type GamificationResult } from '@/lib/gamification'
+import { Loader2, ArrowRight, RotateCcw, Home, Lock, Crown, Info, X, Flame, Star, Trophy, TrendingUp } from 'lucide-react'
+import type { ECG, OfficialReport, MedicalHistory, FamilyHistory, Medication, HospitalType, Category } from '@/types/database'
 
 type ECGWithPatientInfo = ECG & {
   patient_age?: number | null
@@ -60,6 +61,7 @@ export default function PracticePage() {
   const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false })
   const [monthlyAttempts, setMonthlyAttempts] = useState(0)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [gamificationResult, setGamificationResult] = useState<GamificationResult | null>(null)
 
   useEffect(() => {
     loadNextECG()
@@ -70,6 +72,7 @@ export default function PracticePage() {
     setCurrentECG(null)
     setOfficialReport(null)
     setScoringResult(null)
+    setGamificationResult(null)
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -262,6 +265,24 @@ export default function PracticePage() {
         // Still show results even if save failed
       }
 
+      // === GAMIFICATION HOOK ===
+      try {
+        const gamResult = await onAttemptComplete(userId, {
+          ecgId: currentECG.id,
+          score: result.score,
+          difficulty: currentECG.difficulty,
+          isPerfect: result.score === 100,
+          categories: (currentECG.categories || [currentECG.category]) as Category[],
+          findings: officialReport.findings || [],
+          isFirstAttempt: true,
+        }, supabase)
+
+        setGamificationResult(gamResult)
+      } catch (gamError) {
+        console.error('Gamification error:', gamError)
+        // Don't fail the submission if gamification fails
+      }
+
       // Update monthly count
       setMonthlyAttempts(prev => prev + 1)
 
@@ -361,6 +382,87 @@ export default function PracticePage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Resultado</h1>
         </div>
+
+        {/* Gamification Results */}
+        {gamificationResult && (
+          <Card className="mb-6 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardContent className="py-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {/* XP Earned */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">XP Ganho</p>
+                    <p className="text-xl font-bold text-blue-700">+{gamificationResult.xpEarned}</p>
+                  </div>
+                  {gamificationResult.activeEvent && (
+                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
+                      {gamificationResult.activeEvent.multiplier_type} Evento!
+                    </span>
+                  )}
+                </div>
+
+                {/* Level */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Star className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Nivel</p>
+                    <p className="text-xl font-bold text-purple-700">
+                      {gamificationResult.newLevel}
+                      {gamificationResult.levelUp && (
+                        <span className="ml-2 text-sm text-green-600 font-normal">Level Up!</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Streak */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Streak</p>
+                    <p className="text-xl font-bold text-orange-600">
+                      {gamificationResult.newStreak} dia{gamificationResult.newStreak !== 1 ? 's' : ''}
+                      {gamificationResult.streakMilestone && (
+                        <span className="ml-2 text-sm text-green-600 font-normal">
+                          {gamificationResult.streakMilestone} dias!
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Achievements */}
+                {gamificationResult.achievementsUnlocked.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-100 rounded-full">
+                      <Trophy className="h-5 w-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Conquistas</p>
+                      <div className="flex flex-wrap gap-1">
+                        {gamificationResult.achievementsUnlocked.map((ua) => (
+                          <span
+                            key={ua.achievement.id}
+                            className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full"
+                          >
+                            {ua.achievement.name_pt}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ECG Image (smaller) */}
         <Card className="mb-6">

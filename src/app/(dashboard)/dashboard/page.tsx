@@ -6,6 +6,7 @@ import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, Trendin
 import { ManageSubscriptionButton } from './manage-subscription-button'
 import { PaymentSuccessHandler } from './payment-success-handler'
 import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
+import { DashboardWidget } from '@/components/gamification'
 
 export const dynamic = 'force-dynamic'
 
@@ -294,6 +295,11 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Gamification Widget */}
+      <div className="mb-8">
+        <DashboardWidget userId={user.id} />
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

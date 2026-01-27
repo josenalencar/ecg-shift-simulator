@@ -154,6 +154,15 @@ export type HospitalType =
   | 'pronto_socorro'
   | 'hospital_geral'
   | 'hospital_cardiologico'
+  | 'pediatria_geral'
+  | 'pediatria_cardiologica'
+
+// Gamification Types
+export type AchievementRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+export type AchievementCategory = 'ecg_count' | 'diagnosis' | 'streak' | 'perfect' | 'level' | 'special' | 'hospital' | 'pediatric'
+export type AchievementUnlockType = 'counter' | 'streak' | 'category' | 'special'
+export type XPEventType = '2x' | '3x'
+export type XPEventTargetType = 'all' | 'inactive_7d' | 'inactive_30d' | 'inactive_60d' | 'user_specific'
 
 export interface Database {
   public: {
@@ -352,6 +361,285 @@ export interface Database {
           created_at?: string
         }
       }
+      // Gamification Tables
+      gamification_config: {
+        Row: {
+          id: string
+          xp_per_ecg_base: number
+          xp_per_score_point: number
+          xp_difficulty_multipliers: { easy: number; medium: number; hard: number }
+          xp_streak_bonus_per_day: number
+          xp_streak_bonus_max: number
+          xp_perfect_bonus: number
+          level_multiplier_per_level: number
+          max_level: number
+          xp_per_level_base: number
+          xp_per_level_growth: number
+          event_2x_bonus: number
+          event_3x_bonus: number
+          streak_grace_period_hours: number
+          inactivity_email_days: number[]
+          inactivity_event_duration_hours: number
+          ranking_top_n_visible: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          xp_per_ecg_base?: number
+          xp_per_score_point?: number
+          xp_difficulty_multipliers?: { easy: number; medium: number; hard: number }
+          xp_streak_bonus_per_day?: number
+          xp_streak_bonus_max?: number
+          xp_perfect_bonus?: number
+          level_multiplier_per_level?: number
+          max_level?: number
+          xp_per_level_base?: number
+          xp_per_level_growth?: number
+          event_2x_bonus?: number
+          event_3x_bonus?: number
+          streak_grace_period_hours?: number
+          inactivity_email_days?: number[]
+          inactivity_event_duration_hours?: number
+          ranking_top_n_visible?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          xp_per_ecg_base?: number
+          xp_per_score_point?: number
+          xp_difficulty_multipliers?: { easy: number; medium: number; hard: number }
+          xp_streak_bonus_per_day?: number
+          xp_streak_bonus_max?: number
+          xp_perfect_bonus?: number
+          level_multiplier_per_level?: number
+          max_level?: number
+          xp_per_level_base?: number
+          xp_per_level_growth?: number
+          event_2x_bonus?: number
+          event_3x_bonus?: number
+          streak_grace_period_hours?: number
+          inactivity_email_days?: number[]
+          inactivity_event_duration_hours?: number
+          ranking_top_n_visible?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+      }
+      user_gamification_stats: {
+        Row: {
+          user_id: string
+          total_xp: number
+          current_level: number
+          current_streak: number
+          longest_streak: number
+          last_activity_date: string | null
+          total_ecgs_completed: number
+          total_perfect_scores: number
+          ecgs_by_difficulty: { easy: number; medium: number; hard: number }
+          correct_by_category: Record<string, number>
+          correct_by_finding: Record<string, number>
+          perfect_streak: number
+          events_participated: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          total_xp?: number
+          current_level?: number
+          current_streak?: number
+          longest_streak?: number
+          last_activity_date?: string | null
+          total_ecgs_completed?: number
+          total_perfect_scores?: number
+          ecgs_by_difficulty?: { easy: number; medium: number; hard: number }
+          correct_by_category?: Record<string, number>
+          correct_by_finding?: Record<string, number>
+          perfect_streak?: number
+          events_participated?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          total_xp?: number
+          current_level?: number
+          current_streak?: number
+          longest_streak?: number
+          last_activity_date?: string | null
+          total_ecgs_completed?: number
+          total_perfect_scores?: number
+          ecgs_by_difficulty?: { easy: number; medium: number; hard: number }
+          correct_by_category?: Record<string, number>
+          correct_by_finding?: Record<string, number>
+          perfect_streak?: number
+          events_participated?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      achievements: {
+        Row: {
+          id: string
+          slug: string
+          name_pt: string
+          description_pt: string
+          icon: string
+          rarity: AchievementRarity
+          category: AchievementCategory
+          unlock_type: AchievementUnlockType
+          unlock_conditions: Json
+          xp_reward: number
+          display_order: number
+          is_active: boolean
+          is_hidden: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name_pt: string
+          description_pt: string
+          icon: string
+          rarity: AchievementRarity
+          category: AchievementCategory
+          unlock_type: AchievementUnlockType
+          unlock_conditions: Json
+          xp_reward?: number
+          display_order?: number
+          is_active?: boolean
+          is_hidden?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name_pt?: string
+          description_pt?: string
+          icon?: string
+          rarity?: AchievementRarity
+          category?: AchievementCategory
+          unlock_type?: AchievementUnlockType
+          unlock_conditions?: Json
+          xp_reward?: number
+          display_order?: number
+          is_active?: boolean
+          is_hidden?: boolean
+          created_at?: string
+        }
+      }
+      user_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          achievement_id: string
+          earned_at: string
+          notified: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          achievement_id: string
+          earned_at?: string
+          notified?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          achievement_id?: string
+          earned_at?: string
+          notified?: boolean
+        }
+      }
+      xp_events: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          multiplier_type: XPEventType
+          start_at: string
+          end_at: string
+          target_type: XPEventTargetType
+          target_user_id: string | null
+          is_active: boolean
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          multiplier_type: XPEventType
+          start_at: string
+          end_at: string
+          target_type?: XPEventTargetType
+          target_user_id?: string | null
+          is_active?: boolean
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          multiplier_type?: XPEventType
+          start_at?: string
+          end_at?: string
+          target_type?: XPEventTargetType
+          target_user_id?: string | null
+          is_active?: boolean
+          created_by?: string | null
+          created_at?: string
+        }
+      }
+      user_xp_events: {
+        Row: {
+          id: string
+          user_id: string
+          event_id: string
+          email_sent_at: string | null
+          participated: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_id: string
+          email_sent_at?: string | null
+          participated?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_id?: string
+          email_sent_at?: string | null
+          participated?: boolean
+        }
+      }
+      inactivity_emails: {
+        Row: {
+          id: string
+          user_id: string
+          days_inactive: number
+          event_id: string | null
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          days_inactive: number
+          event_id?: string | null
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          days_inactive?: number
+          event_id?: string | null
+          sent_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -377,4 +665,27 @@ export type ECGWithReport = ECG & {
 
 export type AttemptWithECG = Attempt & {
   ecgs: ECG
+}
+
+// Gamification helper types
+export type GamificationConfig = Database['public']['Tables']['gamification_config']['Row']
+export type UserGamificationStats = Database['public']['Tables']['user_gamification_stats']['Row']
+export type Achievement = Database['public']['Tables']['achievements']['Row']
+export type UserAchievement = Database['public']['Tables']['user_achievements']['Row']
+export type XPEvent = Database['public']['Tables']['xp_events']['Row']
+export type UserXPEvent = Database['public']['Tables']['user_xp_events']['Row']
+export type InactivityEmail = Database['public']['Tables']['inactivity_emails']['Row']
+
+export type AchievementWithProgress = Achievement & {
+  earned: boolean
+  earned_at: string | null
+}
+
+export type UserStatsWithRanking = UserGamificationStats & {
+  rank: number | null
+  percentile: number
+  profiles: {
+    full_name: string | null
+    email: string
+  }
 }

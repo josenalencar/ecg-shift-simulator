@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui'
-import { Menu, X, User, LogOut, LayoutDashboard, Activity, CreditCard, Settings } from 'lucide-react'
+import { Menu, X, User, LogOut, LayoutDashboard, Activity, CreditCard, Settings, TrendingUp } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 interface HeaderProps {
@@ -99,6 +99,14 @@ export function Header({ profile }: HeaderProps) {
                     Dashboard
                   </Link>
                   <Link
+                    href="/progress"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    Meu Progresso
+                  </Link>
+                  <Link
                     href="/settings"
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                     onClick={() => setIsUserMenuOpen(false)}
@@ -153,6 +161,13 @@ export function Header({ profile }: HeaderProps) {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href="/progress"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Meu Progresso
                 </Link>
                 {profile.role === 'admin' && (
                   <Link
