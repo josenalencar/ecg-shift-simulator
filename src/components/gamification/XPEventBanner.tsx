@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getActiveEvent } from '@/lib/gamification'
 import type { XPEvent } from '@/types/database'
@@ -35,31 +35,64 @@ function formatTimeRemaining(endAt: string): string {
 export function XPEventBanner({ userId }: XPEventBannerProps) {
   const [event, setEvent] = useState<XPEvent | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<string>('')
+  const [isExpired, setIsExpired] = useState(false)
+  const eventRef = useRef<XPEvent | null>(null)
+  const isLoadingRef = useRef(false)
 
   useEffect(() => {
-    async function loadEvent() {
-      const supabase = createClient()
-      const activeEvent = await getActiveEvent(userId, supabase)
-      setEvent(activeEvent)
+    let isMounted = true
 
-      if (activeEvent) {
-        setTimeRemaining(formatTimeRemaining(activeEvent.end_at))
+    async function loadEvent() {
+      if (isLoadingRef.current) return
+      isLoadingRef.current = true
+
+      try {
+        const supabase = createClient()
+        const activeEvent = await getActiveEvent(userId, supabase)
+
+        if (!isMounted) return
+
+        setEvent(activeEvent)
+        eventRef.current = activeEvent
+        setIsExpired(false)
+
+        if (activeEvent) {
+          const remaining = formatTimeRemaining(activeEvent.end_at)
+          setTimeRemaining(remaining)
+          if (remaining === 'Encerrado') {
+            setIsExpired(true)
+          }
+        }
+      } finally {
+        isLoadingRef.current = false
       }
     }
 
     loadEvent()
 
-    // Update time remaining every minute
+    // Update time remaining every 30 seconds for better responsiveness
     const interval = setInterval(() => {
-      if (event) {
-        setTimeRemaining(formatTimeRemaining(event.end_at))
+      const currentEvent = eventRef.current
+      if (currentEvent) {
+        const remaining = formatTimeRemaining(currentEvent.end_at)
+        setTimeRemaining(remaining)
+
+        // Check if event has expired and reload to verify
+        if (remaining === 'Encerrado') {
+          setIsExpired(true)
+          // Reload to check if there's a new event
+          loadEvent()
+        }
       }
-    }, 60000)
+    }, 30000)
 
-    return () => clearInterval(interval)
-  }, [userId, event?.end_at])
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [userId])
 
-  if (!event) return null
+  if (!event || isExpired) return null
 
   const is3x = event.multiplier_type === '3x'
 

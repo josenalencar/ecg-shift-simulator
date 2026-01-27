@@ -60,6 +60,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid multiplier type' }, { status: 400 })
     }
 
+    // Validate dates
+    const startDate = new Date(start_at)
+    const endDate = new Date(end_at)
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
+    }
+
+    if (endDate <= startDate) {
+      return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 })
+    }
+
+    // Validate that event is not too far in the past (allow up to 1 hour grace period)
+    const now = new Date()
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+    if (endDate < oneHourAgo) {
+      return NextResponse.json({ error: 'Event end date is in the past' }, { status: 400 })
+    }
+
     // Create event
     const event = await createGlobalEvent(
       name,

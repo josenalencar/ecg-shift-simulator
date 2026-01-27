@@ -21,7 +21,7 @@ export async function getActiveEvent(
     .gte('end_at', now)
     .order('multiplier_type', { ascending: false }) // Prefer 3x over 2x
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (!userError && userEvent) {
     return userEvent as XPEvent
@@ -38,7 +38,7 @@ export async function getActiveEvent(
     .gte('end_at', now)
     .order('multiplier_type', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (!globalError && globalEvent) {
     return globalEvent as XPEvent
@@ -52,7 +52,7 @@ export async function getActiveEvent(
       xp_events (*)
     `)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (!targetedError && targetedEvent?.xp_events) {
     const event = targetedEvent.xp_events as unknown as XPEvent

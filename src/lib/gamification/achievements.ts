@@ -20,6 +20,10 @@ export interface AchievementCheckContext {
     isFirstAttempt: boolean
   }
   previousStats?: UserGamificationStats
+  // Extended context for specific achievement types
+  hospitalType?: string
+  todayEcgCount?: number
+  perfectHardCount?: number
 }
 
 export interface UnlockedAchievement {
@@ -90,9 +94,13 @@ export function evaluateAchievement(
     }
 
     case 'hospital_type': {
-      // This would need to be tracked separately based on user's hospital setting
-      // For now, return false until we implement hospital-specific tracking
-      return false
+      // Check if the user's hospital type matches the condition
+      // This is handled in checkAchievements where we have access to the profile
+      // The context should include hospitalType from the profile
+      const requiredType = conditions.hospital as string
+      const userHospital = (context as AchievementCheckContext & { hospitalType?: string }).hospitalType
+      if (!userHospital) return false
+      return userHospital === requiredType
     }
 
     case 'difficulty_correct': {
@@ -103,9 +111,11 @@ export function evaluateAchievement(
     }
 
     case 'perfect_hard': {
-      // This needs separate tracking - perfect scores on hard difficulty
-      // For now, estimate based on available data
-      return false
+      // Track perfect scores on hard difficulty
+      // This is checked when we have attempt data for a hard perfect score
+      const threshold = conditions.threshold as number
+      const perfectHardCount = (context as AchievementCheckContext & { perfectHardCount?: number }).perfectHardCount ?? 0
+      return perfectHardCount >= threshold
     }
 
     case 'first_perfect_hard': {
@@ -119,9 +129,10 @@ export function evaluateAchievement(
     }
 
     case 'daily_ecgs': {
-      // This needs real-time tracking of today's ECGs
-      // Will be implemented with attempt timestamp checking
-      return false
+      // Check today's ECG count
+      const threshold = conditions.threshold as number
+      const todayCount = (context as AchievementCheckContext & { todayEcgCount?: number }).todayEcgCount ?? 0
+      return todayCount >= threshold
     }
 
     case 'weekend_ecgs': {
@@ -227,6 +238,44 @@ export async function checkAchievements(
   // For achievements that check achievement count
   const earnedCount = earnedIds.size
 
+  // Fetch extended context for specific achievement types
+  const extendedContext: AchievementCheckContext = { ...context }
+
+  // Get user's hospital type from profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('hospital_type')
+    .eq('id', userId)
+    .single()
+
+  if (profile?.hospital_type) {
+    extendedContext.hospitalType = profile.hospital_type
+  }
+
+  // Get today's ECG count
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const { count: todayCount } = await supabase
+    .from('attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', today.toISOString())
+
+  extendedContext.todayEcgCount = todayCount ?? 0
+
+  // Get perfect hard count (perfect scores on hard difficulty ECGs)
+  const { count: perfectHardCount } = await supabase
+    .from('attempts')
+    .select(`
+      *,
+      ecgs!inner(difficulty)
+    `, { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('score', 100)
+    .eq('ecgs.difficulty', 'hard')
+
+  extendedContext.perfectHardCount = perfectHardCount ?? 0
+
   // Check each achievement
   const newlyUnlocked: UnlockedAchievement[] = []
 
@@ -248,7 +297,7 @@ export async function checkAchievements(
     }
 
     // Evaluate the achievement
-    if (evaluateAchievement(achievement as Achievement, context)) {
+    if (evaluateAchievement(achievement as Achievement, extendedContext)) {
       newlyUnlocked.push({
         achievement: achievement as Achievement,
         xpReward: achievement.xp_reward,

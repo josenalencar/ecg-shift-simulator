@@ -65,7 +65,17 @@ export function DashboardWidget({ userId }: DashboardWidgetProps) {
   }
 
   if (!stats || !config) {
-    return null
+    return (
+      <Card className="border-2 border-gray-100">
+        <CardContent className="py-8">
+          <div className="text-center text-gray-500">
+            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Nao foi possivel carregar seu progresso.</p>
+            <p className="text-xs mt-1">Tente novamente mais tarde.</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   const xpProgress = xpProgressToNextLevel(stats.total_xp, config)

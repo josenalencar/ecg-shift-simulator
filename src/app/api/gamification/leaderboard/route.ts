@@ -12,9 +12,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get limit from query params
+    // Get limit from query params with max limit validation
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '10', 10)
+    const requestedLimit = parseInt(searchParams.get('limit') || '10', 10)
+    const maxLimit = 100
+    const limit = Math.min(Math.max(1, requestedLimit), maxLimit)
 
     // Get leaderboard
     const leaderboard = await getXPLeaderboard(user.id, supabase, limit)
