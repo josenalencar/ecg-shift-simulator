@@ -607,7 +607,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.pronto_socorro.categories[cat.value] || 1}
                           onChange={(e) => updateHospitalWeight('pronto_socorro', 'categories', cat.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
@@ -625,7 +625,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.pronto_socorro.difficulties[diff.value] || 1}
                           onChange={(e) => updateHospitalWeight('pronto_socorro', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
@@ -653,7 +653,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.hospital_geral.categories[cat.value] || 1}
                           onChange={(e) => updateHospitalWeight('hospital_geral', 'categories', cat.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
@@ -671,7 +671,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.hospital_geral.difficulties[diff.value] || 1}
                           onChange={(e) => updateHospitalWeight('hospital_geral', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
@@ -699,7 +699,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.hospital_cardiologico.categories[cat.value] || 1}
                           onChange={(e) => updateHospitalWeight('hospital_cardiologico', 'categories', cat.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
@@ -717,7 +717,7 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.hospital_cardiologico.difficulties[diff.value] || 1}
                           onChange={(e) => updateHospitalWeight('hospital_cardiologico', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>
                     ))}
