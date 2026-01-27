@@ -163,49 +163,58 @@ export default function PracticePage() {
       hospitalType = profile?.hospital_type || null
     }
 
-    // Prioritize ECGs based on hospital type
+    // Load hospital weights from admin settings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: adminSettings } = await (supabase as any)
+      .from('admin_settings')
+      .select('hospital_weights')
+      .eq('id', 'default')
+      .single()
+
+    type WeightConfig = {
+      categories: Record<string, number>
+      difficulties: Record<string, number>
+    }
+
+    // Prioritize ECGs based on hospital type using weighted random selection
     let selectedECG: typeof typedECGs[0]
 
-    if (hospitalType) {
-      const hospitalConfig = HOSPITAL_TYPES.find(h => h.value === hospitalType)
+    if (hospitalType && adminSettings?.hospital_weights) {
+      // hospitalType is already 'pronto_socorro', 'hospital_geral', or 'hospital_cardiologico'
+      // Handle both old keys (emergency, general, cardiology) and new keys
+      const hospitalWeightsData = adminSettings.hospital_weights as Record<string, WeightConfig>
+      const keyMapping: Record<string, string> = {
+        'pronto_socorro': 'emergency',
+        'hospital_geral': 'general',
+        'hospital_cardiologico': 'cardiology'
+      }
+      const weights = hospitalWeightsData[hospitalType] || hospitalWeightsData[keyMapping[hospitalType]] as WeightConfig
 
-      if (hospitalConfig) {
-        // Helper function to check if ECG matches priority categories
-        // Supports both single category (backward compat) and categories array
-        const matchesPriorityCategory = (ecg: typeof typedECGs[0]) => {
-          // Check new categories array first
-          const ecgCategories = (ecg as { categories?: string[] }).categories
-          if (ecgCategories && ecgCategories.length > 0) {
-            return ecgCategories.some(cat => hospitalConfig.priorityCategories.includes(cat as never))
+      if (weights) {
+        // Calculate weight for each ECG
+        const ecgWeights = typedECGs.map(ecg => {
+          const categoryWeight = weights.categories[ecg.category] || 1
+          const difficultyWeight = weights.difficulties[ecg.difficulty] || 1
+          return {
+            ecg,
+            weight: categoryWeight * difficultyWeight
           }
-          // Fallback to single category for backward compatibility
-          return hospitalConfig.priorityCategories.includes(ecg.category)
-        }
+        })
 
-        // Separate ECGs into priority and non-priority groups
-        const priorityECGs = typedECGs.filter(ecg =>
-          matchesPriorityCategory(ecg) ||
-          hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
-        )
-        const otherECGs = typedECGs.filter(ecg =>
-          !matchesPriorityCategory(ecg) &&
-          !hospitalConfig.priorityDifficulties.includes(ecg.difficulty)
-        )
+        // Weighted random selection
+        const totalWeight = ecgWeights.reduce((sum, ew) => sum + ew.weight, 0)
+        let random = Math.random() * totalWeight
 
-        // 70% chance to pick from priority ECGs if available
-        if (priorityECGs.length > 0 && Math.random() < 0.7) {
-          const randomIndex = Math.floor(Math.random() * priorityECGs.length)
-          selectedECG = priorityECGs[randomIndex]
-        } else if (otherECGs.length > 0) {
-          const randomIndex = Math.floor(Math.random() * otherECGs.length)
-          selectedECG = otherECGs[randomIndex]
-        } else {
-          // Fallback to priority if no other ECGs
-          const randomIndex = Math.floor(Math.random() * priorityECGs.length)
-          selectedECG = priorityECGs[randomIndex]
+        selectedECG = ecgWeights[ecgWeights.length - 1].ecg // fallback
+        for (const ew of ecgWeights) {
+          random -= ew.weight
+          if (random <= 0) {
+            selectedECG = ew.ecg
+            break
+          }
         }
       } else {
-        // No config found, pick random
+        // No weights found, pick random
         const randomIndex = Math.floor(Math.random() * typedECGs.length)
         selectedECG = typedECGs[randomIndex]
       }

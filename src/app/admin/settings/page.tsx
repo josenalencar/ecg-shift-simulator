@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui'
-import { Settings, Database, Image, Bell, Shield, Save, RefreshCw, Lock, Crown, UserPlus, UserMinus, Loader2, Trophy } from 'lucide-react'
+import { Settings, Database, Image, Bell, Shield, Save, RefreshCw, Lock, Crown, UserPlus, UserMinus, Loader2, Trophy, Building2 } from 'lucide-react'
+import { CATEGORIES, DIFFICULTIES } from '@/lib/ecg-constants'
 
 type AdminProfile = {
   id: string
@@ -14,12 +15,43 @@ type AdminProfile = {
   is_master_admin: boolean
 }
 
+type HospitalWeights = {
+  pronto_socorro: {
+    categories: Record<string, number>
+    difficulties: Record<string, number>
+  }
+  hospital_geral: {
+    categories: Record<string, number>
+    difficulties: Record<string, number>
+  }
+  hospital_cardiologico: {
+    categories: Record<string, number>
+    difficulties: Record<string, number>
+  }
+}
+
+const defaultHospitalWeights: HospitalWeights = {
+  pronto_socorro: {
+    categories: { arrhythmia: 3, ischemia: 3, conduction: 2, normal: 1, other: 1 },
+    difficulties: { easy: 1, medium: 2, hard: 2 }
+  },
+  hospital_geral: {
+    categories: { arrhythmia: 1, ischemia: 1, conduction: 1, normal: 3, other: 2 },
+    difficulties: { easy: 2, medium: 2, hard: 1 }
+  },
+  hospital_cardiologico: {
+    categories: { arrhythmia: 2, ischemia: 2, conduction: 2, normal: 1, other: 1 },
+    difficulties: { easy: 1, medium: 2, hard: 3 }
+  }
+}
+
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [isMasterAdmin, setIsMasterAdmin] = useState(false)
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [admins, setAdmins] = useState<AdminProfile[]>([])
+  const [hospitalWeights, setHospitalWeights] = useState<HospitalWeights>(defaultHospitalWeights)
   const [settings, setSettings] = useState({
     passScore: 80,
     heartRateTolerance: 10,
@@ -71,6 +103,26 @@ export default function AdminSettingsPage() {
           .order('email')
 
         setAdmins((adminsData as AdminProfile[]) || [])
+
+        // Load hospital weights
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: settingsData } = await (supabase as any)
+          .from('admin_settings')
+          .select('hospital_weights')
+          .eq('id', 'default')
+          .single()
+
+        if (settingsData?.hospital_weights) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const weights = settingsData.hospital_weights as any
+          // Handle migration from old keys to new keys
+          const normalizedWeights: HospitalWeights = {
+            pronto_socorro: weights.pronto_socorro || weights.emergency || defaultHospitalWeights.pronto_socorro,
+            hospital_geral: weights.hospital_geral || weights.general || defaultHospitalWeights.hospital_geral,
+            hospital_cardiologico: weights.hospital_cardiologico || weights.cardiology || defaultHospitalWeights.hospital_cardiologico,
+          }
+          setHospitalWeights(normalizedWeights)
+        }
       }
 
       setLoading(false)
@@ -82,10 +134,43 @@ export default function AdminSettingsPage() {
   async function handleSave() {
     if (!isMasterAdmin) return
     setIsSaving(true)
-    // In a real app, this would save to the database
-    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    try {
+      // Save hospital weights to database
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('admin_settings')
+        .update({ hospital_weights: hospitalWeights })
+        .eq('id', 'default')
+
+      if (error) {
+        alert('Erro ao salvar: ' + error.message)
+      } else {
+        alert('Configuracoes salvas com sucesso!')
+      }
+    } catch (err) {
+      alert('Erro ao salvar configuracoes')
+    }
+
     setIsSaving(false)
-    alert('Configuracoes salvas com sucesso!')
+  }
+
+  function updateHospitalWeight(
+    hospitalType: 'pronto_socorro' | 'hospital_geral' | 'hospital_cardiologico',
+    weightType: 'categories' | 'difficulties',
+    key: string,
+    value: number
+  ) {
+    setHospitalWeights(prev => ({
+      ...prev,
+      [hospitalType]: {
+        ...prev[hospitalType],
+        [weightType]: {
+          ...prev[hospitalType][weightType],
+          [key]: value
+        }
+      }
+    }))
   }
 
   async function toggleMasterAdmin(adminId: string, adminEmail: string, currentStatus: boolean) {
@@ -484,6 +569,169 @@ export default function AdminSettingsPage() {
               </p>
               <p className="text-xs text-blue-600 mt-1">
                 A atividade é normalizada em relação ao usuário mais ativo do sistema.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hospital Randomization Settings */}
+        <Card className="border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-blue-600" />
+              Randomizacao por Tipo de Hospital
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-sm text-gray-600">
+              Configure os pesos de probabilidade para cada tipo de hospital. Valores maiores = maior probabilidade de aparecer.
+              O sistema nao exclui outras categorias, apenas prioriza as configuradas.
+            </p>
+
+            {/* Emergency Hospital */}
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <h4 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                Pronto Socorro
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-red-700 mb-2">Categorias</p>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => (
+                      <div key={cat.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{cat.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pronto_socorro.categories[cat.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pronto_socorro', 'categories', cat.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-red-700 mb-2">Dificuldades</p>
+                  <div className="space-y-2">
+                    {DIFFICULTIES.map(diff => (
+                      <div key={diff.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{diff.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pronto_socorro.difficulties[diff.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pronto_socorro', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* General Hospital */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                Hospital Geral
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-blue-700 mb-2">Categorias</p>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => (
+                      <div key={cat.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{cat.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.hospital_geral.categories[cat.value] || 1}
+                          onChange={(e) => updateHospitalWeight('hospital_geral', 'categories', cat.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-700 mb-2">Dificuldades</p>
+                  <div className="space-y-2">
+                    {DIFFICULTIES.map(diff => (
+                      <div key={diff.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{diff.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.hospital_geral.difficulties[diff.value] || 1}
+                          onChange={(e) => updateHospitalWeight('hospital_geral', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cardiology Hospital */}
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
+                Hospital Cardiologico
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-purple-700 mb-2">Categorias</p>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => (
+                      <div key={cat.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{cat.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.hospital_cardiologico.categories[cat.value] || 1}
+                          onChange={(e) => updateHospitalWeight('hospital_cardiologico', 'categories', cat.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-purple-700 mb-2">Dificuldades</p>
+                  <div className="space-y-2">
+                    {DIFFICULTIES.map(diff => (
+                      <div key={diff.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{diff.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.hospital_cardiologico.difficulties[diff.value] || 1}
+                          onChange={(e) => updateHospitalWeight('hospital_cardiologico', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-lg border">
+              <h4 className="font-medium text-gray-800 mb-2">Como funciona</h4>
+              <p className="text-sm text-gray-600">
+                Quando um usuario Premium seleciona um tipo de hospital, o sistema usa esses pesos para
+                calcular a probabilidade de cada ECG aparecer. Por exemplo, se &quot;Arritmia&quot; tem peso 3 e &quot;Normal&quot; tem peso 1,
+                ECGs de arritmia terao 3x mais chance de aparecer.
               </p>
             </div>
           </CardContent>
