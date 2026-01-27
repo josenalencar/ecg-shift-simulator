@@ -191,6 +191,15 @@ export default async function AdminUsersPage({
     return order === 'asc' ? comparison : -comparison
   })
 
+  // Helper to format date consistently on server
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const day = date.getUTCDate().toString().padStart(2, '0')
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
+    const year = date.getUTCFullYear()
+    return `${day}/${month}/${year}`
+  }
+
   // Prepare data for components
   const usersForTable = filteredProfiles.map(profile => {
     const planInfo = getUserPlanInfo(profile)
@@ -201,6 +210,7 @@ export default async function AdminUsersPage({
       full_name: profile.full_name,
       role: profile.role,
       created_at: profile.created_at,
+      created_at_formatted: formatDate(profile.created_at),
       granted_plan: profile.granted_plan,
       planType: planInfo.plan,
       isGranted: planInfo.isGranted,

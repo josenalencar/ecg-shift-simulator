@@ -14,6 +14,7 @@ interface UserData {
   full_name: string | null
   role: string
   created_at: string
+  created_at_formatted: string
   granted_plan: GrantedPlan | null
   planType: 'free' | 'premium' | 'ai' | 'aluno_ecg'
   isGranted: boolean
@@ -216,7 +217,7 @@ export function UsersTableClient({ users }: UsersTableClientProps) {
                 <td className="py-3 px-4 text-gray-600">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                    {user.created_at_formatted}
                   </div>
                 </td>
                 <td className="py-3 px-4">
