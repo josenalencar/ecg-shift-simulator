@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { User, Shield, Calendar, Crown, Sparkles, GraduationCap } from 'lucide-react'
 import { UserActions } from './user-actions'
 import { UserFilters } from './user-filters'
+import { UserToolbar } from './user-toolbar'
 import { GrantedPlan } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -190,7 +191,10 @@ export default async function AdminUsersPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Gerenciar Usuários</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Gerenciar Usuários</h1>
+
+      {/* Toolbar */}
+      <UserToolbar />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
