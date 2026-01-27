@@ -110,6 +110,15 @@ async function handleSubscriptionChange(subscription: any, sendEmail = false) {
   const plan = subscription.metadata?.plan || 'premium'
   const customerId = subscription.customer as string
 
+  console.log('[Webhook] handleSubscriptionChange:', {
+    userId,
+    plan,
+    customerId,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    metadata: subscription.metadata,
+  })
+
   const subscriptionData = {
     stripe_customer_id: customerId,
     stripe_subscription_id: subscription.id,
@@ -129,18 +138,31 @@ async function handleSubscriptionChange(subscription: any, sendEmail = false) {
 
   if (userId) {
     // Update by user_id
-    await supabaseAdmin
+    const { error: subError } = await supabaseAdmin
       .from('subscriptions')
       .upsert({
         user_id: userId,
         ...subscriptionData,
       })
 
+    if (subError) {
+      console.error('[Webhook] Failed to upsert subscription:', subError)
+      throw new Error(`Failed to upsert subscription: ${subError.message}`)
+    }
+    console.log('[Webhook] Subscription upserted successfully for user:', userId)
+
     // Update profile subscription status
-    await supabaseAdmin
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ subscription_status: subscriptionData.status })
       .eq('id', userId)
+
+    if (profileError) {
+      console.error('[Webhook] Failed to update profile:', profileError)
+      // Don't throw here, subscription was created
+    } else {
+      console.log('[Webhook] Profile updated successfully for user:', userId)
+    }
 
     // Send activation email if this is a new/activated subscription
     if (sendEmail && subscriptionData.status === 'active') {
@@ -160,10 +182,34 @@ async function handleSubscriptionChange(subscription: any, sendEmail = false) {
     }
   } else {
     // Update by customer_id if no user_id in metadata
-    await supabaseAdmin
+    console.log('[Webhook] No userId in metadata, trying customer_id lookup:', customerId)
+
+    const { data: existingSub, error: lookupError } = await supabaseAdmin
       .from('subscriptions')
-      .update(subscriptionData)
+      .select('user_id')
       .eq('stripe_customer_id', customerId)
+      .maybeSingle()
+
+    if (lookupError) {
+      console.error('[Webhook] Failed to lookup subscription by customer_id:', lookupError)
+    }
+
+    if (existingSub?.user_id) {
+      // Found existing subscription, update it
+      const { error: updateError } = await supabaseAdmin
+        .from('subscriptions')
+        .update(subscriptionData)
+        .eq('stripe_customer_id', customerId)
+
+      if (updateError) {
+        console.error('[Webhook] Failed to update subscription by customer_id:', updateError)
+        throw new Error(`Failed to update subscription: ${updateError.message}`)
+      }
+      console.log('[Webhook] Subscription updated by customer_id for user:', existingSub.user_id)
+    } else {
+      console.error('[Webhook] No existing subscription found for customer_id:', customerId)
+      // Cannot create subscription without user_id
+    }
   }
 }
 
@@ -172,21 +218,31 @@ async function handleSubscriptionDeleted(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id
   const customerId = subscription.customer as string
 
+  console.log('[Webhook] handleSubscriptionDeleted:', { userId, customerId, subscriptionId: subscription.id })
+
   const updateData = {
     status: 'canceled',
     cancel_at_period_end: false,
   }
 
   if (userId) {
-    await supabaseAdmin
+    const { error: subError } = await supabaseAdmin
       .from('subscriptions')
       .update(updateData)
       .eq('user_id', userId)
 
-    await supabaseAdmin
+    if (subError) {
+      console.error('[Webhook] Failed to update subscription on delete:', subError)
+    }
+
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ subscription_status: 'canceled' })
       .eq('id', userId)
+
+    if (profileError) {
+      console.error('[Webhook] Failed to update profile on delete:', profileError)
+    }
 
     // Send cancellation email
     const { data: profile } = await supabaseAdmin
@@ -210,9 +266,13 @@ async function handleSubscriptionDeleted(subscription: any) {
       ).catch((err) => console.error('Failed to send cancellation email:', err))
     }
   } else {
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('subscriptions')
       .update(updateData)
       .eq('stripe_customer_id', customerId)
+
+    if (error) {
+      console.error('[Webhook] Failed to update subscription by customer_id on delete:', error)
+    }
   }
 }
