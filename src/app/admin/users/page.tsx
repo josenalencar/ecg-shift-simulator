@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { User, Shield, Calendar, Crown, Sparkles, GraduationCap } from 'lucide-react'
-import { UserActions } from './user-actions'
+import { User, Shield, Crown, Sparkles } from 'lucide-react'
 import { UserFilters } from './user-filters'
 import { UserToolbar } from './user-toolbar'
+import { UsersTableClient } from './users-table-client'
 import { GrantedPlan } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -36,13 +36,15 @@ type Subscription = {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; sort?: string; order?: string; search?: string }>
+  searchParams: Promise<{ filter?: string; sort?: string; order?: string; search?: string; dateFrom?: string; dateTo?: string }>
 }) {
   const params = await searchParams
   const filter = params.filter || 'all'
   const sort = params.sort || 'created_at'
   const order = params.order || 'desc'
   const search = params.search || ''
+  const dateFrom = params.dateFrom || ''
+  const dateTo = params.dateTo || ''
 
   const supabaseAdmin = getSupabaseAdmin()
 
@@ -125,6 +127,22 @@ export default async function AdminUsersPage({
     )
   }
 
+  // Date range filter
+  if (dateFrom) {
+    const fromDate = new Date(dateFrom)
+    fromDate.setHours(0, 0, 0, 0)
+    filteredProfiles = filteredProfiles.filter(profile =>
+      new Date(profile.created_at) >= fromDate
+    )
+  }
+  if (dateTo) {
+    const toDate = new Date(dateTo)
+    toDate.setHours(23, 59, 59, 999)
+    filteredProfiles = filteredProfiles.filter(profile =>
+      new Date(profile.created_at) <= toDate
+    )
+  }
+
   // Plan/role filter
   if (filter !== 'all') {
     filteredProfiles = filteredProfiles.filter(profile => {
@@ -173,8 +191,35 @@ export default async function AdminUsersPage({
     return order === 'asc' ? comparison : -comparison
   })
 
+  // Prepare data for components
+  const usersForTable = filteredProfiles.map(profile => {
+    const planInfo = getUserPlanInfo(profile)
+    const stats = userStats.get(profile.id)
+    return {
+      id: profile.id,
+      email: profile.email,
+      full_name: profile.full_name,
+      role: profile.role,
+      created_at: profile.created_at,
+      granted_plan: profile.granted_plan,
+      planType: planInfo.plan,
+      isGranted: planInfo.isGranted,
+      ecgCount: stats?.count || 0,
+      avgScore: stats?.avgScore || 0
+    }
+  })
+
+  const usersForExport = usersForTable.map(u => ({
+    name: u.full_name || 'Sem nome',
+    email: u.email,
+    plan: u.planType === 'ai' ? 'Premium +IA' : u.planType === 'premium' ? 'Premium' : u.planType === 'aluno_ecg' ? 'Aluno ECG' : 'Gratuito',
+    role: u.role === 'admin' ? 'Admin' : 'Usuário',
+    ecgs: u.ecgCount,
+    avgScore: Math.round(u.avgScore),
+    createdAt: new Date(u.created_at).toLocaleDateString('pt-BR')
+  }))
+
   const adminCount = profiles?.filter(p => p.role === 'admin').length || 0
-  const userCount = profiles?.filter(p => p.role === 'user').length || 0
   const premiumCount = profiles?.filter(p => {
     const info = getUserPlanInfo(p)
     return info.plan === 'premium'
@@ -183,10 +228,6 @@ export default async function AdminUsersPage({
     const info = getUserPlanInfo(p)
     return info.plan === 'ai'
   }).length || 0
-  const alunoEcgCount = profiles?.filter(p => {
-    const info = getUserPlanInfo(p)
-    return info.plan === 'aluno_ecg'
-  }).length || 0
   const freeCount = profiles?.filter(p => getUserPlanInfo(p).plan === 'free' && p.role !== 'admin').length || 0
 
   return (
@@ -194,7 +235,7 @@ export default async function AdminUsersPage({
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Gerenciar Usuários</h1>
 
       {/* Toolbar */}
-      <UserToolbar />
+      <UserToolbar usersForExport={usersForExport} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -270,14 +311,21 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Filters */}
-      <UserFilters currentFilter={filter} currentSort={sort} currentOrder={order} currentSearch={search} />
+      <UserFilters
+        currentFilter={filter}
+        currentSort={sort}
+        currentOrder={order}
+        currentSearch={search}
+        currentDateFrom={dateFrom}
+        currentDateTo={dateTo}
+      />
 
       {/* Users Table */}
       <Card>
         <CardHeader>
           <CardTitle>
             Lista de Usuários
-            {filter !== 'all' && (
+            {(filter !== 'all' || search || dateFrom || dateTo) && (
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({filteredProfiles.length} de {profiles?.length})
               </span>
@@ -285,99 +333,8 @@ export default async function AdminUsersPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredProfiles && filteredProfiles.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Usuário</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Plano</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Função</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">ECGs</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Média</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Cadastro</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProfiles.map((profile) => {
-                    const stats = userStats.get(profile.id)
-                    const planInfo = getUserPlanInfo(profile)
-                    return (
-                      <tr key={profile.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {profile.full_name || 'Sem nome'}
-                            </p>
-                            <p className="text-sm text-gray-500">{profile.email}</p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`
-                            px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1
-                            ${planInfo.plan === 'ai'
-                              ? 'bg-purple-100 text-purple-700'
-                              : planInfo.plan === 'premium'
-                                ? 'bg-blue-100 text-blue-700'
-                                : planInfo.plan === 'aluno_ecg'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-gray-100 text-gray-700'
-                            }
-                          `}>
-                            {planInfo.plan === 'ai' && <Sparkles className="h-3 w-3" />}
-                            {planInfo.plan === 'premium' && <Crown className="h-3 w-3" />}
-                            {planInfo.plan === 'aluno_ecg' && <GraduationCap className="h-3 w-3" />}
-                            {planInfo.plan === 'ai' ? 'Premium +AI' : planInfo.plan === 'premium' ? 'Premium' : planInfo.plan === 'aluno_ecg' ? 'Aluno ECG' : 'Gratuito'}
-                            {planInfo.isGranted && <span className="ml-1 opacity-70">(cortesia)</span>}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`
-                            px-2 py-1 rounded-full text-xs font-medium
-                            ${profile.role === 'admin'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
-                            }
-                          `}>
-                            {profile.role === 'admin' ? 'Admin' : 'Usuário'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-gray-900 font-medium">
-                          {stats?.count || 0}
-                        </td>
-                        <td className="py-3 px-4">
-                          {stats ? (
-                            <span className={`
-                              px-2 py-1 rounded-full text-sm font-medium
-                              ${stats.avgScore >= 80
-                                ? 'bg-green-100 text-green-700'
-                                : stats.avgScore >= 60
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-red-100 text-red-700'
-                              }
-                            `}>
-                              {Math.round(stats.avgScore)}%
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(profile.created_at).toLocaleDateString('pt-BR')}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <UserActions userId={profile.id} userEmail={profile.email} currentRole={profile.role} currentGrantedPlan={profile.granted_plan} />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+          {usersForTable.length > 0 ? (
+            <UsersTableClient users={usersForTable} />
           ) : (
             <p className="text-gray-500 text-center py-8">Nenhum usuário encontrado</p>
           )}
