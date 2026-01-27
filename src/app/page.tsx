@@ -937,7 +937,7 @@ export default function HomePage() {
                 <li><a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a></li>
                 <li><a href="#recursos" className="hover:text-white transition-colors">Recursos</a></li>
                 <li><Link href="/pricing" className="hover:text-white transition-colors">Preços</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+                <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
               </ul>
             </div>
 
