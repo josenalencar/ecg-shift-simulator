@@ -8,12 +8,17 @@ import {
   Preview,
   Section,
   Text,
+  Hr,
+  Row,
+  Column,
 } from '@react-email/components'
 
 interface SubscriptionCanceledEmailProps {
   name: string
   endDate: string
 }
+
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
 
 export default function SubscriptionCanceledEmail({
   name,
@@ -22,61 +27,127 @@ export default function SubscriptionCanceledEmail({
   return (
     <Html>
       <Head />
-      <Preview>Sua assinatura do Plantao ECG foi cancelada</Preview>
+      <Preview>Sua assinatura foi cancelada - Voce ainda pode usar ate {endDate}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={heading}>Assinatura Cancelada</Heading>
+          {/* Header */}
+          <Section style={header}>
+            <Text style={logoText}>
+              <span style={logoIcon}>&#9829;</span> Plantao ECG
+            </Text>
+          </Section>
 
-          <Text style={text}>Ola {name || 'colega'},</Text>
+          {/* Main Content */}
+          <Section style={mainSection}>
+            <Text style={sadIcon}>&#128532;</Text>
+            <Heading style={heading}>
+              Assinatura Cancelada
+            </Heading>
+            <Text style={heroText}>
+              Ola, {name || 'Doutor(a)'}. Recebemos seu pedido de cancelamento da
+              assinatura Premium do Plantao ECG.
+            </Text>
+          </Section>
 
-          <Text style={text}>
-            Lamentamos ver voce partir. Sua assinatura do Plantao ECG foi
-            cancelada.
-          </Text>
+          {/* Info Box */}
+          <Section style={infoBox}>
+            <Row>
+              <Column style={infoIconCol}>
+                <Text style={infoIcon}>&#128197;</Text>
+              </Column>
+              <Column style={infoTextCol}>
+                <Text style={infoTitle}>Acesso ate:</Text>
+                <Text style={infoValue}>{endDate}</Text>
+                <Text style={infoDesc}>
+                  Voce ainda pode usar todos os recursos Premium ate esta data.
+                </Text>
+              </Column>
+            </Row>
+          </Section>
 
-          {endDate && (
-            <Section style={highlightBox}>
-              <Text style={highlightText}>
-                Seu acesso premium continuara ativo ate{' '}
-                <strong>{endDate}</strong>.
-              </Text>
-            </Section>
-          )}
+          <Hr style={divider} />
 
-          <Text style={text}>
-            Apos o termino da assinatura, voce ainda tera acesso a:
-          </Text>
+          {/* What you'll miss section */}
+          <Section style={missSection}>
+            <Text style={sectionTitle}>O que voce perdera apos {endDate}:</Text>
 
-          <ul style={list}>
-            <li style={listItem}>Casos basicos de ECG para pratica</li>
-            <li style={listItem}>Seu historico de progresso</li>
-            <li style={listItem}>Seus casos salvos</li>
-          </ul>
+            <Row style={missRow}>
+              <Column style={missIconCol}>
+                <Text style={missIcon}>&#10060;</Text>
+              </Column>
+              <Column style={missTextCol}>
+                <Text style={missText}>Acesso a casos ilimitados de ECG</Text>
+              </Column>
+            </Row>
 
-          <Text style={text}>
-            Mudou de ideia? Voce pode assinar novamente a qualquer momento para
-            recuperar o acesso a todos os recursos premium.
-          </Text>
+            <Row style={missRow}>
+              <Column style={missIconCol}>
+                <Text style={missIcon}>&#10060;</Text>
+              </Column>
+              <Column style={missTextCol}>
+                <Text style={missText}>Niveis avancados de dificuldade</Text>
+              </Column>
+            </Row>
 
-          <Section style={buttonContainer}>
-            <Link style={button} href={`${process.env.NEXT_PUBLIC_SITE_URL}/pricing`}>
-              Assinar Novamente
+            <Row style={missRow}>
+              <Column style={missIconCol}>
+                <Text style={missIcon}>&#10060;</Text>
+              </Column>
+              <Column style={missTextCol}>
+                <Text style={missText}>Estatisticas detalhadas de desempenho</Text>
+              </Column>
+            </Row>
+
+            <Row style={missRow}>
+              <Column style={missIconCol}>
+                <Text style={missIcon}>&#10060;</Text>
+              </Column>
+              <Column style={missTextCol}>
+                <Text style={missText}>Analise com Inteligencia Artificial</Text>
+              </Column>
+            </Row>
+          </Section>
+
+          <Hr style={divider} />
+
+          {/* Win-back section */}
+          <Section style={winbackSection}>
+            <Text style={winbackTitle}>&#128161; Mudou de ideia?</Text>
+            <Text style={winbackText}>
+              Voce pode reativar sua assinatura a qualquer momento e continuar
+              de onde parou. Seu progresso e estatisticas serao mantidos.
+            </Text>
+            <Link style={button} href={`${baseUrl}/pricing`}>
+              Reativar Assinatura
             </Link>
           </Section>
 
-          <Text style={text}>
-            Gostaríamos de ouvir sua opiniao. Se tiver um momento, por favor{' '}
-            <Link href={`mailto:suporte@plantaoecg.com.br`} style={link}>
-              nos conte
-            </Link>{' '}
-            por que decidiu cancelar.
-          </Text>
+          {/* Feedback section */}
+          <Section style={feedbackSection}>
+            <Text style={feedbackTitle}>Nos ajude a melhorar</Text>
+            <Text style={feedbackText}>
+              Se tiver um momento, adorariamos saber o motivo do cancelamento
+              para podermos melhorar nosso servico. Responda este email com
+              seu feedback - lemos todas as mensagens!
+            </Text>
+          </Section>
 
-          <Text style={footer}>
-            Atenciosamente,
-            <br />
-            Equipe Plantao ECG
-          </Text>
+          {/* Footer */}
+          <Section style={footer}>
+            <Text style={footerText}>
+              Obrigado por ter feito parte da nossa comunidade.
+            </Text>
+            <Text style={footerLinks}>
+              <Link href={baseUrl} style={footerLink}>Site</Link>
+              {' • '}
+              <Link href={`${baseUrl}/termos`} style={footerLink}>Termos</Link>
+              {' • '}
+              <Link href={`${baseUrl}/privacidade`} style={footerLink}>Privacidade</Link>
+            </Text>
+            <Text style={copyright}>
+              © 2026 Plantao ECG. Todos os direitos reservados.
+            </Text>
+          </Section>
         </Container>
       </Body>
     </Html>
@@ -84,87 +155,225 @@ export default function SubscriptionCanceledEmail({
 }
 
 const main = {
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#f4f4f5',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
 }
 
 const container = {
   backgroundColor: '#ffffff',
-  margin: '0 auto',
-  padding: '40px 20px',
-  marginBottom: '64px',
-  borderRadius: '8px',
+  margin: '40px auto',
+  borderRadius: '12px',
+  overflow: 'hidden' as const,
   maxWidth: '600px',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+}
+
+const header = {
+  backgroundColor: '#71717a',
+  padding: '24px',
+  textAlign: 'center' as const,
+}
+
+const logoText = {
+  color: '#ffffff',
+  fontSize: '24px',
+  fontWeight: '700',
+  margin: '0',
+}
+
+const logoIcon = {
+  color: '#fecaca',
+  marginRight: '8px',
+}
+
+const mainSection = {
+  padding: '40px 40px 20px',
+  textAlign: 'center' as const,
+}
+
+const sadIcon = {
+  fontSize: '48px',
+  margin: '0 0 16px',
 }
 
 const heading = {
-  color: '#1a1a1a',
-  fontSize: '24px',
-  fontWeight: '600',
-  textAlign: 'center' as const,
-  margin: '0 0 30px',
+  color: '#18181b',
+  fontSize: '28px',
+  fontWeight: '700',
+  lineHeight: '36px',
+  margin: '0 0 16px',
 }
 
-const text = {
-  color: '#484848',
+const heroText = {
+  color: '#52525b',
   fontSize: '16px',
   lineHeight: '26px',
-  margin: '16px 0',
-}
-
-const highlightBox = {
-  backgroundColor: '#fef3c7',
-  borderRadius: '8px',
-  padding: '20px',
-  margin: '24px 0',
-  border: '1px solid #fde68a',
-}
-
-const highlightText = {
-  color: '#92400e',
-  fontSize: '16px',
-  lineHeight: '24px',
   margin: '0',
+}
+
+const infoBox = {
+  backgroundColor: '#fef3c7',
+  margin: '24px 40px',
+  padding: '20px',
+  borderRadius: '12px',
+  border: '1px solid #fcd34d',
+}
+
+const infoIconCol = {
+  width: '48px',
+  verticalAlign: 'top' as const,
+}
+
+const infoTextCol = {
+  verticalAlign: 'top' as const,
+  paddingLeft: '12px',
+}
+
+const infoIcon = {
+  fontSize: '32px',
+  margin: '0',
+}
+
+const infoTitle = {
+  color: '#92400e',
+  fontSize: '12px',
+  fontWeight: '600',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.5px',
+  margin: '0 0 4px',
+}
+
+const infoValue = {
+  color: '#92400e',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '0 0 8px',
+}
+
+const infoDesc = {
+  color: '#a16207',
+  fontSize: '14px',
+  lineHeight: '20px',
+  margin: '0',
+}
+
+const divider = {
+  borderColor: '#e4e4e7',
+  margin: '0 40px',
+}
+
+const missSection = {
+  padding: '32px 40px',
+}
+
+const sectionTitle = {
+  color: '#18181b',
+  fontSize: '16px',
+  fontWeight: '600',
+  margin: '0 0 20px',
+}
+
+const missRow = {
+  marginBottom: '12px',
+}
+
+const missIconCol = {
+  width: '28px',
+  verticalAlign: 'middle' as const,
+}
+
+const missTextCol = {
+  verticalAlign: 'middle' as const,
+}
+
+const missIcon = {
+  fontSize: '14px',
+  margin: '0',
+}
+
+const missText = {
+  color: '#71717a',
+  fontSize: '15px',
+  margin: '0',
+}
+
+const winbackSection = {
+  backgroundColor: '#eff6ff',
+  padding: '32px 40px',
   textAlign: 'center' as const,
 }
 
-const buttonContainer = {
-  textAlign: 'center' as const,
-  margin: '32px 0',
+const winbackTitle = {
+  color: '#1e40af',
+  fontSize: '18px',
+  fontWeight: '600',
+  margin: '0 0 12px',
+}
+
+const winbackText = {
+  color: '#3b82f6',
+  fontSize: '15px',
+  lineHeight: '24px',
+  margin: '0 0 20px',
 }
 
 const button = {
   backgroundColor: '#2563eb',
-  borderRadius: '6px',
-  color: '#fff',
+  borderRadius: '8px',
+  color: '#ffffff',
   fontSize: '16px',
   fontWeight: '600',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '12px 24px',
+  padding: '14px 32px',
 }
 
-const list = {
-  color: '#484848',
+const feedbackSection = {
+  padding: '32px 40px',
+  textAlign: 'center' as const,
+}
+
+const feedbackTitle = {
+  color: '#18181b',
   fontSize: '16px',
-  lineHeight: '26px',
-  paddingLeft: '20px',
+  fontWeight: '600',
+  margin: '0 0 8px',
 }
 
-const listItem = {
-  marginBottom: '8px',
-}
-
-const link = {
-  color: '#2563eb',
-  textDecoration: 'underline',
+const feedbackText = {
+  color: '#71717a',
+  fontSize: '14px',
+  lineHeight: '22px',
+  margin: '0',
 }
 
 const footer = {
-  color: '#8898aa',
+  backgroundColor: '#fafafa',
+  padding: '32px 40px',
+  textAlign: 'center' as const,
+}
+
+const footerText = {
+  color: '#71717a',
   fontSize: '14px',
-  lineHeight: '22px',
-  marginTop: '32px',
+  margin: '0 0 16px',
+}
+
+const footerLinks = {
+  color: '#a1a1aa',
+  fontSize: '13px',
+  margin: '0 0 12px',
+}
+
+const footerLink = {
+  color: '#71717a',
+  textDecoration: 'none',
+}
+
+const copyright = {
+  color: '#a1a1aa',
+  fontSize: '12px',
+  margin: '0',
 }

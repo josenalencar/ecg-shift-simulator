@@ -217,7 +217,7 @@ function PricingContent() {
     {
       name: 'Premium',
       description: 'Para quem quer evoluir rapido',
-      price: { monthly: 29.90, yearly: 23.90 },
+      price: { monthly: 39.90, yearly: 31.92 },
       icon: Crown,
       color: 'blue',
       popular: true,
@@ -235,7 +235,7 @@ function PricingContent() {
     {
       name: 'Premium +AI',
       description: 'Experiencia completa com IA',
-      price: { monthly: 49.90, yearly: 39.90 },
+      price: { monthly: 69.90, yearly: 55.92 },
       icon: Sparkles,
       color: 'purple',
       popular: false,

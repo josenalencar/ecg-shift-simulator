@@ -235,7 +235,7 @@ function PricingContent() {
     {
       name: 'Premium +AI',
       description: 'Experiência completa com IA',
-      price: { monthly: 59.90, yearly: 47.92 },
+      price: { monthly: 69.90, yearly: 55.92 },
       icon: Sparkles,
       color: 'purple',
       popular: false,

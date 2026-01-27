@@ -102,7 +102,7 @@ export default async function PlanoPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Valor</span>
-                <span className="font-medium">{isAIPlan ? 'R$ 59,90/mês' : 'R$ 39,90/mês'}</span>
+                <span className="font-medium">{isAIPlan ? 'R$ 69,90/mês' : 'R$ 39,90/mês'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-600">Casos de ECG</span>
@@ -187,25 +187,25 @@ export default async function PlanoPage() {
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Feedback ilimitado da ECG-IA</span>
+                    <span className="text-purple-700">Feedback ilimitado da ECG-IA</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Explicações detalhadas por IA</span>
+                    <span className="text-purple-700">Explicações detalhadas por IA</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Análise comparativa avançada</span>
+                    <span className="text-purple-700">Análise comparativa avançada</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-purple-600" />
-                    <span>Sugestões de estudo personalizadas</span>
+                    <span className="text-purple-700">Sugestões de estudo personalizadas</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-4">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">+R$ 20,00</p>
-                    <p className="text-sm text-gray-500">R$ 59,90/mês no total</p>
+                    <p className="text-2xl font-bold text-gray-900">+R$ 30,00</p>
+                    <p className="text-sm text-gray-500">R$ 69,90/mês no total</p>
                   </div>
                   <Link href="/pricing">
                     <Button className="bg-purple-600 hover:bg-purple-700">
@@ -262,26 +262,26 @@ export default async function PlanoPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Casos ilimitados por mês</span>
+                  <span className="text-gray-700">Casos ilimitados por mês</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Feedback completo e detalhado</span>
+                  <span className="text-gray-700">Feedback completo e detalhado</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Casos avançados e raros</span>
+                  <span className="text-gray-700">Casos avançados e raros</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Suporte prioritário</span>
+                  <span className="text-gray-700">Suporte prioritário</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-white rounded-lg">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">R$ 29,90</p>
-                  <p className="text-sm text-gray-500">por mes</p>
+                  <p className="text-2xl font-bold text-gray-900">R$ 39,90</p>
+                  <p className="text-sm text-gray-500">por mês</p>
                 </div>
                 <Link href="/pricing">
                   <Button size="lg">
@@ -308,7 +308,7 @@ export default async function PlanoPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span>Tudo do Premium</span>
+                  <span className="text-gray-700">Tudo do Premium</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
@@ -316,22 +316,22 @@ export default async function PlanoPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
-                  <span>IA especializada em ECG</span>
+                  <span className="text-purple-700">IA especializada em ECG</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
-                  <span>Explicações detalhadas por IA</span>
+                  <span className="text-purple-700">Explicações detalhadas por IA</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-purple-600" />
-                  <span>Sugestões de estudo personalizadas</span>
+                  <span className="text-purple-700">Sugestões de estudo personalizadas</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-white rounded-lg">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">R$ 49,90</p>
-                  <p className="text-sm text-gray-500">por mes</p>
+                  <p className="text-2xl font-bold text-gray-900">R$ 69,90</p>
+                  <p className="text-sm text-gray-500">por mês</p>
                 </div>
                 <Link href="/pricing">
                   <Button size="lg" className="bg-purple-600 hover:bg-purple-700">

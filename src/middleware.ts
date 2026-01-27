@@ -51,6 +51,17 @@ export async function middleware(request: NextRequest) {
   // This is what sets the cookies properly
   const { data: { user }, error } = await supabase.auth.getUser()
 
+  // Debug logging
+  const cookies = request.cookies.getAll()
+  const authCookies = cookies.filter(c => c.name.startsWith('sb-'))
+  console.log('[Middleware]', {
+    path: request.nextUrl.pathname,
+    hasAuthCookies: authCookies.length > 0,
+    cookieNames: authCookies.map(c => c.name),
+    userId: user?.id || null,
+    error: error?.message || null,
+  })
+
   // User is authenticated only if no error and user exists
   const isAuthenticated = !error && !!user
 
