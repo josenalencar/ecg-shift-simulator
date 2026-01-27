@@ -55,8 +55,8 @@ export default function RegisterPage() {
         return
       }
 
-      router.push('/dashboard')
-      router.refresh()
+      // Force a full page reload to ensure cookies are properly read by middleware
+      window.location.href = '/dashboard'
     } catch (err) {
       // Handle network/fetch errors that may also be rate limits
       if (err instanceof Error && (err.message.includes('429') || err.message.includes('rate'))) {

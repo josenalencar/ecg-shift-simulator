@@ -2,9 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Block vercel.app domains in production
   const host = request.headers.get('host') || ''
-
-  // Block access from vercel.app domains in production
   if (process.env.NODE_ENV === 'production' && host.includes('vercel.app')) {
     const url = new URL(request.url)
     url.host = 'plantaoecg.com.br'
@@ -12,9 +11,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 })
   }
 
-  // Create response early so we can modify cookies
+  // IMPORTANT: Create response first, then pass to Supabase
+  // This ensures cookies are properly set
   let response = NextResponse.next({
-    request,
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -26,66 +28,69 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
+          // Set cookies on request for server components
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
-          )
-          response = NextResponse.next({
-            request,
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
+          // Create new response with updated request
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          // Set cookies on response for browser
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options)
-          )
+          })
         },
       },
     }
   )
 
-  // Get user - this also refreshes the session if needed
+  // IMPORTANT: Always call getUser() to refresh session
+  // This is what sets the cookies properly
   const { data: { user }, error } = await supabase.auth.getUser()
 
-  // Determine if we have a valid authenticated user
-  // Both error AND missing user should be treated as not authenticated
-  const isAuthenticated = !error && user !== null
+  // User is authenticated only if no error and user exists
+  const isAuthenticated = !error && !!user
 
   const pathname = request.nextUrl.pathname
 
-  // Define route types
+  // Public paths that don't require auth
+  const publicPaths = ['/', '/pricing', '/termos', '/privacidade', '/preview']
+  const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/callback']
   const protectedPaths = ['/dashboard', '/practice', '/admin', '/settings', '/plano']
-  const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
 
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
-  const isAuthPath = authPaths.some(path => pathname === path)
+  const isPublicPath = publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
+  const isAuthPath = authPaths.some(p => pathname === p || pathname.startsWith(p))
+  const isProtectedPath = protectedPaths.some(p => pathname === p || pathname.startsWith(p))
 
-  // CASE 1: Protected route + NOT authenticated → redirect to login
+  // Protected route without auth → redirect to login
   if (isProtectedPath && !isAuthenticated) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
+    const redirectUrl = new URL('/login', request.url)
+    redirectUrl.searchParams.set('redirectTo', pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // CASE 2: Auth route + authenticated → redirect to dashboard
-  if (isAuthPath && isAuthenticated) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // Auth page with valid auth → redirect to dashboard
+  if (isAuthPath && isAuthenticated && pathname !== '/auth/callback') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // CASE 3: Admin route + authenticated → check admin role
-  if (pathname.startsWith('/admin') && isAuthenticated) {
+  // Admin route → check role
+  if (pathname.startsWith('/admin') && isAuthenticated && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user!.id)
+      .eq('id', user.id)
       .single()
 
     if (profile?.role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
+  // IMPORTANT: Always return response to persist cookies
   return response
 }
 
