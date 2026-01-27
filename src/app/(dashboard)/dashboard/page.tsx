@@ -217,12 +217,6 @@ export default async function DashboardPage() {
   const monthlyAttempts = monthlyCount || 0
   const remainingFree = FREE_MONTHLY_LIMIT - monthlyAttempts
 
-  // Get count of ECGs available
-  const { count: ecgCount } = await supabase
-    .from('ecgs')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Payment Success Handler - polls for subscription after Stripe redirect */}
@@ -286,9 +280,11 @@ export default async function DashboardPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">Assinatura Premium</h3>
                   <p className="text-sm text-gray-700">
-                    {subscription.cancel_at_period_end
-                      ? `Cancela em ${new Date(subscription.current_period_end!).toLocaleDateString('pt-BR')}`
-                      : `Renova em ${new Date(subscription.current_period_end!).toLocaleDateString('pt-BR')}`
+                    {subscription.current_period_end && new Date(subscription.current_period_end).getFullYear() > 2000
+                      ? subscription.cancel_at_period_end
+                        ? `Cancela em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
+                        : `Renova em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
+                      : 'Assinatura ativa'
                     }
                   </p>
                 </div>
@@ -300,7 +296,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -329,40 +325,41 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+        {!isSubscribed && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 rounded-lg">
+                  <Clock className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-700">Este Mês</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {monthlyAttempts}/{FREE_MONTHLY_LIMIT}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-700">ECGs Disponíveis</p>
-                <p className="text-2xl font-bold text-gray-900">{ecgCount || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Clock className="h-6 w-6 text-orange-600" />
+        {isSubscribed && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Trophy className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-700">Ranking</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    #{currentUserRank || '-'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-700">
-                  {isSubscribed ? 'Restantes' : 'Este Mês'}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isSubscribed
-                    ? (ecgCount || 0) - totalAttempts
-                    : `${monthlyAttempts}/${FREE_MONTHLY_LIMIT}`
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Rankings and Quick Actions */}
