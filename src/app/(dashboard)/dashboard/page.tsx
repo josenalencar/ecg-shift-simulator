@@ -2,45 +2,15 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Medal, Building2 } from 'lucide-react'
+import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Building2 } from 'lucide-react'
 import { ManageSubscriptionButton } from './manage-subscription-button'
 import { PaymentSuccessHandler } from './payment-success-handler'
 import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
-import { DashboardWidget } from '@/components/gamification'
+import { DashboardWidget, LeaderboardXP } from '@/components/gamification'
 
 export const dynamic = 'force-dynamic'
 
 const FREE_MONTHLY_LIMIT = 5
-
-// Difficulty weights for scoring (ECGs more difficult give more points)
-const DIFFICULTY_WEIGHTS: Record<string, number> = {
-  easy: 1.0,
-  medium: 1.25,
-  hard: 1.5,
-}
-
-// Weighted score formula: 70% grade weight + 30% activity weight (normalized)
-// Grade is now weighted by ECG difficulty
-function calculateWeightedScore(avgScore: number, attemptCount: number, maxAttempts: number): number {
-  const normalizedActivity = maxAttempts > 0 ? Math.min(attemptCount / maxAttempts, 1) : 0
-  return (avgScore * 0.7) + (normalizedActivity * 100 * 0.3)
-}
-
-// Calculate difficulty-weighted average score
-function calculateDifficultyWeightedAvg(attempts: { score: number; difficulty: string | null }[]): number {
-  if (attempts.length === 0) return 0
-
-  let totalWeightedScore = 0
-  let totalWeight = 0
-
-  for (const attempt of attempts) {
-    const weight = DIFFICULTY_WEIGHTS[attempt.difficulty || 'medium'] || 1.0
-    totalWeightedScore += Number(attempt.score) * weight
-    totalWeight += weight
-  }
-
-  return totalWeight > 0 ? totalWeightedScore / totalWeight : 0
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -142,67 +112,6 @@ export default async function DashboardPage() {
 
   const bestDiagnoses = diagnosisStats.slice(0, 10)
   const worstDiagnoses = [...diagnosisStats].sort((a, b) => a.percentage - b.percentage).slice(0, 10)
-
-  // Get all users for ranking
-  const { data: allProfilesData } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
-
-  type ProfileInfo = { id: string; full_name: string | null; email: string }
-  const allProfiles = allProfilesData as ProfileInfo[] | null
-
-  // Get all attempts for ranking calculation (including ECG difficulty)
-  const { data: allAttemptsData } = await supabase
-    .from('attempts')
-    .select('user_id, score, ecg_id, ecgs(difficulty)')
-
-  type AttemptData = { user_id: string; score: number; ecg_id: string; ecgs: { difficulty: string } | null }
-  const allAttempts = allAttemptsData as AttemptData[] | null
-
-  // Calculate user rankings with difficulty weighting
-  const userAttemptsMap = new Map<string, { score: number; difficulty: string | null }[]>()
-  allAttempts?.forEach(attempt => {
-    if (!userAttemptsMap.has(attempt.user_id)) {
-      userAttemptsMap.set(attempt.user_id, [])
-    }
-    userAttemptsMap.get(attempt.user_id)!.push({
-      score: Number(attempt.score),
-      difficulty: attempt.ecgs?.difficulty || null
-    })
-  })
-
-  const maxAttempts = Math.max(...Array.from(userAttemptsMap.values()).map(a => a.length), 1)
-
-  const rankings = Array.from(userAttemptsMap.entries())
-    .map(([userId, userAttempts]) => {
-      const profileInfo = allProfiles?.find(p => p.id === userId)
-      // Calculate difficulty-weighted average
-      const avgScore = calculateDifficultyWeightedAvg(userAttempts)
-      const weightedScore = calculateWeightedScore(avgScore, userAttempts.length, maxAttempts)
-      return {
-        userId,
-        name: profileInfo?.full_name || profileInfo?.email?.split('@')[0] || 'Anonimo',
-        avgScore: Math.round(avgScore),
-        attemptCount: userAttempts.length,
-        weightedScore: Math.round(weightedScore * 100) / 100,
-        isCurrentUser: userId === user.id
-      }
-    })
-    .sort((a, b) => b.weightedScore - a.weightedScore)
-    .map((entry, index) => ({ ...entry, rank: index + 1 }))
-
-  const currentUserRank = rankings.find(r => r.isCurrentUser)?.rank || 0
-  const totalUsers = rankings.length
-
-  // Calculate percentile (better than X% of users)
-  const percentile = totalUsers > 1 && currentUserRank > 0
-    ? Math.round(((totalUsers - currentUserRank) / (totalUsers - 1)) * 100)
-    : 0
-
-  // Build display ranking: top 10, and if user not in top 10, show them separately
-  const top10 = rankings.slice(0, 10)
-  const currentUserInTop10 = top10.some(r => r.isCurrentUser)
-  const currentUserEntry = rankings.find(r => r.isCurrentUser)
 
   // Get monthly attempt count for free users
   const startOfMonth = new Date()
@@ -357,9 +266,9 @@ export default async function DashboardPage() {
                   <Trophy className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-700">Ranking</p>
+                  <p className="text-sm text-gray-700">ECGs Este Mês</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    #{currentUserRank || '-'}
+                    {monthlyAttempts}
                   </p>
                 </div>
               </div>
@@ -370,96 +279,8 @@ export default async function DashboardPage() {
 
       {/* Rankings and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Ranking Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Ranking Geral
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rankings.length > 0 ? (
-              <div className="space-y-2">
-                {/* Top 10 users */}
-                {top10.map((r) => {
-                  const isTop3 = r.rank <= 3
-
-                  return (
-                    <div
-                      key={r.userId}
-                      className={`flex items-center justify-between p-2 rounded-lg ${
-                        r.isCurrentUser ? 'bg-blue-100 border border-blue-300' : 'bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                          r.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                          r.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                          r.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                          'bg-gray-200 text-gray-600'
-                        }`}>
-                          {r.rank <= 3 ? <Medal className="h-4 w-4" /> : r.rank}
-                        </div>
-                        <span className={`text-sm ${r.isCurrentUser ? 'font-bold text-blue-700' : isTop3 ? 'text-gray-900' : 'text-gray-700'}`}>
-                          {isTop3 || r.isCurrentUser ? r.name : '••••••'}
-                          {r.isCurrentUser && ' (Você)'}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">{r.avgScore}%</p>
-                        <p className="text-xs text-gray-600">{r.attemptCount} ECGs</p>
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {/* Show current user if not in top 10 */}
-                {!currentUserInTop10 && currentUserEntry && (
-                  <>
-                    <div className="text-center text-gray-400 py-1">• • •</div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-blue-100 border border-blue-300">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
-                          {currentUserEntry.rank}
-                        </div>
-                        <span className="text-sm font-bold text-blue-700">
-                          {currentUserEntry.name} (Você)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">{currentUserEntry.avgScore}%</p>
-                        <p className="text-xs text-gray-600">{currentUserEntry.attemptCount} ECGs</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Percentile display */}
-                {currentUserRank > 0 && totalUsers > 1 && (
-                  <div className="pt-3 mt-2 border-t border-gray-200">
-                    {currentUserInTop10 ? (
-                      <p className="text-xs text-center text-gray-600">
-                        Sua posição: <span className="font-bold">#{currentUserRank}</span> de {totalUsers} usuários
-                      </p>
-                    ) : (
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-blue-600">
-                          Você está melhor que {percentile}% dos usuários!
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Posição #{currentUserRank} de {totalUsers} usuários
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-gray-600 text-center py-4">Nenhum dado disponível</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* XP Leaderboard */}
+        <LeaderboardXP userId={user.id} limit={10} showUserPosition={true} />
 
         {/* Start Practice */}
         <Card className="lg:col-span-2">
