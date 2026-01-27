@@ -589,7 +589,7 @@ export default function PracticePage() {
       {/* ECG Viewer - Full Width */}
       <div className="mb-6">
         {currentECG && (
-          <ECGViewer imageUrl={currentECG.image_url} title={currentECG.title} />
+          <ECGViewer imageUrl={currentECG.image_url} />
         )}
       </div>
 
