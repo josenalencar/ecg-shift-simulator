@@ -7,6 +7,7 @@ export type Json =
   | Json[]
 
 export type UserRole = 'user' | 'admin'
+export type GrantedPlan = 'premium' | 'ai' | 'aluno_ecg'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type Category = 'arrhythmia' | 'ischemia' | 'structural' | 'normal' | 'emergency' | 'routine' | 'advanced' | 'rare' | 'other'
 
@@ -176,6 +177,7 @@ export interface Database {
           role: UserRole
           is_master_admin: boolean
           hospital_type: HospitalType | null
+          granted_plan: GrantedPlan | null
           created_at: string
           updated_at: string
         }
@@ -187,6 +189,7 @@ export interface Database {
           role?: UserRole
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
+          granted_plan?: GrantedPlan | null
           created_at?: string
           updated_at?: string
         }
@@ -198,6 +201,7 @@ export interface Database {
           role?: UserRole
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
+          granted_plan?: GrantedPlan | null
           created_at?: string
           updated_at?: string
         }

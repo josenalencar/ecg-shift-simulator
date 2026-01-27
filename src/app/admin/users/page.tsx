@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { User, Shield, Calendar, Crown, Sparkles } from 'lucide-react'
+import { User, Shield, Calendar, Crown, Sparkles, GraduationCap } from 'lucide-react'
 import { UserActions } from './user-actions'
 import { UserFilters } from './user-filters'
+import { GrantedPlan } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,7 @@ type Profile = {
   role: string
   created_at: string
   subscription_status: string | null
+  granted_plan: GrantedPlan | null
 }
 
 type Subscription = {
@@ -33,19 +35,20 @@ type Subscription = {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; sort?: string; order?: string }>
+  searchParams: Promise<{ filter?: string; sort?: string; order?: string; search?: string }>
 }) {
   const params = await searchParams
   const filter = params.filter || 'all'
   const sort = params.sort || 'created_at'
   const order = params.order || 'desc'
+  const search = params.search || ''
 
   const supabaseAdmin = getSupabaseAdmin()
 
   // Get all users with admin client (bypasses RLS)
   const { data: profilesData, error: profilesError } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, full_name, role, created_at, subscription_status')
+    .select('id, email, full_name, role, created_at, subscription_status, granted_plan')
     .order('created_at', { ascending: false })
 
   if (profilesError) {
@@ -96,26 +99,44 @@ export default async function AdminUsersPage({
   }
 
   // Helper function to get user plan type
-  const getUserPlanType = (profile: Profile): 'free' | 'premium' | 'ai' => {
+  const getUserPlanInfo = (profile: Profile): { plan: 'free' | 'premium' | 'ai' | 'aluno_ecg'; isGranted: boolean } => {
+    // Granted plans take priority
+    if (profile.granted_plan) {
+      return { plan: profile.granted_plan, isGranted: true }
+    }
+    // Then check paid subscription
     const subscription = subscriptionMap.get(profile.id)
     if (!subscription || subscription.status !== 'active') {
-      return 'free'
+      return { plan: 'free', isGranted: false }
     }
-    return subscription.plan === 'ai' ? 'ai' : 'premium'
+    return { plan: subscription.plan === 'ai' ? 'ai' : 'premium', isGranted: false }
   }
 
   // Filter users
   let filteredProfiles = profiles || []
+
+  // Search filter
+  if (search) {
+    const searchLower = search.toLowerCase()
+    filteredProfiles = filteredProfiles.filter(profile =>
+      (profile.full_name?.toLowerCase().includes(searchLower)) ||
+      (profile.email.toLowerCase().includes(searchLower))
+    )
+  }
+
+  // Plan/role filter
   if (filter !== 'all') {
     filteredProfiles = filteredProfiles.filter(profile => {
-      const planType = getUserPlanType(profile)
+      const planInfo = getUserPlanInfo(profile)
       switch (filter) {
         case 'free':
-          return planType === 'free'
+          return planInfo.plan === 'free'
         case 'premium':
-          return planType === 'premium'
+          return planInfo.plan === 'premium'
         case 'ai':
-          return planType === 'ai'
+          return planInfo.plan === 'ai'
+        case 'aluno_ecg':
+          return planInfo.plan === 'aluno_ecg'
         case 'admin':
           return profile.role === 'admin'
         default:
@@ -153,9 +174,19 @@ export default async function AdminUsersPage({
 
   const adminCount = profiles?.filter(p => p.role === 'admin').length || 0
   const userCount = profiles?.filter(p => p.role === 'user').length || 0
-  const premiumCount = profiles?.filter(p => getUserPlanType(p) === 'premium').length || 0
-  const aiCount = profiles?.filter(p => getUserPlanType(p) === 'ai').length || 0
-  const freeCount = profiles?.filter(p => getUserPlanType(p) === 'free' && p.role !== 'admin').length || 0
+  const premiumCount = profiles?.filter(p => {
+    const info = getUserPlanInfo(p)
+    return info.plan === 'premium'
+  }).length || 0
+  const aiCount = profiles?.filter(p => {
+    const info = getUserPlanInfo(p)
+    return info.plan === 'ai'
+  }).length || 0
+  const alunoEcgCount = profiles?.filter(p => {
+    const info = getUserPlanInfo(p)
+    return info.plan === 'aluno_ecg'
+  }).length || 0
+  const freeCount = profiles?.filter(p => getUserPlanInfo(p).plan === 'free' && p.role !== 'admin').length || 0
 
   return (
     <div>
@@ -235,7 +266,7 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Filters */}
-      <UserFilters currentFilter={filter} currentSort={sort} currentOrder={order} />
+      <UserFilters currentFilter={filter} currentSort={sort} currentOrder={order} currentSearch={search} />
 
       {/* Users Table */}
       <Card>
@@ -267,7 +298,7 @@ export default async function AdminUsersPage({
                 <tbody>
                   {filteredProfiles.map((profile) => {
                     const stats = userStats.get(profile.id)
-                    const planType = getUserPlanType(profile)
+                    const planInfo = getUserPlanInfo(profile)
                     return (
                       <tr key={profile.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
@@ -281,16 +312,20 @@ export default async function AdminUsersPage({
                         <td className="py-3 px-4">
                           <span className={`
                             px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1
-                            ${planType === 'ai'
+                            ${planInfo.plan === 'ai'
                               ? 'bg-purple-100 text-purple-700'
-                              : planType === 'premium'
+                              : planInfo.plan === 'premium'
                                 ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-700'
+                                : planInfo.plan === 'aluno_ecg'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-700'
                             }
                           `}>
-                            {planType === 'ai' && <Sparkles className="h-3 w-3" />}
-                            {planType === 'premium' && <Crown className="h-3 w-3" />}
-                            {planType === 'ai' ? 'Premium +AI' : planType === 'premium' ? 'Premium' : 'Gratuito'}
+                            {planInfo.plan === 'ai' && <Sparkles className="h-3 w-3" />}
+                            {planInfo.plan === 'premium' && <Crown className="h-3 w-3" />}
+                            {planInfo.plan === 'aluno_ecg' && <GraduationCap className="h-3 w-3" />}
+                            {planInfo.plan === 'ai' ? 'Premium +AI' : planInfo.plan === 'premium' ? 'Premium' : planInfo.plan === 'aluno_ecg' ? 'Aluno ECG' : 'Gratuito'}
+                            {planInfo.isGranted && <span className="ml-1 opacity-70">(cortesia)</span>}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -331,7 +366,7 @@ export default async function AdminUsersPage({
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <UserActions userId={profile.id} userEmail={profile.email} currentRole={profile.role} />
+                          <UserActions userId={profile.id} userEmail={profile.email} currentRole={profile.role} currentGrantedPlan={profile.granted_plan} />
                         </td>
                       </tr>
                     )

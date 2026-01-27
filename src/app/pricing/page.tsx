@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { Activity, Check, X, Loader2, Sparkles, ArrowRight, Crown, Zap, Shield, ChevronDown, Mail, Instagram, Linkedin, Twitter, Send, CheckCircle2 } from 'lucide-react'
+import { Check, X, Loader2, Sparkles, ArrowRight, Crown, Zap, Shield, ChevronDown, Mail, Instagram, Linkedin, Twitter, Send, CheckCircle2 } from 'lucide-react'
 
 // Contact Modal Component
 function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -326,13 +327,14 @@ function PricingContent() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className={`p-2 rounded-xl transition-all ${isScrolled ? 'bg-blue-100' : 'bg-white/20 backdrop-blur'}`}>
-                <Activity className="h-6 w-6 text-blue-600" />
-              </div>
-              <span className={`font-bold text-xl transition-colors ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>
-                Plantão de ECG
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo-nobg.png"
+                alt="Plantão ECG"
+                width={160}
+                height={40}
+                className="h-10 w-auto"
+              />
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
@@ -702,11 +704,14 @@ function PricingContent() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/10 rounded-xl">
-                  <Activity className="h-6 w-6 text-blue-400" />
-                </div>
-                <span className="font-bold text-xl">Plantão de ECG</span>
+              <Link href="/" className="flex items-center mb-4">
+                <Image
+                  src="/logo-nobg.png"
+                  alt="Plantão ECG"
+                  width={140}
+                  height={35}
+                  className="h-8 w-auto brightness-0 invert"
+                />
               </Link>
               <p className="text-gray-400 text-sm mb-4">
                 Simulador de plantão de tele-ECG com feedback de especialistas.
@@ -737,10 +742,9 @@ function PricingContent() {
             <div>
               <h4 className="font-semibold mb-4">Recursos</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Guia de ECG</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Casos clínicos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Comunidade</a></li>
+                <li><a href="https://substack.com/@mbedescomplicada" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="https://www.manole.com.br/curso-de-eletrocardiograma-com-jose-alencar-2-edicao/p?utm_source=site_jose_alencar&utm_medium=referral&utm_campaign=curso_ecg&utm_content=banner_home" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Curso de ECG com José Alencar</a></li>
+                <li><a href="https://concelhojedi.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Comunidade</a></li>
               </ul>
             </div>
 
@@ -753,19 +757,28 @@ function PricingContent() {
                     Fale conosco
                   </button>
                 </li>
-                <li><a href="#" className="hover:text-white transition-colors">Suporte</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Parcerias</a></li>
+                <li>
+                  <button onClick={() => setContactOpen(true)} className="hover:text-white transition-colors">
+                    Suporte
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setContactOpen(true)} className="hover:text-white transition-colors">
+                    Parcerias
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
-              © 2025 Plantão de ECG. Todos os direitos reservados.
-            </p>
+            <div className="text-sm text-gray-500 text-center md:text-left">
+              <p>© 2026 Plantão de ECG. Todos os direitos reservados.</p>
+              <p className="text-xs mt-1">JOSÉ NUNES DE ALENCAR NETO SERVIÇOS MÉDICOS LTDA - CNPJ: 39.815.339/0001-81</p>
+            </div>
             <div className="flex gap-6 text-sm text-gray-500">
-              <a href="#" className="hover:text-white transition-colors">Termos de uso</a>
-              <a href="#" className="hover:text-white transition-colors">Privacidade</a>
+              <Link href="/termos" className="hover:text-white transition-colors">Termos de uso</Link>
+              <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ type ECGWithPatientInfo = ECG & {
   medical_history?: MedicalHistory[] | null
   family_history?: FamilyHistory[] | null
   medications?: Medication[] | null
+  is_pediatric?: boolean | null
 }
 
 const CLINICAL_PRESENTATIONS = [
@@ -46,6 +47,8 @@ type PracticeState = 'loading' | 'practicing' | 'submitted' | 'no-ecgs' | 'limit
 type SubscriptionInfo = {
   status: string
   isActive: boolean
+  hasAI: boolean
+  isGranted: boolean
 }
 
 export default function PracticePage() {
@@ -58,7 +61,7 @@ export default function PracticePage() {
   const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
-  const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false })
+  const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false, hasAI: false, isGranted: false })
   const [monthlyAttempts, setMonthlyAttempts] = useState(0)
   const [showTutorial, setShowTutorial] = useState(false)
   const [gamificationResult, setGamificationResult] = useState<GamificationResult | null>(null)
@@ -82,17 +85,42 @@ export default function PracticePage() {
     }
     setUserId(user.id)
 
-    // Check subscription status
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: subData } = await (supabase as any)
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    // Check subscription status (including granted plans)
+    // First check for granted plan
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('granted_plan')
+      .eq('id', user.id)
+      .single()
 
-    const subInfo = {
-      status: (subData as { status?: string } | null)?.status || 'inactive',
-      isActive: (subData as { status?: string } | null)?.status === 'active'
+    const grantedPlan = (profileData as { granted_plan?: string | null } | null)?.granted_plan
+
+    let subInfo: SubscriptionInfo
+
+    if (grantedPlan) {
+      // User has a granted plan
+      subInfo = {
+        status: 'active',
+        isActive: true,
+        hasAI: grantedPlan === 'ai' || grantedPlan === 'aluno_ecg',
+        isGranted: true
+      }
+    } else {
+      // Check paid subscription
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: subData } = await (supabase as any)
+        .from('subscriptions')
+        .select('status, plan')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      const subscription = subData as { status?: string; plan?: string } | null
+      subInfo = {
+        status: subscription?.status || 'inactive',
+        isActive: subscription?.status === 'active',
+        hasAI: subscription?.plan === 'ai',
+        isGranted: false
+      }
     }
     setSubscription(subInfo)
 
@@ -185,11 +213,28 @@ export default function PracticePage() {
       difficulties: Record<string, number>
     }
 
+    // Filter ECGs based on hospital type (pediatric vs adult)
+    let eligibleECGs = typedECGs
+
+    if (hospitalType === 'pediatria_geral' || hospitalType === 'pediatria_cardiologica') {
+      // Pediatric hospitals: only show pediatric ECGs
+      eligibleECGs = typedECGs.filter(ecg => ecg.is_pediatric === true)
+    } else if (hospitalType) {
+      // Adult hospitals: only show adult (non-pediatric) ECGs
+      eligibleECGs = typedECGs.filter(ecg => ecg.is_pediatric !== true)
+    }
+    // If no hospital type (free users), show all ECGs
+
+    if (eligibleECGs.length === 0) {
+      // No ECGs available for this hospital type
+      setState('no-ecgs')
+      return
+    }
+
     // Prioritize ECGs based on hospital type using weighted random selection
-    let selectedECG: typeof typedECGs[0]
+    let selectedECG: typeof eligibleECGs[0]
 
     if (hospitalType && adminSettings?.hospital_weights) {
-      // hospitalType is already 'pronto_socorro', 'hospital_geral', or 'hospital_cardiologico'
       // Handle both old keys (emergency, general, cardiology) and new keys
       const hospitalWeightsData = adminSettings.hospital_weights as Record<string, WeightConfig>
       const keyMapping: Record<string, string> = {
@@ -201,7 +246,7 @@ export default function PracticePage() {
 
       if (weights) {
         // Calculate weight for each ECG
-        const ecgWeights = typedECGs.map(ecg => {
+        const ecgWeights = eligibleECGs.map(ecg => {
           const categoryWeight = weights.categories[ecg.category] || 1
           const difficultyWeight = weights.difficulties[ecg.difficulty] || 1
           return {
@@ -224,13 +269,13 @@ export default function PracticePage() {
         }
       } else {
         // No weights found, pick random
-        const randomIndex = Math.floor(Math.random() * typedECGs.length)
-        selectedECG = typedECGs[randomIndex]
+        const randomIndex = Math.floor(Math.random() * eligibleECGs.length)
+        selectedECG = eligibleECGs[randomIndex]
       }
     } else {
-      // No hospital type preference, pick random
-      const randomIndex = Math.floor(Math.random() * typedECGs.length)
-      selectedECG = typedECGs[randomIndex]
+      // No hospital type preference, pick random from eligible
+      const randomIndex = Math.floor(Math.random() * eligibleECGs.length)
+      selectedECG = eligibleECGs[randomIndex]
     }
 
     setCurrentECG(selectedECG)
