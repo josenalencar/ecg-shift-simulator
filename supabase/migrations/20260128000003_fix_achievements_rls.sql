@@ -1,15 +1,12 @@
 -- =============================================
--- Fix: Allow users to insert and update their own achievements
--- This was blocking achievement awards because only service_role was allowed
---
--- Root cause: checkAchievements() runs with client-side auth token,
--- but only service_role could insert into user_achievements
+-- Remove insecure user_achievements policies
+-- Achievements should only be awarded server-side via service_role
 -- =============================================
 
--- Allow users to insert their own achievements (when they earn them)
-CREATE POLICY "user_achievements_insert_own" ON user_achievements
-  FOR INSERT WITH CHECK (user_id = auth.uid());
+-- Drop the insecure policies if they exist
+DROP POLICY IF EXISTS "user_achievements_insert_own" ON user_achievements;
+DROP POLICY IF EXISTS "user_achievements_update_own" ON user_achievements;
 
--- Allow users to update their own achievements (for notified flag)
-CREATE POLICY "user_achievements_update_own" ON user_achievements
-  FOR UPDATE USING (user_id = auth.uid());
+-- Keep only:
+-- 1. user_achievements_select_own - users can VIEW their achievements
+-- 2. user_achievements_service - service_role can INSERT/UPDATE (server-side only)

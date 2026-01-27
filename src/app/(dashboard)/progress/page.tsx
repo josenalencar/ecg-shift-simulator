@@ -46,7 +46,16 @@ export default function ProgressPage() {
       }
       setUserId(user.id)
 
-      // Load all data in parallel
+      // First, check and award any pending achievements (server-side)
+      // This ensures users get achievements they've earned but weren't awarded due to previous bugs
+      try {
+        await fetch('/api/gamification/check-achievements', { method: 'POST' })
+      } catch (error) {
+        console.error('Failed to check achievements:', error)
+        // Continue loading even if achievement check fails
+      }
+
+      // Load all data in parallel (achievements will now include any newly awarded ones)
       const [userStats, leaderboard, achievementsData] = await Promise.all([
         getUserStats(user.id, supabase),
         getXPLeaderboard(user.id, supabase),

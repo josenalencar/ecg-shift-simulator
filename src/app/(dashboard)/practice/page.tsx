@@ -283,6 +283,24 @@ export default function PracticePage() {
           isFirstAttempt: true,
         }, supabase)
 
+        // Check and award achievements via server API (uses service_role to bypass RLS)
+        try {
+          const achievementRes = await fetch('/api/gamification/check-achievements', { method: 'POST' })
+          if (achievementRes.ok) {
+            const achievementData = await achievementRes.json()
+            // Merge newly awarded achievements into the result
+            if (achievementData.achievementsUnlocked?.length > 0) {
+              gamResult.achievementsUnlocked = achievementData.achievementsUnlocked.map((a: { id: string; name: string; xpReward: number }) => ({
+                achievement: { id: a.id, name_pt: a.name } as never,
+                xpReward: a.xpReward,
+              }))
+              gamResult.newTotalXP += achievementData.totalNewXp
+            }
+          }
+        } catch (achievementError) {
+          console.error('Achievement check error:', achievementError)
+        }
+
         setGamificationResult(gamResult)
       } catch (gamError) {
         console.error('Gamification error:', gamError)
