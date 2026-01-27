@@ -51,11 +51,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
     }
 
-    // Generate password recovery link
-    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'recovery',
-      email: targetUser.email,
-    })
+    // Send password recovery email
+    const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(
+      targetUser.email,
+      {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
+      }
+    )
 
     if (resetError) {
       console.error('[Reset Password] Error:', resetError)
