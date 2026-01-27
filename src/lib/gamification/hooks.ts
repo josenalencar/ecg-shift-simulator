@@ -2,7 +2,6 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type {
   GamificationConfig,
   UserGamificationStats,
-  Achievement,
   XPEvent,
   Difficulty,
   Category,
@@ -201,9 +200,21 @@ export async function onAttemptComplete(
   // Track event participation
   let newEventsParticipated = stats.events_participated
   if (activeEvent) {
+    // Check if this is the first participation in this event before incrementing
+    const supabaseClient = supabase
+    const { data: existingParticipation } = await supabaseClient
+      .from('user_xp_events')
+      .select('id, participated')
+      .eq('user_id', userId)
+      .eq('event_id', activeEvent.id)
+      .single()
+
     await recordEventParticipation(userId, activeEvent.id, supabase)
-    // Only increment if first time in this event (simplified - could be more sophisticated)
-    newEventsParticipated++
+
+    // Only increment if first time participating in this event
+    if (!existingParticipation?.participated) {
+      newEventsParticipated++
+    }
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -304,14 +315,61 @@ export async function getXPLeaderboard(
 ): Promise<{
   topUsers: Array<UserGamificationStats & { rank: number; profiles: { full_name: string | null; email: string } }>
   userRank: number | null
+  userTotalXP: number
   userPercentile: number
   isInTopN: boolean
+  totalUsers: number
   config: GamificationConfig
 }> {
   const config = await getGamificationConfig(supabase)
 
-  // Get all users ordered by XP
-  const { data: allUsers, error } = await supabase
+  // Enforce maximum limit to prevent performance issues
+  const maxLimit = 100
+  const safeLimit = Math.min(Math.max(1, limit), maxLimit)
+
+  // Get total user count for percentile calculation
+  const { count: totalUsers, error: countError } = await supabase
+    .from('user_gamification_stats')
+    .select('*', { count: 'exact', head: true })
+
+  if (countError) {
+    console.error('Failed to count users:', countError)
+    return {
+      topUsers: [],
+      userRank: null,
+      userTotalXP: 0,
+      userPercentile: 0,
+      isInTopN: false,
+      totalUsers: 0,
+      config,
+    }
+  }
+
+  // Get user's XP to determine their rank
+  const { data: userStats } = await supabase
+    .from('user_gamification_stats')
+    .select('total_xp')
+    .eq('user_id', userId)
+    .single()
+
+  // Calculate user's rank by counting users with more XP
+  let userRank: number | null = null
+  let userPercentile = 0
+  let isInTopN = false
+
+  if (userStats && totalUsers) {
+    const { count: usersAhead } = await supabase
+      .from('user_gamification_stats')
+      .select('*', { count: 'exact', head: true })
+      .gt('total_xp', userStats.total_xp)
+
+    userRank = (usersAhead ?? 0) + 1
+    userPercentile = Math.floor(((totalUsers - userRank + 1) / totalUsers) * 100)
+    isInTopN = userRank <= config.ranking_top_n_visible
+  }
+
+  // Get top N users with pagination (only fetch what we need)
+  const { data: topUsersData, error } = await supabase
     .from('user_gamification_stats')
     .select(`
       *,
@@ -321,44 +379,34 @@ export async function getXPLeaderboard(
       )
     `)
     .order('total_xp', { ascending: false })
+    .limit(safeLimit)
 
-  if (error || !allUsers) {
+  if (error || !topUsersData) {
     console.error('Failed to load leaderboard:', error)
     return {
       topUsers: [],
       userRank: null,
+      userTotalXP: 0,
       userPercentile: 0,
       isInTopN: false,
+      totalUsers: 0,
       config,
     }
   }
 
-  // Find user's position
-  const userIndex = allUsers.findIndex((u) => u.user_id === userId)
-  const totalUsers = allUsers.length
-
-  // Calculate percentile
-  let userPercentile = 0
-  let userRank: number | null = null
-  let isInTopN = false
-
-  if (userIndex !== -1) {
-    userRank = userIndex + 1
-    userPercentile = Math.floor(((totalUsers - userIndex) / totalUsers) * 100)
-    isInTopN = userRank <= config.ranking_top_n_visible
-  }
-
-  // Get top N users
-  const topUsers = allUsers.slice(0, limit).map((user, index) => ({
+  // Map top users with rank
+  const topUsers = topUsersData.map((user, index) => ({
     ...user,
     rank: index + 1,
   }))
 
   return {
     topUsers: topUsers as Array<UserGamificationStats & { rank: number; profiles: { full_name: string | null; email: string } }>,
-    userRank: isInTopN ? userRank : null, // Only return rank if in top N
+    userRank,
+    userTotalXP: userStats?.total_xp || 0,
     userPercentile,
     isInTopN,
+    totalUsers: totalUsers || 0,
     config,
   }
 }

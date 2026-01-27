@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { getXPLeaderboard } from '@/lib/gamification'
 import type { UserGamificationStats, GamificationConfig } from '@/types/database'
-import { Medal, Crown, Trophy, TrendingUp, User } from 'lucide-react'
+import { Medal, Crown, TrendingUp } from 'lucide-react'
 
 interface LeaderboardXPProps {
   userId: string
@@ -30,8 +30,10 @@ const RANK_STYLES = [
 export function LeaderboardXP({ userId, limit = 10, showUserPosition = true }: LeaderboardXPProps) {
   const [topUsers, setTopUsers] = useState<LeaderboardEntry[]>([])
   const [userRank, setUserRank] = useState<number | null>(null)
+  const [userTotalXP, setUserTotalXP] = useState<number>(0)
   const [userPercentile, setUserPercentile] = useState<number>(0)
   const [isInTopN, setIsInTopN] = useState(false)
+  const [totalUsers, setTotalUsers] = useState<number>(0)
   const [config, setConfig] = useState<GamificationConfig | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -42,8 +44,10 @@ export function LeaderboardXP({ userId, limit = 10, showUserPosition = true }: L
 
       setTopUsers(result.topUsers)
       setUserRank(result.userRank)
+      setUserTotalXP(result.userTotalXP)
       setUserPercentile(result.userPercentile)
       setIsInTopN(result.isInTopN)
+      setTotalUsers(result.totalUsers)
       setConfig(result.config)
       setLoading(false)
     }
@@ -129,22 +133,21 @@ export function LeaderboardXP({ userId, limit = 10, showUserPosition = true }: L
         </div>
 
         {/* User Position (if not in top N) */}
-        {showUserPosition && !isInTopN && (
+        {showUserPosition && !isInTopN && userRank && (
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
               <div className="flex items-center justify-center w-8">
-                <User className="h-5 w-5 text-blue-500" />
+                <span className="text-lg font-bold text-blue-600">#{userRank}</span>
               </div>
               <div className="flex-1">
                 <p className="font-medium text-blue-700">Sua Posicao</p>
                 <p className="text-sm text-blue-600">
-                  Voce esta no <span className="font-bold">Top {userPercentile}%</span>
+                  Top {userPercentile}% de {totalUsers} usuarios
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">
-                  Continue praticando para subir no ranking!
-                </p>
+                <p className="font-bold text-blue-700">{userTotalXP.toLocaleString()} XP</p>
+                <p className="text-xs text-gray-500">Continue praticando!</p>
               </div>
             </div>
           </div>
