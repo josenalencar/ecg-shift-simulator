@@ -1,6 +1,6 @@
 import type { OfficialReport, Rhythm, Finding, Axis, Interval, Regularity, ElectrodeSwap } from '@/types/database'
 import type { ReportFormData } from '@/components/ecg'
-import { RHYTHMS, FINDINGS, ELECTRODE_SWAP_OPTIONS } from './ecg-constants'
+import { RHYTHMS, FINDINGS, ELECTRODE_SWAP_OPTIONS, AXES, formatCompoundFinding } from './ecg-constants'
 
 interface FieldComparison {
   field: string
@@ -54,9 +54,7 @@ function formatRhythm(rhythms: Rhythm[]): string {
 
 function formatFindings(findings: Finding[]): string {
   if (findings.length === 0) return 'Nenhum'
-  return findings
-    .map(f => FINDINGS.find(finding => finding.value === f)?.label || f)
-    .join(', ')
+  return findings.map(f => formatCompoundFinding(f)).join(', ')
 }
 
 function formatElectrodeSwap(swaps: ElectrodeSwap[]): string {
@@ -67,13 +65,7 @@ function formatElectrodeSwap(swaps: ElectrodeSwap[]): string {
 }
 
 function formatAxis(axis: Axis): string {
-  const labels: Record<Axis, string> = {
-    normal: 'Normal',
-    left: 'Left Axis Deviation',
-    right: 'Right Axis Deviation',
-    extreme: 'Extreme Axis',
-  }
-  return labels[axis]
+  return AXES.find(a => a.value === axis)?.label || axis
 }
 
 function formatInterval(interval: Interval, type: 'pr' | 'qrs' | 'qt'): string {
@@ -124,7 +116,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'rhythm',
-    label: 'Rhythm',
+    label: 'Ritmo',
     userValue: formatRhythm(userReport.rhythm),
     correctValue: formatRhythm(officialReport.rhythm),
     isCorrect: rhythmCorrect,
@@ -140,7 +132,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'regularity',
-    label: 'Regularity',
+    label: 'Regularidade',
     userValue: userReport.regularity === 'regular' ? 'Regular' : 'Irregular',
     correctValue: officialReport.regularity === 'regular' ? 'Regular' : 'Irregular',
     isCorrect: regularityCorrect,
@@ -157,7 +149,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'heart_rate',
-    label: 'Heart Rate',
+    label: 'Frequência Cardíaca',
     userValue: `${userReport.heart_rate} bpm`,
     correctValue: `${officialReport.heart_rate} bpm`,
     isCorrect: hrCorrect,
@@ -173,7 +165,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'axis',
-    label: 'Axis',
+    label: 'Eixo Elétrico',
     userValue: formatAxis(userReport.axis),
     correctValue: formatAxis(officialReport.axis),
     isCorrect: axisCorrect,
@@ -188,7 +180,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'pr_interval',
-    label: 'PR Interval',
+    label: 'Intervalo PR',
     userValue: formatInterval(userReport.pr_interval, 'pr'),
     correctValue: formatInterval(officialReport.pr_interval, 'pr'),
     isCorrect: prCorrect,
@@ -203,7 +195,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'qrs_duration',
-    label: 'QRS Duration',
+    label: 'Duração do QRS',
     userValue: formatInterval(userReport.qrs_duration, 'qrs'),
     correctValue: formatInterval(officialReport.qrs_duration, 'qrs'),
     isCorrect: qrsCorrect,
@@ -218,7 +210,7 @@ export function calculateScore(
 
   comparisons.push({
     field: 'qt_interval',
-    label: 'QT Interval',
+    label: 'Intervalo QT',
     userValue: formatInterval(userReport.qt_interval, 'qt'),
     correctValue: formatInterval(officialReport.qt_interval, 'qt'),
     isCorrect: qtCorrect,

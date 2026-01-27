@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { ECGViewer, ReportForm, ResultComparison, type ReportFormData } from '@/components/ecg'
+import { ECGViewer, ReportForm, ResultComparison, PremiumFeedback, type ReportFormData } from '@/components/ecg'
 import { calculateScore, type ScoringResult } from '@/lib/scoring'
 import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
 import { onAttemptComplete, type GamificationResult } from '@/lib/gamification'
@@ -477,6 +477,18 @@ export default function PracticePage() {
 
         {/* Results */}
         <ResultComparison result={scoringResult} notes={officialReport?.notes} />
+
+        {/* Premium Feedback - detailed explanations for Premium users */}
+        {officialReport && currentECG && (
+          <div className="mt-6">
+            <PremiumFeedback
+              result={scoringResult}
+              officialReport={officialReport}
+              ecgImageUrl={currentECG.image_url}
+              isPremium={subscription.isActive}
+            />
+          </div>
+        )}
 
         {/* Free user warning */}
         {!subscription.isActive && remainingFree <= 2 && remainingFree > 0 && (

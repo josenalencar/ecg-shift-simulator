@@ -393,53 +393,6 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Atividade Recente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {typedAttempts && typedAttempts.length > 0 ? (
-            <div className="divide-y">
-              {typedAttempts.slice(0, 5).map((attempt) => (
-                <div key={attempt.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      ECG #{attempt.ecgs?.title || 'Caso'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(attempt.created_at).toLocaleDateString('pt-BR', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                  <div className={`
-                    px-3 py-1 rounded-full text-sm font-medium
-                    ${Number(attempt.score) >= 80
-                      ? 'bg-green-100 text-green-700'
-                      : Number(attempt.score) >= 60
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }
-                  `}>
-                    {Math.round(Number(attempt.score))}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">Nenhuma sessão de prática ainda</p>
-              <Link href="/practice">
-                <Button variant="outline">Comece sua primeira sessão</Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

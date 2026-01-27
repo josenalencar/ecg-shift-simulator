@@ -245,3 +245,58 @@ export const ELECTRODE_SWAP_OPTIONS: { value: ElectrodeSwap; label: string; desc
   { value: 'swap_rl_involved', label: 'Perna direita', description: 'Troca envolvendo perna direita' },
   { value: 'swap_precordial', label: 'Precordiais', description: 'Troca de eletrodos precordiais' },
 ]
+
+/**
+ * Format compound findings (e.g., wall-specific findings) to user-friendly labels
+ * Handles dynamic findings like pathological_q_anteroapical, oca_wall_inferior, etc.
+ */
+export function formatCompoundFinding(finding: string): string {
+  // Handle OCA wall findings: oca_wall_anterior → "Infarto Oclusivo (Anterior)"
+  if (finding.startsWith('oca_wall_')) {
+    const wall = finding.replace('oca_wall_', '')
+    const wallLabel = WALL_OPTIONS.find(w => w.value === wall)?.label || wall
+    return `Infarto Oclusivo (${wallLabel})`
+  }
+
+  // Handle pathological Q wall findings: pathological_q_anteroapical → "Onda Q Patológica (Anteroapical)"
+  if (finding.startsWith('pathological_q_') && finding !== 'pathological_q') {
+    const wall = finding.replace('pathological_q_', '')
+    const wallLabel = WALL_OPTIONS.find(w => w.value === wall)?.label || wall
+    return `Onda Q Patológica (${wallLabel})`
+  }
+
+  // Handle STE wall findings: ste_anterior → "Supradesnivelamento do ST (Anterior)"
+  if (finding.startsWith('ste_') && finding !== 'ste') {
+    const wall = finding.replace('ste_', '')
+    const wallLabel = WALL_OPTIONS.find(w => w.value === wall)?.label || wall
+    return `Supradesnivelamento do ST (${wallLabel})`
+  }
+
+  // Handle fragmented QRS wall findings: fragmented_qrs_anterior → "QRS Fragmentado (Anterior)"
+  if (finding.startsWith('fragmented_qrs_') && finding !== 'fragmented_qrs') {
+    const wall = finding.replace('fragmented_qrs_', '')
+    const wallLabel = WALL_OPTIONS.find(w => w.value === wall)?.label || wall
+    return `QRS Fragmentado (${wallLabel})`
+  }
+
+  // Handle pacemaker sense failure: pacemaker_sense_failure_atrio → "Falha de Sense (Átrio)"
+  if (finding.startsWith('pacemaker_sense_failure_')) {
+    const chamber = finding.replace('pacemaker_sense_failure_', '')
+    return `Falha de Sense (${chamber === 'atrio' ? 'Átrio' : 'Ventrículo'})`
+  }
+
+  // Handle pacemaker pace failure: pacemaker_pace_failure_ventriculo → "Falha de Pace (Ventrículo)"
+  if (finding.startsWith('pacemaker_pace_failure_')) {
+    const chamber = finding.replace('pacemaker_pace_failure_', '')
+    return `Falha de Pace (${chamber === 'atrio' ? 'Átrio' : 'Ventrículo'})`
+  }
+
+  // Fall back to standard lookup in FINDINGS array
+  const standardFinding = FINDINGS.find(f => f.value === finding)
+  if (standardFinding) {
+    return standardFinding.label
+  }
+
+  // If not found, return the raw value (should not happen in production)
+  return finding
+}
