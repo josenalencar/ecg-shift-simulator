@@ -1,63 +1,79 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, CheckCircle, Crown } from 'lucide-react'
 
 export function PaymentSuccessHandler() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const success = searchParams.get('success')
 
   const [status, setStatus] = useState<'checking' | 'active' | 'waiting'>('checking')
-  const [attempts, setAttempts] = useState(0)
+  const [attemptCount, setAttemptCount] = useState(0)
   const maxAttempts = 15 // Max 15 attempts = ~30 seconds
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const hasFoundActiveRef = useRef(false)
+
+  const checkSubscription = useCallback(async () => {
+    if (hasFoundActiveRef.current) return
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    console.log('[PaymentSuccess] Checking subscription for user:', user.id)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from('subscriptions')
+      .select('status, plan')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    console.log('[PaymentSuccess] Subscription data:', data, 'error:', error)
+
+    if (data?.status === 'active') {
+      hasFoundActiveRef.current = true
+      setStatus('active')
+      // Clear interval immediately
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      // Wait a moment to show success message, then refresh
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 2000)
+    } else {
+      setStatus('waiting')
+      setAttemptCount(prev => {
+        const newCount = prev + 1
+        if (newCount >= maxAttempts && intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
+        }
+        return newCount
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (success !== 'true') return
 
-    const supabase = createClient()
-
-    async function checkSubscription() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (data?.status === 'active') {
-        setStatus('active')
-        // Wait a moment to show success message, then refresh
-        setTimeout(() => {
-          // Remove success param and refresh
-          window.location.href = '/dashboard'
-        }, 2000)
-      } else {
-        setStatus('waiting')
-        setAttempts(prev => prev + 1)
-      }
-    }
-
     // Initial check
     checkSubscription()
 
-    // Poll every 2 seconds
-    const interval = setInterval(() => {
-      if (attempts < maxAttempts) {
-        checkSubscription()
-      } else {
-        // Stop polling after max attempts
-        clearInterval(interval)
-      }
-    }, 2000)
+    // Start polling
+    intervalRef.current = setInterval(checkSubscription, 2000)
 
-    return () => clearInterval(interval)
-  }, [success, attempts, router])
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [success, checkSubscription])
 
   if (success !== 'true') return null
 
@@ -89,12 +105,12 @@ export function PaymentSuccessHandler() {
             <p className="text-gray-600">
               Aguarde enquanto confirmamos seu pagamento. Isso pode levar alguns segundos.
             </p>
-            {attempts > 5 && (
+            {attemptCount > 5 && attemptCount < maxAttempts && (
               <p className="text-sm text-gray-500 mt-4">
                 Ainda processando... Por favor, aguarde.
               </p>
             )}
-            {attempts >= maxAttempts && (
+            {attemptCount >= maxAttempts && (
               <div className="mt-4">
                 <p className="text-sm text-orange-600 mb-2">
                   O processamento esta demorando mais que o esperado.
