@@ -13,8 +13,9 @@ interface ECGViewerProps {
 type CaliperMode = 'off' | 'calibrating' | 'measuring'
 
 interface CaliperPoint {
-  x: number
-  y: number
+  x: number      // percentage (0-100)
+  y: number      // percentage (0-100)
+  pixelX: number // pixel value at time of click (for measurement calc)
 }
 
 export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
@@ -23,6 +24,7 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 1000, height: 500 })
 
   // Caliper state
@@ -83,23 +85,31 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
   const handleImageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (caliperMode === 'off') return
 
-    // Get click position relative to the image container
-    const rect = imageContainerRef.current?.getBoundingClientRect()
-    if (!rect) return
+    // Get the image element's bounding rect
+    const imgElement = imageRef.current
+    if (!imgElement) return
 
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const imgRect = imgElement.getBoundingClientRect()
 
-    // Update container size on click for accuracy
-    setContainerSize({ width: rect.width, height: rect.height })
+    // Calculate click position relative to image (in visual/screen pixels)
+    const visualX = e.clientX - imgRect.left
+    const visualY = e.clientY - imgRect.top
+
+    // Convert to percentage of image dimensions (zoom-invariant)
+    const xPercent = (visualX / imgRect.width) * 100
+    const yPercent = (visualY / imgRect.height) * 100
+
+    // Also store pixel value for measurement calculations
+    const scale = transformRef.current?.state?.scale || 1
+    const pixelX = visualX / scale
 
     if (caliperMode === 'calibrating') {
-      const newPoints = [...calibrationPoints, { x, y }]
+      const newPoints = [...calibrationPoints, { x: xPercent, y: yPercent, pixelX }]
       setCalibrationPoints(newPoints)
 
       if (newPoints.length === 2) {
-        // Calculate pixels per 200ms (using horizontal distance only for standard ECG speed)
-        const distance = Math.abs(newPoints[1].x - newPoints[0].x)
+        // Calculate pixels per 200ms using the pixel values
+        const distance = Math.abs(newPoints[1].pixelX - newPoints[0].pixelX)
         const pxPerMs = distance / 200 // 200ms for 5mm big square
         setPixelsPerMs(pxPerMs)
         setCaliperMode('measuring')
@@ -107,18 +117,18 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
         setMeasurement(null)
       }
     } else if (caliperMode === 'measuring' && pixelsPerMs) {
-      const newPoints = [...measurePoints, { x, y }]
+      const newPoints = [...measurePoints, { x: xPercent, y: yPercent, pixelX }]
 
       if (newPoints.length > 2) {
-        // Reset measurement and start new one (5th click onwards)
-        setMeasurePoints([{ x, y }])
+        // Reset measurement and start new one
+        setMeasurePoints([{ x: xPercent, y: yPercent, pixelX }])
         setMeasurement(null)
       } else {
         setMeasurePoints(newPoints)
 
         if (newPoints.length === 2) {
-          // Calculate measurement (using horizontal distance)
-          const distance = Math.abs(newPoints[1].x - newPoints[0].x)
+          // Calculate measurement using pixel values
+          const distance = Math.abs(newPoints[1].pixelX - newPoints[0].pixelX)
           const ms = distance / pixelsPerMs
           setMeasurement(Math.round(ms))
         }
@@ -315,6 +325,7 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                 style={{ position: 'relative', overflow: 'visible' }}
               >
                 <img
+                  ref={imageRef}
                   src={imageUrl}
                   alt={title || 'ECG'}
                   className="max-w-full max-h-full object-contain"
@@ -328,14 +339,14 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                     key={`cal-vline-${i}`}
                     style={{
                       position: 'absolute',
-                      left: `${point.x}px`,
-                      top: '-50%',
+                      left: `${point.x}%`,
+                      top: 0,
                       width: '3px',
-                      height: '200%',
+                      height: '100%',
                       backgroundColor: '#ef4444',
                       pointerEvents: 'none',
                       zIndex: 50,
-                      marginLeft: '-1.5px'
+                      transform: 'translateX(-50%)'
                     }}
                   />
                 ))}
@@ -346,14 +357,14 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                     key={`meas-vline-${i}`}
                     style={{
                       position: 'absolute',
-                      left: `${point.x}px`,
-                      top: '-50%',
+                      left: `${point.x}%`,
+                      top: 0,
                       width: '3px',
-                      height: '200%',
+                      height: '100%',
                       backgroundColor: '#3b82f6',
                       pointerEvents: 'none',
                       zIndex: 50,
-                      marginLeft: '-1.5px'
+                      transform: 'translateX(-50%)'
                     }}
                   />
                 ))}
@@ -363,7 +374,7 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                   <div
                     style={{
                       position: 'absolute',
-                      left: `${(measurePoints[0].x + measurePoints[1].x) / 2}px`,
+                      left: `${(measurePoints[0].x + measurePoints[1].x) / 2}%`,
                       top: '20px',
                       transform: 'translateX(-50%)',
                       backgroundColor: 'white',
@@ -385,8 +396,8 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                     key={`cal-${i}`}
                     style={{
                       position: 'absolute',
-                      left: `${point.x}px`,
-                      top: `${point.y}px`,
+                      left: `${point.x}%`,
+                      top: `${point.y}%`,
                       width: '16px',
                       height: '16px',
                       backgroundColor: '#ef4444',
@@ -406,8 +417,8 @@ export function ECGViewer({ imageUrl, title }: ECGViewerProps) {
                     key={`meas-${i}`}
                     style={{
                       position: 'absolute',
-                      left: `${point.x}px`,
-                      top: `${point.y}px`,
+                      left: `${point.x}%`,
+                      top: `${point.y}%`,
                       width: '16px',
                       height: '16px',
                       backgroundColor: '#3b82f6',

@@ -157,11 +157,8 @@ The app can be deployed to any platform supporting Next.js:
 ## Future Enhancements
 
 - [ ] AI-powered teaching integration
-- [ ] Stripe payment integration
 - [ ] Advanced analytics dashboard
 - [ ] Error pattern analysis
-- [ ] Timed "shift mode"
-- [ ] Export certificates
 
 ## License
 

@@ -28,6 +28,14 @@ type HospitalWeights = {
     categories: Record<string, number>
     difficulties: Record<string, number>
   }
+  pediatria_geral?: {
+    categories: Record<string, number>
+    difficulties: Record<string, number>
+  }
+  pediatria_cardiologica?: {
+    categories: Record<string, number>
+    difficulties: Record<string, number>
+  }
 }
 
 type GamificationConfig = {
@@ -105,6 +113,14 @@ const defaultHospitalWeights: HospitalWeights = {
     difficulties: { easy: 2, medium: 2, hard: 1 }
   },
   hospital_cardiologico: {
+    categories: { arrhythmia: 2, ischemia: 2, conduction: 2, normal: 1, other: 1 },
+    difficulties: { easy: 1, medium: 2, hard: 3 }
+  },
+  pediatria_geral: {
+    categories: { arrhythmia: 1, ischemia: 1, conduction: 1, normal: 3, other: 2 },
+    difficulties: { easy: 2, medium: 2, hard: 1 }
+  },
+  pediatria_cardiologica: {
     categories: { arrhythmia: 2, ischemia: 2, conduction: 2, normal: 1, other: 1 },
     difficulties: { easy: 1, medium: 2, hard: 3 }
   }
@@ -258,21 +274,24 @@ export default function AdminSettingsPage() {
   }
 
   function updateHospitalWeight(
-    hospitalType: 'pronto_socorro' | 'hospital_geral' | 'hospital_cardiologico',
+    hospitalType: 'pronto_socorro' | 'hospital_geral' | 'hospital_cardiologico' | 'pediatria_geral' | 'pediatria_cardiologica',
     weightType: 'categories' | 'difficulties',
     key: string,
     value: number
   ) {
-    setHospitalWeights(prev => ({
-      ...prev,
-      [hospitalType]: {
-        ...prev[hospitalType],
-        [weightType]: {
-          ...prev[hospitalType][weightType],
-          [key]: value
+    setHospitalWeights(prev => {
+      const currentHospital = prev[hospitalType] || { categories: {}, difficulties: {} }
+      return {
+        ...prev,
+        [hospitalType]: {
+          ...currentHospital,
+          [weightType]: {
+            ...currentHospital[weightType],
+            [key]: value
+          }
         }
       }
-    }))
+    })
   }
 
   async function handleSaveGamification() {
@@ -769,6 +788,98 @@ export default function AdminSettingsPage() {
                           max="10"
                           value={hospitalWeights.hospital_cardiologico.difficulties[diff.value] || 1}
                           onChange={(e) => updateHospitalWeight('hospital_cardiologico', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pediatric General Hospital */}
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                Hospital Pediatrico Geral
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-green-700 mb-2">Categorias</p>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => (
+                      <div key={cat.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{cat.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pediatria_geral?.categories[cat.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pediatria_geral', 'categories', cat.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-700 mb-2">Dificuldades</p>
+                  <div className="space-y-2">
+                    {DIFFICULTIES.map(diff => (
+                      <div key={diff.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{diff.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pediatria_geral?.difficulties[diff.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pediatria_geral', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pediatric Cardiology Hospital */}
+            <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
+              <h4 className="font-semibold text-pink-800 mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-pink-500 rounded-full"></span>
+                Hospital Pediatrico Cardiologico
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-pink-700 mb-2">Categorias</p>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => (
+                      <div key={cat.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{cat.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pediatria_cardiologica?.categories[cat.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pediatria_cardiologica', 'categories', cat.value, parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-pink-700 mb-2">Dificuldades</p>
+                  <div className="space-y-2">
+                    {DIFFICULTIES.map(diff => (
+                      <div key={diff.value} className="flex items-center justify-between">
+                        <label className="text-sm text-gray-700">{diff.label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={hospitalWeights.pediatria_cardiologica?.difficulties[diff.value] || 1}
+                          onChange={(e) => updateHospitalWeight('pediatria_cardiologica', 'difficulties', diff.value, parseInt(e.target.value) || 1)}
                           className="w-16 px-2 py-1 border rounded text-center text-sm text-gray-900 font-medium"
                         />
                       </div>

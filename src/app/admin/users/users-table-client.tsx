@@ -106,7 +106,7 @@ export function UsersTableClient({ users }: UsersTableClientProps) {
               Limpar seleção
             </Button>
             <Button
-              variant="destructive"
+              variant="danger"
               size="sm"
               onClick={handleBulkDelete}
               disabled={bulkDeleting}

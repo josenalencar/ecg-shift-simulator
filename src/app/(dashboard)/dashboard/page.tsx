@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Building2 } from 'lucide-react'
+import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Building2, Stethoscope, Heart, AlertTriangle, Play, Baby, HeartPulse } from 'lucide-react'
 import { ManageSubscriptionButton } from './manage-subscription-button'
 import { PaymentSuccessHandler } from './payment-success-handler'
 import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
@@ -11,6 +11,53 @@ import { DashboardWidget, LeaderboardXP } from '@/components/gamification'
 export const dynamic = 'force-dynamic'
 
 const FREE_MONTHLY_LIMIT = 5
+
+// Hospital stories to engage users (environment-focused, not patient-specific)
+const HOSPITAL_STORIES: Record<string, { icon: typeof Building2; title: string; story: string; color: string; bgColor: string }> = {
+  pronto_socorro: {
+    icon: AlertTriangle,
+    title: 'Pronto Socorro',
+    story: 'Luzes piscando, macas passando, monitores apitando. No pronto socorro, cada ECG pode ser a diferença entre a vida e a morte. Aqui você enfrenta os casos mais urgentes: infartos, arritmias instáveis, emergências que não podem esperar. Adrenalina pura.',
+    color: 'text-red-600',
+    bgColor: 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200',
+  },
+  hospital_geral: {
+    icon: Building2,
+    title: 'Hospital Geral',
+    story: 'Enfermarias lotadas, pré-operatórios, check-ups de rotina. No hospital geral, a variedade é a regra. De ECGs normais a achados inesperados em pacientes assintomáticos. Cada caso exige atenção - nem sempre o simples é o que parece.',
+    color: 'text-blue-600',
+    bgColor: 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200',
+  },
+  hospital_cardiologico: {
+    icon: Heart,
+    title: 'Hospital Cardiológico',
+    story: 'Centro de referência. Aqui chegam os casos que ninguém mais conseguiu diagnosticar. Padrões raros, arritmias complexas, sutilezas que passam despercebidas. É o lugar para quem quer se tornar um verdadeiro especialista em ECG.',
+    color: 'text-purple-600',
+    bgColor: 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200',
+  },
+  pediatria_geral: {
+    icon: Baby,
+    title: 'Hospital Pediátrico Geral',
+    story: 'Corredores coloridos, mas a responsabilidade é a mesma. ECGs pediátricos têm suas próprias regras: frequências mais altas, eixos diferentes, variantes normais da idade. Aprenda a distinguir o fisiológico do patológico nos pequenos pacientes.',
+    color: 'text-green-600',
+    bgColor: 'bg-gradient-to-br from-green-50 to-teal-50 border-green-200',
+  },
+  pediatria_cardiologica: {
+    icon: HeartPulse,
+    title: 'Hospital Pediátrico Cardiológico',
+    story: 'Cardiopatias congênitas, arritmias na infância, pós-operatórios de cirurgias complexas. A cardiologia pediátrica é um mundo à parte, com desafios únicos. Aqui você treina seu olhar para os casos mais raros e desafiadores da pediatria.',
+    color: 'text-pink-600',
+    bgColor: 'bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200',
+  },
+}
+
+const DEFAULT_HOSPITAL_STORY = {
+  icon: Stethoscope,
+  title: 'Plantão de ECG',
+  story: 'Os pacientes aguardam sua avaliação. Cada ECG traz uma história, um diagnóstico a ser descoberto. Treine seu olhar clínico e aprimore sua habilidade de interpretação. Seu plantão começa agora.',
+  color: 'text-gray-600',
+  bgColor: 'bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200',
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -211,7 +258,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -277,122 +324,150 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* Rankings and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* XP Leaderboard */}
+      {/* Start Practice - Full Width with Hospital Story */}
+      {(() => {
+        const hospitalType = profile?.hospital_type as string | undefined
+        const hospitalStory = hospitalType && HOSPITAL_STORIES[hospitalType]
+          ? HOSPITAL_STORIES[hospitalType]
+          : DEFAULT_HOSPITAL_STORY
+        const HospitalIcon = hospitalStory.icon
+
+        return (
+          <Card className={`mb-6 border-2 ${hospitalStory.bgColor}`}>
+            <CardContent className="py-8">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className={`p-4 rounded-2xl bg-white/80 shadow-sm`}>
+                    <HospitalIcon className={`h-12 w-12 ${hospitalStory.color}`} />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <h3 className={`text-xl font-bold ${hospitalStory.color}`}>
+                      Iniciar Plantão
+                    </h3>
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/80 text-gray-700">
+                      {hospitalStory.title}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed italic text-lg mb-4">
+                    &ldquo;{hospitalStory.story}&rdquo;
+                  </p>
+                  {!profile?.hospital_type && (
+                    <p className="text-sm text-gray-600 mb-4">
+                      <Link href="/settings" className="text-blue-600 hover:underline">
+                        Configure seu tipo de hospital
+                      </Link> para receber ECGs personalizados para sua prática.
+                    </p>
+                  )}
+                </div>
+                <div className="flex-shrink-0">
+                  <Link href="/practice">
+                    <Button
+                      size="lg"
+                      disabled={!isSubscribed && remainingFree <= 0}
+                      className="gap-2 px-8"
+                    >
+                      <Play className="h-5 w-5" />
+                      {!isSubscribed && remainingFree <= 0
+                        ? 'Limite Atingido'
+                        : 'Começar'
+                      }
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
+
+      {/* Ranking and Diagnosis Performance - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* XP Leaderboard - Left side */}
         <LeaderboardXP userId={user.id} limit={10} showUserPosition={true} />
 
-        {/* Start Practice */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Iniciar Plantão</span>
-              {profile?.hospital_type && (
-                <span className="flex items-center gap-2 text-sm font-normal text-gray-600">
-                  <Building2 className="h-4 w-4" />
-                  {HOSPITAL_TYPES.find(h => h.value === profile.hospital_type)?.label}
-                </span>
+        {/* Diagnosis Performance - Right side (stacked) */}
+        <div className="space-y-6">
+          {/* Best Diagnoses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                Melhores Diagnósticos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {bestDiagnoses.length > 0 ? (
+                <div className="space-y-3">
+                  {bestDiagnoses.map((diag, index) => (
+                    <div key={diag.key} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-600 w-5">{index + 1}.</span>
+                        <span className="text-sm text-gray-900 truncate">{diag.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
+                            style={{ width: `${diag.percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold text-green-600 w-12 text-right">
+                          {diag.percentage}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 text-center py-4">
+                  Complete mais ECGs para ver estatísticas
+                </p>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              Entre em uma sessão de prática e interprete ECGs como em um plantão real de tele-ECG.
-              Receba feedback imediato e aprenda com seus erros.
-            </p>
-            <Link href="/practice">
-              <Button size="lg" disabled={!isSubscribed && remainingFree <= 0}>
-                {!isSubscribed && remainingFree <= 0
-                  ? 'Limite Atingido'
-                  : 'Iniciar Plantão'
-                }
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* Diagnosis Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Best Diagnoses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              Melhores Diagnósticos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {bestDiagnoses.length > 0 ? (
-              <div className="space-y-3">
-                {bestDiagnoses.map((diag, index) => (
-                  <div key={diag.key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-600 w-5">{index + 1}.</span>
-                      <span className="text-sm text-gray-900 truncate">{diag.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: `${diag.percentage}%` }}
-                        />
+          {/* Worst Diagnoses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5 text-red-500" />
+                Diagnósticos a Melhorar
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {worstDiagnoses.length > 0 ? (
+                <div className="space-y-3">
+                  {worstDiagnoses.map((diag, index) => (
+                    <div key={diag.key} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-600 w-5">{index + 1}.</span>
+                        <span className="text-sm text-gray-900 truncate">{diag.label}</span>
                       </div>
-                      <span className="text-sm font-semibold text-green-600 w-12 text-right">
-                        {diag.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-600 text-center py-4">
-                Complete mais ECGs para ver estatísticas
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Worst Diagnoses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
-              Diagnósticos a Melhorar
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {worstDiagnoses.length > 0 ? (
-              <div className="space-y-3">
-                {worstDiagnoses.map((diag, index) => (
-                  <div key={diag.key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-600 w-5">{index + 1}.</span>
-                      <span className="text-sm text-gray-900 truncate">{diag.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-red-500 h-2 rounded-full"
-                          style={{ width: `${diag.percentage}%` }}
-                        />
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-red-500 h-2 rounded-full"
+                            style={{ width: `${diag.percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold text-red-600 w-12 text-right">
+                          {diag.percentage}%
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold text-red-600 w-12 text-right">
-                        {diag.percentage}%
-                      </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-600 text-center py-4">
-                Complete mais ECGs para ver estatísticas
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 text-center py-4">
+                  Complete mais ECGs para ver estatísticas
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
     </div>
   )
 }

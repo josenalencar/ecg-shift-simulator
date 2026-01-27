@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     description: 'Pratique interpretação de ECG com feedback de especialistas. O melhor simulador de plantão de tele-ECG do Brasil.',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGOG.png',
         width: 1200,
         height: 630,
         alt: 'Plantão ECG - Simulador de Tele-ECG',
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Plantão ECG - Simulador de Tele-ECG',
     description: 'Pratique interpretação de ECG com feedback de especialistas.',
-    images: ['/og-image.png'],
+    images: ['https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGOG.png'],
   },
   robots: {
     index: true,

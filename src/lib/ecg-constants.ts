@@ -235,6 +235,20 @@ export const HOSPITAL_TYPES: { value: HospitalType; label: string; description: 
     priorityCategories: ['advanced', 'rare', 'ischemia', 'arrhythmia', 'structural'],
     priorityDifficulties: ['hard'],
   },
+  {
+    value: 'pediatria_geral',
+    label: 'Hospital Pediátrico Geral',
+    description: 'ECGs pediátricos de rotina e check-ups',
+    priorityCategories: ['routine', 'normal', 'structural', 'other'],
+    priorityDifficulties: ['easy', 'medium'],
+  },
+  {
+    value: 'pediatria_cardiologica',
+    label: 'Hospital Pediátrico Cardiológico',
+    description: 'Cardiopatias congênitas e arritmias pediátricas',
+    priorityCategories: ['advanced', 'rare', 'ischemia', 'arrhythmia', 'structural'],
+    priorityDifficulties: ['medium', 'hard'],
+  },
 ]
 
 // Electrode swap options for technical issues

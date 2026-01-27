@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, Button, Select, Input } from '@/components/ui'
 import { ImageUpload, ReportForm, ECGViewer, type ReportFormData } from '@/components/ecg'
 import { DIFFICULTIES, CATEGORIES, MEDICAL_HISTORY_OPTIONS, FAMILY_HISTORY_OPTIONS, MEDICATIONS_OPTIONS } from '@/lib/ecg-constants'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Baby } from 'lucide-react'
 import type { Difficulty, Category, MedicalHistory, FamilyHistory, Medication } from '@/types/database'
 
 const CLINICAL_PRESENTATIONS = [
@@ -41,6 +41,7 @@ export default function NewECGPage() {
   const [imageUrl, setImageUrl] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [categories, setCategories] = useState<Category[]>(['other'])
+  const [isPediatric, setIsPediatric] = useState(false)
 
   // Patient info
   const [patientAge, setPatientAge] = useState<string>('')
@@ -154,6 +155,7 @@ export default function NewECGPage() {
           difficulty,
           category: categories[0], // Keep first category for backward compatibility
           categories, // New: array of categories
+          is_pediatric: isPediatric,
           patient_age: parseInt(patientAge),
           patient_sex: patientSex,
           clinical_presentation: clinicalPresentation,
@@ -460,6 +462,25 @@ export default function NewECGPage() {
                     )
                   })}
                 </div>
+              </div>
+
+              {/* Pediatric ECG Toggle */}
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPediatric}
+                    onChange={(e) => setIsPediatric(e.target.checked)}
+                    className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Baby className="h-5 w-5 text-green-600" />
+                    <div>
+                      <span className="font-medium text-gray-900">ECG Pediátrico</span>
+                      <p className="text-sm text-gray-600">Marque se este é um ECG de paciente pediátrico</p>
+                    </div>
+                  </div>
+                </label>
               </div>
             </CardContent>
           </Card>

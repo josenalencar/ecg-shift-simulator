@@ -391,8 +391,12 @@ export function ReportForm({
                 type="number"
                 min="0"
                 max="300"
-                value={formData.heart_rate}
-                onChange={(e) => setFormData((prev) => ({ ...prev, heart_rate: parseInt(e.target.value) || 0 }))}
+                value={formData.heart_rate || ''}
+                onChange={(e) => {
+                  const value = e.target.value
+                  const numValue = value === '' ? 0 : parseInt(value, 10)
+                  setFormData((prev) => ({ ...prev, heart_rate: isNaN(numValue) ? 0 : numValue }))
+                }}
               />
             </div>
 
