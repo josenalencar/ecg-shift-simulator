@@ -24,6 +24,7 @@ export interface AchievementCheckContext {
   hospitalType?: string
   todayEcgCount?: number
   perfectHardCount?: number
+  ecgsByHospital?: Record<string, number>  // Track ECGs completed per hospital type
 }
 
 export interface UnlockedAchievement {
@@ -94,13 +95,17 @@ export function evaluateAchievement(
     }
 
     case 'hospital_type': {
-      // Check if the user's hospital type matches the condition
-      // This is handled in checkAchievements where we have access to the profile
-      // The context should include hospitalType from the profile
+      // Check if user has completed enough ECGs at the required hospital type
       const requiredType = conditions.hospital as string
-      const userHospital = (context as AchievementCheckContext & { hospitalType?: string }).hospitalType
-      if (!userHospital) return false
-      return userHospital === requiredType
+      const threshold = conditions.threshold as number
+      const userHospital = context.hospitalType
+      const hospitalCounts = context.ecgsByHospital || {}
+
+      // User must have the matching hospital type AND meet the ECG count threshold
+      if (!userHospital || userHospital !== requiredType) return false
+
+      const count = hospitalCounts[requiredType] || 0
+      return count >= threshold
     }
 
     case 'difficulty_correct': {
@@ -251,6 +256,10 @@ export async function checkAchievements(
   if (profile?.hospital_type) {
     extendedContext.hospitalType = profile.hospital_type
   }
+
+  // Get ECGs by hospital from stats (for hospital-type achievements)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  extendedContext.ecgsByHospital = (context.stats as any).ecgs_by_hospital || {}
 
   // Get today's ECG count
   const today = new Date()

@@ -197,6 +197,23 @@ export async function onAttemptComplete(
   // Update longest streak
   const newLongestStreak = Math.max(stats.longest_streak, streakResult.newStreak)
 
+  // Track ECGs by hospital type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentEcgsByHospital = (stats as any).ecgs_by_hospital || {}
+  const updatedEcgsByHospital = { ...currentEcgsByHospital }
+
+  // Get user's hospital type from profile
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('hospital_type')
+    .eq('id', userId)
+    .single()
+
+  if (userProfile?.hospital_type) {
+    updatedEcgsByHospital[userProfile.hospital_type] =
+      (updatedEcgsByHospital[userProfile.hospital_type] || 0) + 1
+  }
+
   // Track event participation
   let newEventsParticipated = stats.events_participated
   if (activeEvent) {
@@ -219,7 +236,8 @@ export async function onAttemptComplete(
 
   const today = new Date().toISOString().split('T')[0]
 
-  const updatedStats: Partial<UserGamificationStats> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatedStats: Partial<UserGamificationStats> & { ecgs_by_hospital?: Record<string, number> } = {
     total_xp: newTotalXP,
     current_level: levelResult.newLevel,
     current_streak: streakResult.newStreak,
@@ -232,6 +250,7 @@ export async function onAttemptComplete(
     correct_by_finding: updatedFindings,
     perfect_streak: newPerfectStreak,
     events_participated: newEventsParticipated,
+    ecgs_by_hospital: updatedEcgsByHospital,
   }
 
   // Update in database
