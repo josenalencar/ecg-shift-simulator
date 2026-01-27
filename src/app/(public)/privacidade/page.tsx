@@ -104,38 +104,38 @@ export default function PrivacidadePage() {
             <table className="w-full border-collapse border border-gray-300 mb-4">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Finalidade</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Base Legal (LGPD)</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Finalidade</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Base Legal (LGPD)</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Criar e gerenciar sua conta</td>
-                  <td className="border border-gray-300 px-4 py-2">Execução de contrato (Art. 7º, V)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Criar e gerenciar sua conta</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Execução de contrato (Art. 7º, V)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Fornecer o serviço educacional</td>
-                  <td className="border border-gray-300 px-4 py-2">Execução de contrato (Art. 7º, V)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Fornecer o serviço educacional</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Execução de contrato (Art. 7º, V)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Processar pagamentos</td>
-                  <td className="border border-gray-300 px-4 py-2">Execução de contrato (Art. 7º, V)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Processar pagamentos</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Execução de contrato (Art. 7º, V)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Enviar e-mails transacionais</td>
-                  <td className="border border-gray-300 px-4 py-2">Execução de contrato (Art. 7º, V)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Enviar e-mails transacionais</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Execução de contrato (Art. 7º, V)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Melhorar a plataforma</td>
-                  <td className="border border-gray-300 px-4 py-2">Legítimo interesse (Art. 7º, IX)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Melhorar a plataforma</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Legítimo interesse (Art. 7º, IX)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Prevenir fraudes</td>
-                  <td className="border border-gray-300 px-4 py-2">Legítimo interesse (Art. 7º, IX)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Prevenir fraudes</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Legítimo interesse (Art. 7º, IX)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Cumprir obrigações legais</td>
-                  <td className="border border-gray-300 px-4 py-2">Obrigação legal (Art. 7º, II)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Cumprir obrigações legais</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Obrigação legal (Art. 7º, II)</td>
                 </tr>
               </tbody>
             </table>
@@ -149,36 +149,36 @@ export default function PrivacidadePage() {
             <table className="w-full border-collapse border border-gray-300 mb-4">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Parceiro</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Finalidade</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Localização</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Parceiro</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Finalidade</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Localização</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Supabase</td>
-                  <td className="border border-gray-300 px-4 py-2">Banco de dados e autenticação</td>
-                  <td className="border border-gray-300 px-4 py-2">São Paulo, Brasil</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Supabase</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Banco de dados e autenticação</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">São Paulo, Brasil</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Stripe</td>
-                  <td className="border border-gray-300 px-4 py-2">Processamento de pagamentos</td>
-                  <td className="border border-gray-300 px-4 py-2">EUA (certificado Privacy Shield)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Stripe</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Processamento de pagamentos</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">EUA (certificado Privacy Shield)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Resend</td>
-                  <td className="border border-gray-300 px-4 py-2">Envio de e-mails</td>
-                  <td className="border border-gray-300 px-4 py-2">EUA</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Resend</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Envio de e-mails</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">EUA</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Vercel</td>
-                  <td className="border border-gray-300 px-4 py-2">Hospedagem da aplicação</td>
-                  <td className="border border-gray-300 px-4 py-2">Global (CDN)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Vercel</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Hospedagem da aplicação</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Global (CDN)</td>
                 </tr>
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Cloudinary</td>
-                  <td className="border border-gray-300 px-4 py-2">Armazenamento de imagens</td>
-                  <td className="border border-gray-300 px-4 py-2">Global (CDN)</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Cloudinary</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Armazenamento de imagens</td>
+                  <td className="border border-gray-300 px-4 py-2 text-gray-900">Global (CDN)</td>
                 </tr>
               </tbody>
             </table>
