@@ -117,24 +117,30 @@ export default function PracticePage() {
       }
     }
 
-    // Get ECGs the user hasn't attempted yet
-    const { data: attemptedECGs } = await supabase
+    // Get ECGs the user hasn't attempted recently (30-day cooldown)
+    // ECGs come back after 30 days, keeping content fresh and ensuring users never "run out"
+    const ECG_COOLDOWN_DAYS = 30
+    const cooldownDate = new Date()
+    cooldownDate.setDate(cooldownDate.getDate() - ECG_COOLDOWN_DAYS)
+
+    const { data: recentAttempts } = await supabase
       .from('attempts')
       .select('ecg_id')
       .eq('user_id', user.id)
+      .gte('created_at', cooldownDate.toISOString())
 
-    const typedAttemptedECGs = attemptedECGs as { ecg_id: string }[] | null
-    const attemptedIds = typedAttemptedECGs?.map(a => a.ecg_id) || []
+    const typedRecentAttempts = recentAttempts as { ecg_id: string }[] | null
+    const recentIds = typedRecentAttempts?.map(a => a.ecg_id) || []
 
-    // Get a random active ECG that hasn't been attempted
+    // Get a random active ECG that hasn't been attempted recently
     let query = supabase
       .from('ecgs')
       .select('*, official_reports(*)')
       .eq('is_active', true)
       .not('official_reports', 'is', null)
 
-    if (attemptedIds.length > 0) {
-      query = query.not('id', 'in', `(${attemptedIds.join(',')})`)
+    if (recentIds.length > 0) {
+      query = query.not('id', 'in', `(${recentIds.join(',')})`)
     }
 
     const { data: ecgs, error } = await query

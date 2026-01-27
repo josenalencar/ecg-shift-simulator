@@ -17,7 +17,9 @@ import {
   XPEventBanner,
 } from '@/components/gamification'
 import type { UserGamificationStats, GamificationConfig, AchievementWithProgress } from '@/types/database'
-import { Loader2, Trophy, Medal, Activity, Target } from 'lucide-react'
+import { Loader2, Trophy, Medal, Activity, Target, List, X } from 'lucide-react'
+import { Button } from '@/components/ui'
+import * as LucideIcons from 'lucide-react'
 
 export default function ProgressPage() {
   const router = useRouter()
@@ -30,6 +32,7 @@ export default function ProgressPage() {
   const [percentile, setPercentile] = useState<number>(0)
   const [isInTopN, setIsInTopN] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'achievements' | 'leaderboard'>('overview')
+  const [showAchievementList, setShowAchievementList] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -251,10 +254,20 @@ export default function ProgressPage() {
             {/* Recent Achievements */}
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  Conquistas Recentes
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-yellow-500" />
+                    Conquistas Recentes
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAchievementList(true)}
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    Lista de Conquistas
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -301,6 +314,128 @@ export default function ProgressPage() {
         {activeTab === 'leaderboard' && (
           <LeaderboardXP userId={userId} limit={20} showUserPosition={true} />
         )}
+      </div>
+
+      {/* Achievement List Modal */}
+      {showAchievementList && (
+        <AchievementListModal
+          achievements={achievements}
+          onClose={() => setShowAchievementList(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// Category labels for grouping
+const CATEGORY_LABELS: Record<string, string> = {
+  ecg_count: 'Quantidade de ECGs',
+  diagnosis: 'Diagnosticos',
+  streak: 'Sequencia',
+  perfect: 'Pontuacao Perfeita',
+  level: 'Nivel',
+  special: 'Especiais',
+  hospital: 'Hospital',
+  pediatric: 'Pediatria',
+}
+
+// Helper to get icon component from name
+function getIconComponent(iconName: string): React.ComponentType<{ className?: string }> {
+  const pascalName = iconName
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const IconComponent = (LucideIcons as any)[pascalName]
+  return IconComponent || LucideIcons.Award
+}
+
+// Achievement List Modal Component
+function AchievementListModal({
+  achievements,
+  onClose,
+}: {
+  achievements: AchievementWithProgress[]
+  onClose: () => void
+}) {
+  // Group achievements by category
+  const categories = [...new Set(achievements.map((a) => a.category))]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Lista de Conquistas</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Todas as conquistas disponiveis e como obte-las
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {categories.map((category) => {
+            const categoryAchievements = achievements.filter((a) => a.category === category)
+            if (categoryAchievements.length === 0) return null
+
+            return (
+              <div key={category}>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+                  {CATEGORY_LABELS[category] || category}
+                </h3>
+                <div className="space-y-2">
+                  {categoryAchievements.map((achievement) => {
+                    const Icon = getIconComponent(achievement.icon)
+                    return (
+                      <div
+                        key={achievement.id}
+                        className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="p-2 bg-yellow-100 rounded-full flex-shrink-0">
+                          <Icon className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900">
+                            {achievement.name_pt}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-0.5">
+                            {achievement.description_pt}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onClose}
+          >
+            Fechar
+          </Button>
+        </div>
       </div>
     </div>
   )

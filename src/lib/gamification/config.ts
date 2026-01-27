@@ -2,14 +2,16 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type { GamificationConfig } from '@/types/database'
 
 // Default configuration values (matches database defaults)
+// Option A Rebalancing: Shifted weight from base to score for better skill incentive
+// Ratio changed from ~1:8 to ~1:33 (worst vs best performance)
 export const DEFAULT_CONFIG: GamificationConfig = {
   id: 'default',
-  xp_per_ecg_base: 10,
-  xp_per_score_point: 0.5,
+  xp_per_ecg_base: 5,           // Reduced from 10 - less reward for just attempting
+  xp_per_score_point: 1.0,      // Doubled from 0.5 - more reward for accuracy
   xp_difficulty_multipliers: { easy: 0.8, medium: 1.0, hard: 1.3 },
   xp_streak_bonus_per_day: 0.5,
   xp_streak_bonus_max: 15,
-  xp_perfect_bonus: 25,
+  xp_perfect_bonus: 50,         // Doubled from 25 - big reward for perfection
   level_multiplier_per_level: 0.002525,
   max_level: 100,
   xp_per_level_base: 100,

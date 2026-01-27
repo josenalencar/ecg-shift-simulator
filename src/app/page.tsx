@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital } from 'lucide-react'
+import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, ChevronUp, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital, FileDown, BookOpen } from 'lucide-react'
 
 // Contact Modal Component
 function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -224,13 +224,15 @@ export default function HomePage() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className={`p-2 rounded-xl transition-all ${isScrolled ? 'bg-blue-100' : 'bg-white/20 backdrop-blur'}`}>
-                <Activity className="h-6 w-6 text-blue-600" />
-              </div>
-              <span className={`font-bold text-xl transition-colors ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>
-                Plantão de ECG
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo-nobg.png"
+                alt="Plantão ECG"
+                width={160}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
@@ -587,8 +589,8 @@ export default function HomePage() {
                   {[
                     {
                       icon: Zap,
-                      title: 'Feedback instantâneo',
-                      description: 'Compare sua interpretação com o gabarito do especialista imediatamente.'
+                      title: 'Feedback detalhado Premium',
+                      description: 'Veja exatamente onde errou com explicações didáticas de cada achado. Baixe o relatório em PDF.'
                     },
                     {
                       icon: BarChart3,
@@ -623,31 +625,71 @@ export default function HomePage() {
             <ScrollReveal delay={200}>
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl blur-2xl opacity-20" />
-                <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-white">
-                  <div className="flex items-center gap-3 mb-6">
+                <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 lg:p-8 text-white">
+                  {/* Window controls */}
+                  <div className="flex items-center gap-3 mb-5">
                     <div className="w-3 h-3 bg-red-500 rounded-full" />
                     <div className="w-3 h-3 bg-yellow-500 rounded-full" />
                     <div className="w-3 h-3 bg-green-500 rounded-full" />
+                    <span className="ml-2 text-sm text-gray-400">Feedback Premium</span>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-sm text-gray-400 mb-2">Seu laudo</p>
-                      <p className="text-sm">Ritmo sinusal, Desvio do eixo para esquerda, BRD</p>
+                  <div className="space-y-3">
+                    {/* Score header */}
+                    <div className="flex items-center justify-between bg-green-500/20 border border-green-500/30 rounded-xl p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-green-500/20 rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="h-5 w-5 text-green-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">85% - Aprovado!</p>
+                          <p className="text-xs text-gray-400">17/20 pontos</p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4">
-                      <p className="text-sm text-blue-400 mb-2">Gabarito do especialista</p>
-                      <p className="text-sm">Ritmo sinusal, Eixo normal, BRD</p>
+                    {/* Expandable feedback card (expanded state) */}
+                    <div className="bg-white/10 rounded-xl overflow-hidden">
+                      <div className="p-3 flex items-center justify-between border-b border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-red-500/20 rounded-full">
+                            <X className="h-3 w-3 text-red-400" />
+                          </div>
+                          <span className="font-medium text-sm">Eixo Elétrico</span>
+                          <span className="text-xs text-red-400">(0/3 pts)</span>
+                        </div>
+                        <ChevronUp className="h-4 w-4 text-gray-400" />
+                      </div>
+
+                      {/* Expanded content */}
+                      <div className="p-3 space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-red-500/10 p-2 rounded-lg">
+                            <p className="text-[10px] text-red-400 uppercase mb-0.5">Sua resposta</p>
+                            <p className="text-xs">Desvio para esquerda</p>
+                          </div>
+                          <div className="bg-green-500/10 p-2 rounded-lg">
+                            <p className="text-[10px] text-green-400 uppercase mb-0.5">Correto</p>
+                            <p className="text-xs">Eixo normal</p>
+                          </div>
+                        </div>
+                        <div className="bg-blue-500/10 p-2 rounded-lg">
+                          <p className="text-[10px] text-blue-400 uppercase mb-0.5">Por que?</p>
+                          <p className="text-xs text-gray-300">O eixo está entre -30° e +90°, dentro dos limites normais...</p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
-                      <p className="text-sm text-yellow-300">Você errou o eixo - revise os critérios de desvio</p>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-white/5 rounded-xl p-4">
-                      <span className="text-gray-400">Sua pontuação</span>
-                      <span className="text-2xl font-bold text-yellow-400">72%</span>
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <div className="flex-1 bg-purple-500/20 border border-purple-500/30 rounded-xl p-2.5 text-center flex items-center justify-center gap-2">
+                        <FileDown className="h-4 w-4 text-purple-300" />
+                        <p className="text-xs text-purple-300">Baixar PDF</p>
+                      </div>
+                      <div className="flex-1 bg-blue-500/20 border border-blue-500/30 rounded-xl p-2.5 text-center flex items-center justify-center gap-2">
+                        <BookOpen className="h-4 w-4 text-blue-300" />
+                        <p className="text-xs text-blue-300">Curso ECG</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -749,11 +791,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/10 rounded-xl">
-                  <Activity className="h-6 w-6 text-blue-400" />
-                </div>
-                <span className="font-bold text-xl">Plantão de ECG</span>
+              <Link href="/" className="flex items-center mb-4">
+                <Image
+                  src="/logo-nobg.png"
+                  alt="Plantão ECG"
+                  width={140}
+                  height={35}
+                  className="h-8 w-auto brightness-0 invert"
+                />
               </Link>
               <p className="text-gray-400 text-sm mb-4">
                 Simulador de plantão de tele-ECG com feedback de especialistas.

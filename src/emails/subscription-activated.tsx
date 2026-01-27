@@ -4,6 +4,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -38,9 +39,13 @@ export default function SubscriptionActivatedEmail({
         <Container style={container}>
           {/* Header */}
           <Section style={{ ...header, backgroundColor: headerColor }}>
-            <Text style={logoText}>
-              <span style={logoIcon}>&#9829;</span> Plantao ECG
-            </Text>
+            <Img
+              src={`${baseUrl}/logo.png`}
+              alt="Plantão ECG"
+              width={160}
+              height={40}
+              style={logo}
+            />
             <Text style={headerBadge}>
               {isPremiumAI ? '&#10024; PREMIUM + IA' : '&#11088; PREMIUM'}
             </Text>
@@ -209,16 +214,8 @@ const header = {
   textAlign: 'center' as const,
 }
 
-const logoText = {
-  color: '#ffffff',
-  fontSize: '24px',
-  fontWeight: '700',
-  margin: '0 0 8px',
-}
-
-const logoIcon = {
-  color: '#fecaca',
-  marginRight: '8px',
+const logo = {
+  margin: '0 auto 8px',
 }
 
 const headerBadge = {

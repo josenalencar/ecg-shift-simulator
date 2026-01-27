@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui'
-import { Menu, X, User, LogOut, LayoutDashboard, Activity, CreditCard, Settings, TrendingUp } from 'lucide-react'
+import { Menu, X, User, LogOut, LayoutDashboard, CreditCard, Settings, TrendingUp } from 'lucide-react'
+import Image from 'next/image'
 import type { Profile } from '@/types/database'
 
 interface HeaderProps {
@@ -29,9 +30,15 @@ export function Header({ profile }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href={profile ? '/dashboard' : '/'} className="flex items-center gap-2">
-            <Activity className="h-8 w-8 text-blue-600" />
-            <span className="font-bold text-xl text-gray-900">Plantao de ECG</span>
+          <Link href={profile ? '/dashboard' : '/'} className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="Plantão ECG"
+              width={160}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}

@@ -29,9 +29,13 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
-            <Text style={logoText}>
-              <span style={logoIcon}>&#9829;</span> Plantao ECG
-            </Text>
+            <Img
+              src={`${baseUrl}/logo.png`}
+              alt="Plantão ECG"
+              width={160}
+              height={40}
+              style={logo}
+            />
           </Section>
 
           {/* Hero Section */}
@@ -154,16 +158,8 @@ const header = {
   textAlign: 'center' as const,
 }
 
-const logoText = {
-  color: '#ffffff',
-  fontSize: '24px',
-  fontWeight: '700',
-  margin: '0',
-}
-
-const logoIcon = {
-  color: '#ef4444',
-  marginRight: '8px',
+const logo = {
+  margin: '0 auto',
 }
 
 const heroSection = {
