@@ -232,7 +232,7 @@ export default function PracticePage() {
 
       // Save attempt to database
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('attempts') as any).insert({
+      const { error: insertError } = await (supabase.from('attempts') as any).insert({
         user_id: userId,
         ecg_id: currentECG.id,
         rhythm: userReport.rhythm,
@@ -247,6 +247,11 @@ export default function PracticePage() {
         score: result.score,
         feedback: result.comparisons,
       })
+
+      if (insertError) {
+        console.error('Failed to save attempt:', insertError)
+        // Still show results even if save failed
+      }
 
       // Update monthly count
       setMonthlyAttempts(prev => prev + 1)
