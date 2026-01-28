@@ -375,7 +375,8 @@ export default async function AdminOverviewPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-700">
-                        {new Date(attempt.created_at).toLocaleDateString('pt-BR', {
+                        {new Date(attempt.created_at).toLocaleString('pt-BR', {
+                          timeZone: 'America/Sao_Paulo',
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',

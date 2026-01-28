@@ -203,7 +203,7 @@ export function UserDetailsModal({ userId, onClose }: UserDetailsModalProps) {
                     <div>
                       <p className="text-xs text-gray-500 uppercase">Cadastro</p>
                       <p className="text-gray-900">
-                        {new Date(data.profile.created_at).toLocaleDateString('pt-BR')}
+                        {new Date(data.profile.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                       </p>
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export function UserDetailsModal({ userId, onClose }: UserDetailsModalProps) {
                         <div>
                           <p className="text-blue-600">Válido até</p>
                           <p className="text-blue-900 font-medium">
-                            {new Date(data.subscription.current_period_end).toLocaleDateString('pt-BR')}
+                            {new Date(data.subscription.current_period_end).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                           </p>
                         </div>
                       </div>
@@ -272,7 +272,7 @@ export function UserDetailsModal({ userId, onClose }: UserDetailsModalProps) {
                         {data.recentAttempts.map((attempt) => (
                           <tr key={attempt.id} className="border-b">
                             <td className="py-2 text-gray-900">
-                              {new Date(attempt.created_at).toLocaleDateString('pt-BR')}
+                              {new Date(attempt.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </td>
                             <td className="py-2">
                               <span className={`font-medium ${

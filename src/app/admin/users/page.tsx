@@ -191,13 +191,15 @@ export default async function AdminUsersPage({
     return order === 'asc' ? comparison : -comparison
   })
 
-  // Helper to format date consistently on server
+  // Helper to format date consistently in Brazil timezone
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
-    const day = date.getUTCDate().toString().padStart(2, '0')
-    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
-    const year = date.getUTCFullYear()
-    return `${day}/${month}/${year}`
+    return date.toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
   }
 
   // Prepare data for components
@@ -226,7 +228,7 @@ export default async function AdminUsersPage({
     role: u.role === 'admin' ? 'Admin' : 'Usuário',
     ecgs: u.ecgCount,
     avgScore: Math.round(u.avgScore),
-    createdAt: new Date(u.created_at).toLocaleDateString('pt-BR')
+    createdAt: new Date(u.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
   }))
 
   const adminCount = profiles?.filter(p => p.role === 'admin').length || 0
