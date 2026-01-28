@@ -292,8 +292,9 @@ export default function PracticePage() {
     setIsSubmitting(true)
 
     try {
-      // Calculate score
-      const result = calculateScore(userReport, officialReport)
+      // Calculate score with category-weighted system
+      const ecgCategories = (currentECG.categories || [currentECG.category]) as Category[]
+      const result = calculateScore(userReport, officialReport, ecgCategories)
       setScoringResult(result)
 
       // Save attempt to database
