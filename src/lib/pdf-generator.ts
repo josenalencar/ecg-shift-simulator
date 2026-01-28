@@ -108,6 +108,28 @@ function sanitizeForPDF(text: string): string {
 }
 
 /**
+ * Safe text wrapping - ensures text never exceeds page boundaries
+ * Sets font state before calculating width to ensure accuracy
+ */
+function safeWrapText(
+  pdf: jsPDF,
+  text: string,
+  maxWidth: number,
+  fontSize: number = 9,
+  fontStyle: string = 'normal'
+): string[] {
+  // Set font state BEFORE calculating text width
+  pdf.setFontSize(fontSize)
+  pdf.setFont('helvetica', fontStyle)
+
+  // Sanitize and split
+  const sanitized = sanitizeForPDF(text)
+  const lines = pdf.splitTextToSize(sanitized, maxWidth)
+
+  return lines
+}
+
+/**
  * Generate a feedback PDF report
  */
 export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
@@ -371,13 +393,18 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
       yPosition += 11
 
       // Responses - with text wrapping for long content
-      pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'normal')
+      // CRITICAL: Calculate safe text width to NEVER overflow page
+      // A4 = 210mm, margin = 16mm, text starts at margin+5 = 21mm
+      // Safe end = pageWidth - margin = 194mm
+      // So max text width = 194 - 21 = 173mm, use 160mm for safety buffer
+      const safeTextWidth = 160 // mm - very conservative to prevent ANY overflow
 
       // "Sua resposta:" with wrapping
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(...colors.error)
-      const userResponseText = `Sua resposta: ${item.userValue}`
-      const userResponseLines = pdf.splitTextToSize(userResponseText, contentWidth - 10)
+      const userResponseText = sanitizeForPDF(`Sua resposta: ${item.userValue}`)
+      const userResponseLines = pdf.splitTextToSize(userResponseText, safeTextWidth)
       for (const line of userResponseLines) {
         if (yPosition > pageHeight - 20) {
           pdf.addPage()
@@ -389,9 +416,12 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
       yPosition += 2
 
       // "Esperado:" with wrapping
+      // CRITICAL: Reset font before splitTextToSize (font state may have changed)
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(...colors.success)
-      const expectedText = `Esperado: ${item.correctValue}`
-      const expectedLines = pdf.splitTextToSize(expectedText, contentWidth - 10)
+      const expectedText = sanitizeForPDF(`Esperado: ${item.correctValue}`)
+      const expectedLines = pdf.splitTextToSize(expectedText, safeTextWidth)
       for (const line of expectedLines) {
         if (yPosition > pageHeight - 20) {
           pdf.addPage()
@@ -438,11 +468,11 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
               pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
               yPosition += 6
 
-              pdf.setTextColor(...colors.text.secondary)
               pdf.setFontSize(8)
               pdf.setFont('helvetica', 'normal')
+              pdf.setTextColor(...colors.text.secondary)
               const sanitizedDesc = sanitizeForPDF(exp.description)
-              const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+              const descLines = pdf.splitTextToSize(sanitizedDesc, safeTextWidth - 5)
               for (const line of descLines) {
                 if (yPosition > pageHeight - 20) {
                   pdf.addPage()
@@ -487,11 +517,11 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
               pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
               yPosition += 6
 
-              pdf.setTextColor(...colors.text.secondary)
               pdf.setFontSize(8)
               pdf.setFont('helvetica', 'normal')
+              pdf.setTextColor(...colors.text.secondary)
               const sanitizedDesc = sanitizeForPDF(exp.description)
-              const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+              const descLines = pdf.splitTextToSize(sanitizedDesc, safeTextWidth - 5)
               for (const line of descLines) {
                 if (yPosition > pageHeight - 20) {
                   pdf.addPage()
@@ -530,11 +560,11 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
             pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
             yPosition += 6
 
-            pdf.setTextColor(...colors.text.secondary)
             pdf.setFontSize(8)
             pdf.setFont('helvetica', 'normal')
+            pdf.setTextColor(...colors.text.secondary)
             const sanitizedDesc = sanitizeForPDF(exp.description)
-            const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+            const descLines = pdf.splitTextToSize(sanitizedDesc, safeTextWidth - 5)
             for (const line of descLines) {
               if (yPosition > pageHeight - 20) {
                 pdf.addPage()
