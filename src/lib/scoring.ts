@@ -218,22 +218,36 @@ export function calculateScore(
     maxPoints: POINTS.qt_interval,
   })
 
-  // Findings comparison (35 points)
+  // Findings comparison (30 points)
   const findingsCorrect = arraysEqual(userReport.findings, officialReport.findings)
 
   // Calculate partial credit for findings
   const correctFindings = arraysOverlap(userReport.findings, officialReport.findings)
-  const missedFindings = officialReport.findings.filter(f => !userReport.findings.includes(f)).length
   const falsePositives = userReport.findings.filter(f => !officialReport.findings.includes(f)).length
+  const totalExpected = officialReport.findings.length || 1
 
   let findingsPartial: number
   if (findingsCorrect) {
     findingsPartial = 1
+  } else if (correctFindings === 0) {
+    // No correct findings = no points (prevents random guessing benefit)
+    findingsPartial = 0
   } else {
-    const totalExpected = officialReport.findings.length || 1
+    // Base score: proportion of expected findings correctly identified
     const baseScore = correctFindings / totalExpected
-    const penalty = (missedFindings + falsePositives) * 0.1
-    findingsPartial = Math.max(0, baseScore - penalty)
+
+    // Penalty: only for false positives (missed findings already reduce baseScore)
+    // Using smaller coefficient of 0.05 per false positive
+    const penalty = falsePositives * 0.05
+
+    // Calculate score with penalty
+    const penalizedScore = baseScore - penalty
+
+    // Guarantee minimum: at least 50% of base score when user has correct answers
+    // This ensures partial credit is never wiped out by false positives
+    const minimumScore = baseScore * 0.5
+
+    findingsPartial = Math.max(minimumScore, penalizedScore)
   }
 
   const findingsPoints = Math.round(POINTS.findings * findingsPartial)
