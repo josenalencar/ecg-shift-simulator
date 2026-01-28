@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import {
   RHYTHMS,
-  REGULARITIES,
   AXES,
   PR_INTERVALS,
   QRS_DURATIONS,
@@ -15,12 +14,15 @@ import {
   PACEMAKER_OPTIONS,
   CHAMBER_OPTIONS,
   ELECTRODE_SWAP_OPTIONS,
+  AGE_PATTERN_OPTIONS,
+  ADULT_CHAMBER_FINDINGS,
+  PEDIATRIC_CHAMBER_FINDINGS,
+  FINDINGS,
 } from '@/lib/ecg-constants'
-import type { Rhythm, Finding, Axis, Interval, Regularity, ElectrodeSwap } from '@/types/database'
+import type { Rhythm, Finding, Axis, Interval, ElectrodeSwap, AgePattern } from '@/types/database'
 
 export interface ReportFormData {
   rhythm: Rhythm[]
-  regularity: Regularity
   heart_rate: number
   axis: Axis
   pr_interval: Interval
@@ -29,6 +31,7 @@ export interface ReportFormData {
   findings: Finding[]
   electrode_swap: ElectrodeSwap[]
   notes: string
+  age_pattern?: AgePattern
 }
 
 interface ReportFormProps {
@@ -36,11 +39,11 @@ interface ReportFormProps {
   onSubmit: (data: ReportFormData) => void
   isSubmitting?: boolean
   submitLabel?: string
+  isPediatric?: boolean
 }
 
 const defaultData: ReportFormData = {
   rhythm: ['sinus'],
-  regularity: 'regular',
   heart_rate: 75,
   axis: 'normal',
   pr_interval: 'normal',
@@ -49,6 +52,7 @@ const defaultData: ReportFormData = {
   findings: [],
   electrode_swap: [],
   notes: '',
+  age_pattern: undefined,
 }
 
 // OCA wall findings (including new walls)
@@ -74,13 +78,14 @@ const PACEMAKER_CHAMBER_FINDINGS: Finding[] = [
 ]
 
 // Categories to exclude from regular display (handled specially)
-const SPECIAL_CATEGORIES = ['Infarto Oclusivo', 'Sinais de Infarto Oclusivo', 'Sinais de Fibrose']
+const SPECIAL_CATEGORIES = ['Sinais sugestivos de infarto oclusivo', 'Sinais de Infarto Oclusivo', 'Sinais de Fibrose', 'Câmaras', 'Câmaras Pediátrico']
 
 export function ReportForm({
   initialData,
   onSubmit,
   isSubmitting,
   submitLabel = 'Enviar Laudo',
+  isPediatric = false,
 }: ReportFormProps) {
   const [formData, setFormData] = useState<ReportFormData>({
     ...defaultData,
@@ -343,38 +348,43 @@ export function ReportForm({
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Regularidade
-            </label>
+      {/* Age Pattern Section - Only for Pediatric ECGs */}
+      {isPediatric && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900">Padrão de Idade</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex gap-4">
-              {REGULARITIES.map((reg) => (
+              {AGE_PATTERN_OPTIONS.map((option) => (
                 <label
-                  key={reg.value}
+                  key={option.value}
                   className={`
                     flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors
-                    ${formData.regularity === reg.value
-                      ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                    ${formData.age_pattern === option.value
+                      ? 'bg-teal-50 border-teal-500 text-teal-700 font-medium'
                       : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
                     }
                   `}
                 >
                   <input
                     type="radio"
-                    name="regularity"
-                    value={reg.value}
-                    checked={formData.regularity === reg.value}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, regularity: e.target.value as Regularity }))}
+                    name="age_pattern"
+                    value={option.value}
+                    checked={formData.age_pattern === option.value}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, age_pattern: e.target.value as AgePattern }))}
                     className="sr-only"
                   />
-                  <span className="text-sm">{reg.label}</span>
+                  <span className="text-sm">{option.label}</span>
                 </label>
               ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Rate and Measurements */}
       <Card>
@@ -531,6 +541,39 @@ export function ReportForm({
           <CardTitle className="text-lg text-gray-900">Achados</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Chamber Findings - Adult or Pediatric based on isPediatric */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              {isPediatric ? 'Câmaras (Pediátrico)' : 'Câmaras'}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(isPediatric ? PEDIATRIC_CHAMBER_FINDINGS : ADULT_CHAMBER_FINDINGS).map((findingValue) => {
+                const finding = FINDINGS.find(f => f.value === findingValue)
+                if (!finding) return null
+                return (
+                  <label
+                    key={finding.value}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
+                      ${formData.findings.includes(finding.value)
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.findings.includes(finding.value)}
+                      onChange={() => handleFindingChange(finding.value)}
+                      className="sr-only"
+                    />
+                    {finding.label}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
           {regularCategories.map(([category, findings]) => (
             <div key={category}>
               <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -561,10 +604,10 @@ export function ReportForm({
             </div>
           ))}
 
-          {/* Infarto Oclusivo Section */}
+          {/* Sinais sugestivos de infarto oclusivo Section */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Infarto Oclusivo
+              Sinais sugestivos de infarto oclusivo
             </label>
             <div className="flex flex-wrap gap-2">
               <label
@@ -582,7 +625,7 @@ export function ReportForm({
                   onChange={() => handleFindingChange('oca')}
                   className="sr-only"
                 />
-                Infarto Oclusivo
+                Sinais sugestivos de infarto oclusivo
               </label>
             </div>
 

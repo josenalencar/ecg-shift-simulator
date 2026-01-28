@@ -18,6 +18,15 @@ export const RHYTHM_EXPLANATIONS: Record<string, ECGExplanation> = {
   sinus_bradycardia: {
     description: "Ritmo sinusal com frequência cardíaca < 50 bpm. Pode ser fisiológica (atletas) ou patológica."
   },
+  sinus_tachycardia: {
+    description: "Ritmo sinusal com FC > 100 bpm."
+  },
+  sinus_pause: {
+    description: "Ausencia temporaria do no sinusal, pausa > 2s, nao e multiplo do PP."
+  },
+  ectopic_atrial: {
+    description: "Ritmo fora do no sinusal, P com morfologia diferente (nao e plus-minus/minus em V1)."
+  },
   afib: {
     description: "Ausência de ondas P organizadas, intervalos RR irregulares e ondas fibrilatórias (f) na linha de base."
   },
@@ -100,6 +109,15 @@ export const FINDING_EXPLANATIONS: Record<string, ECGExplanation> = {
   interatrial_block: {
     description: "P > 120ms. 1º grau: P prolongada bifásica em inferiores. Avançado: P plus-minus em D2, D3, aVF."
   },
+  ivcd: {
+    description: "QRS largo sem criterios caracteristicos de BRE ou BRD."
+  },
+  incomplete_rbbb: {
+    description: "QRS entre 100-119ms com padrão rsR' em V1. NÃO existe 'atraso de condução' ou 'distúrbio de condução do ramo direito' - termos obsoletos."
+  },
+  ashman_phenomenon: {
+    description: "Aberrância de condução quando estímulo supraventricular prematuro (RR curto) segue RR longo, encontrando His-Purkinje ainda refratário. QRS alargado, geralmente com morfologia de BRD. Diferencia de EV por: onda P precedente, acoplamento variável, ausência de pausa compensatória."
+  },
 
   // Bloqueios AV
   avb_1st: {
@@ -113,6 +131,12 @@ export const FINDING_EXPLANATIONS: Record<string, ECGExplanation> = {
   },
   avb_3rd: {
     description: "Dissociação AV completa. Átrios e ventrículos batem independentemente. Ritmo de escape assume."
+  },
+  avb_2_1: {
+    description: "Uma onda P bloqueada seguida de uma onda P que conduz um QRS, com intervalos PQ sempre iguais."
+  },
+  avb_advanced: {
+    description: "Bloqueios maiores que 2:1, mas que ainda possuem alguns PQs iguais durante o tracado (indicando conducao preservada intermitente)."
   },
 
   // Bloqueios SA
@@ -161,6 +185,12 @@ export const FINDING_EXPLANATIONS: Record<string, ECGExplanation> = {
   },
   sgarbossa_modified: {
     description: "OCA com BRE. Positivo se: (1) SST concordante ≥1mm, (2) Infra concordante ≥1mm em V1-V3, ou (3) SST/S ≥0,25 ou Infra/R ≥0,25 (discordância excessiva)."
+  },
+  wellens: {
+    description: "Achado POS-ISQUEMICO, T invertidas ou bifasicas."
+  },
+  avr_elevation_diffuse_std: {
+    description: "Marcador de risco, nao diagnostico. Nao usar isoladamente para diagnosticar infarto."
   },
 
   // Sinais de Fibrose
@@ -230,6 +260,30 @@ export const FINDING_EXPLANATIONS: Record<string, ECGExplanation> = {
   },
   pacemaker_pace_failure: {
     description: "Falha de captura do marcapasso - estímulo emitido mas não seguido de despolarização."
+  },
+
+  // Pediatric chamber findings
+  ped_left_atrial_disease: {
+    description: "DOENÇA ATRIAL ESQUERDA (DAE): Critérios de onda P são apenas de suporte. Uso isolado não prediz DAE em pediatria."
+  },
+  ped_left_ventricular_disease: {
+    description: "DOENÇA VENTRICULAR ESQUERDA (DVE): Peguero-Lo Presti Modificado: <3a: ≥35mm | ≥3a: ≥49mm. Índice CHILDHEART (RI+RV6): ≥37mm (corte único para todas as idades). Sokolow-Lyon: Não significativo em pediatria."
+  },
+  ped_right_atrial_disease: {
+    description: "ESCORE CHILDHEART - CÂMARAS DIREITAS: BRD (1pt) | R pura V1 (1pt) | q inicial V1 (1pt) | S>R V6 (1pt) | RV1+SV6 ≥18mm (2pts). ≥2: Rule-in | =1: Intermediário | 0: Rule-out"
+  },
+  ped_right_ventricular_disease: {
+    description: "ESCORE CHILDHEART - CÂMARAS DIREITAS: BRD (1pt) | R pura V1 (1pt) | q inicial V1 (1pt) | S>R V6 (1pt) | RV1+SV6 ≥18mm (2pts). ≥2: Rule-in | =1: Intermediário | 0: Rule-out"
+  }
+}
+
+// AGE PATTERN EXPLANATIONS (for pediatric ECGs)
+export const AGE_PATTERN_EXPLANATIONS: Record<string, ECGExplanation> = {
+  expected_for_age: {
+    description: "ECG dentro do padrão esperado para a faixa etária."
+  },
+  outside_age_pattern: {
+    description: "ECG fora do padrão esperado para a idade. Padrões por faixa etária: Neonatal (0-30d): Lacuna de evidência, usar aVF, V1, V6 para outliers. Lactente (1m-<3a): Dominância de VD esperada, eixo inferior, R≥S em V6, R dominante em V1 pode ser normal. Transição (3-8a): Fase mista, eixo inferior, R>S em V6, R em V1 modesta (<6mm se R>S). Padrão Adulto (≥8a): S>R em V1, R>S em V6 - falha = LR+ ~7,5 para doença."
   }
 }
 

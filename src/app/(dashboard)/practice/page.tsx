@@ -61,6 +61,7 @@ export default function PracticePage() {
   const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionInfo>({ status: 'inactive', isActive: false, hasAI: false, isGranted: false })
   const [monthlyAttempts, setMonthlyAttempts] = useState(0)
   const [showTutorial, setShowTutorial] = useState(false)
@@ -85,15 +86,17 @@ export default function PracticePage() {
     }
     setUserId(user.id)
 
-    // Check subscription status (including granted plans)
-    // First check for granted plan
+    // Check subscription status (including granted plans) and get user name
+    // First check for granted plan and get profile info
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('granted_plan')
+      .select('granted_plan, full_name')
       .eq('id', user.id)
       .single()
 
-    const grantedPlan = (profileData as { granted_plan?: string | null } | null)?.granted_plan
+    const profile = profileData as { granted_plan?: string | null; full_name?: string | null } | null
+    const grantedPlan = profile?.granted_plan
+    setUserName(profile?.full_name || null)
 
     let subInfo: SubscriptionInfo
 
@@ -299,7 +302,6 @@ export default function PracticePage() {
         user_id: userId,
         ecg_id: currentECG.id,
         rhythm: userReport.rhythm,
-        regularity: userReport.regularity,
         heart_rate: userReport.heart_rate,
         axis: userReport.axis,
         pr_interval: userReport.pr_interval,
@@ -309,6 +311,7 @@ export default function PracticePage() {
         electrode_swap: userReport.electrode_swap.length > 0 ? userReport.electrode_swap : null,
         score: result.score,
         feedback: result.comparisons,
+        age_pattern: currentECG.is_pediatric ? userReport.age_pattern : null,
       })
 
       if (insertError) {
@@ -554,7 +557,9 @@ export default function PracticePage() {
               result={scoringResult}
               officialReport={officialReport}
               ecgImageUrl={currentECG.image_url}
+              ecgId={currentECG.id}
               isPremium={subscription.isActive}
+              userName={userName || undefined}
             />
           </div>
         )}
@@ -786,6 +791,7 @@ export default function PracticePage() {
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Enviar Interpretação"
+            isPediatric={currentECG?.is_pediatric || false}
           />
         </CardContent>
       </Card>

@@ -180,7 +180,6 @@ export default function NewECGPage() {
         .insert({
           ecg_id: ecg.id,
           rhythm: reportData.rhythm,
-          regularity: reportData.regularity,
           heart_rate: reportData.heart_rate,
           axis: reportData.axis,
           pr_interval: reportData.pr_interval,
@@ -189,6 +188,7 @@ export default function NewECGPage() {
           findings: reportData.findings,
           electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
           notes: reportData.notes || null,
+          age_pattern: isPediatric ? reportData.age_pattern : null,
         })
 
       if (reportError) {
@@ -597,6 +597,7 @@ export default function NewECGPage() {
             onSubmit={handleReportSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Criar Caso de ECG"
+            isPediatric={isPediatric}
           />
         </div>
       )}

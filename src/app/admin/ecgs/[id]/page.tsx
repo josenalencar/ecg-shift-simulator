@@ -198,7 +198,6 @@ export default function EditECGPage() {
         const { error: reportError } = await (supabase.from('official_reports') as any)
           .update({
             rhythm: reportData.rhythm,
-            regularity: reportData.regularity,
             heart_rate: reportData.heart_rate,
             axis: reportData.axis,
             pr_interval: reportData.pr_interval,
@@ -207,6 +206,7 @@ export default function EditECGPage() {
             findings: reportData.findings,
             electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
             notes: reportData.notes || null,
+            age_pattern: isPediatric ? reportData.age_pattern : null,
           })
           .eq('id', existingReport.id)
 
@@ -219,7 +219,6 @@ export default function EditECGPage() {
           .insert({
             ecg_id: ecgId,
             rhythm: reportData.rhythm,
-            regularity: reportData.regularity,
             heart_rate: reportData.heart_rate,
             axis: reportData.axis,
             pr_interval: reportData.pr_interval,
@@ -228,6 +227,7 @@ export default function EditECGPage() {
             findings: reportData.findings,
             electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
             notes: reportData.notes || null,
+            age_pattern: isPediatric ? reportData.age_pattern : null,
           })
 
         if (reportError) {
@@ -510,7 +510,6 @@ export default function EditECGPage() {
         <ReportForm
           initialData={existingReport ? {
             rhythm: existingReport.rhythm,
-            regularity: existingReport.regularity,
             heart_rate: existingReport.heart_rate,
             axis: existingReport.axis,
             pr_interval: existingReport.pr_interval,
@@ -519,10 +518,12 @@ export default function EditECGPage() {
             findings: existingReport.findings,
             electrode_swap: existingReport.electrode_swap || [],
             notes: existingReport.notes || '',
+            age_pattern: (existingReport as { age_pattern?: 'expected_for_age' | 'outside_age_pattern' }).age_pattern,
           } : undefined}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           submitLabel="Salvar Alteracoes"
+          isPediatric={isPediatric}
         />
       </div>
     </div>

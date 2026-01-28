@@ -1,6 +1,6 @@
-import type { OfficialReport, Rhythm, Finding, Axis, Interval, Regularity, ElectrodeSwap } from '@/types/database'
+import type { OfficialReport, Rhythm, Finding, Axis, Interval, ElectrodeSwap } from '@/types/database'
 import type { ReportFormData } from '@/components/ecg'
-import { RHYTHMS, FINDINGS, ELECTRODE_SWAP_OPTIONS, AXES, formatCompoundFinding } from './ecg-constants'
+import { RHYTHMS, ELECTRODE_SWAP_OPTIONS, AXES, formatCompoundFinding } from './ecg-constants'
 
 interface FieldComparison {
   field: string
@@ -22,17 +22,19 @@ export interface ScoringResult {
 }
 
 // Point weights for different fields
+// Updated: Findings now worth 60/100, regularity removed, qt removed from scoring
 const POINTS = {
-  rhythm: 25,
-  regularity: 5,
-  heart_rate: 10,
-  axis: 10,
-  pr_interval: 5,
-  qrs_duration: 5,
-  qt_interval: 5,
-  findings: 30,
-  electrode_swap: 5,
+  rhythm: 17,
+  // regularity: REMOVED from scoring
+  heart_rate: 7,
+  axis: 7,
+  pr_interval: 3,
+  qrs_duration: 3,
+  // qt_interval: REMOVED from scoring (still shown but 0 points)
+  findings: 60,
+  electrode_swap: 3,
 }
+// Total: 17 + 7 + 7 + 3 + 3 + 60 + 3 = 100
 
 function arraysEqual<T>(a: T[], b: T[]): boolean {
   if (a.length !== b.length) return false
@@ -125,22 +127,9 @@ export function calculateScore(
     maxPoints: POINTS.rhythm,
   })
 
-  // Regularity comparison (5 points)
-  const regularityCorrect = userReport.regularity === officialReport.regularity
-  const regularityPoints = regularityCorrect ? POINTS.regularity : 0
-  totalPoints += regularityPoints
+  // Regularity - REMOVED from scoring (not compared)
 
-  comparisons.push({
-    field: 'regularity',
-    label: 'Regularidade',
-    userValue: userReport.regularity === 'regular' ? 'Regular' : 'Irregular',
-    correctValue: officialReport.regularity === 'regular' ? 'Regular' : 'Irregular',
-    isCorrect: regularityCorrect,
-    points: regularityPoints,
-    maxPoints: POINTS.regularity,
-  })
-
-  // Heart rate comparison (10 points) - ±10 bpm tolerance
+  // Heart rate comparison (7 points) - ±10 bpm tolerance
   const hrDiff = Math.abs(userReport.heart_rate - officialReport.heart_rate)
   const hrCorrect = hrDiff <= 10
   const hrPartial = hrCorrect ? 1 : Math.max(0, 1 - (hrDiff - 10) / 20)
@@ -203,10 +192,8 @@ export function calculateScore(
     maxPoints: POINTS.qrs_duration,
   })
 
-  // QT Interval comparison (5 points)
+  // QT Interval - shown for feedback but NOT scored (0 points)
   const qtCorrect = userReport.qt_interval === officialReport.qt_interval
-  const qtPoints = qtCorrect ? POINTS.qt_interval : 0
-  totalPoints += qtPoints
 
   comparisons.push({
     field: 'qt_interval',
@@ -214,11 +201,11 @@ export function calculateScore(
     userValue: formatInterval(userReport.qt_interval, 'qt'),
     correctValue: formatInterval(officialReport.qt_interval, 'qt'),
     isCorrect: qtCorrect,
-    points: qtPoints,
-    maxPoints: POINTS.qt_interval,
+    points: 0, // Not scored
+    maxPoints: 0, // Not scored
   })
 
-  // Findings comparison (30 points)
+  // Findings comparison (60 points)
   const findingsCorrect = arraysEqual(userReport.findings, officialReport.findings)
 
   // Calculate partial credit for findings

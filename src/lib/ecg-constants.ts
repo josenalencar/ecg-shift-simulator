@@ -1,14 +1,17 @@
-import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category, MedicalHistory, FamilyHistory, Medication, HospitalType, ElectrodeSwap } from '@/types/database'
+import type { Rhythm, Finding, Axis, Interval, Regularity, Difficulty, Category, MedicalHistory, FamilyHistory, Medication, HospitalType, ElectrodeSwap, AgePattern } from '@/types/database'
 
 export const RHYTHMS: { value: Rhythm; label: string }[] = [
   { value: 'sinus', label: 'Ritmo Sinusal' },
   { value: 'sinus_arrhythmia', label: 'Arritmia Sinusal' },
   { value: 'sinus_bradycardia', label: 'Bradicardia Sinusal' },
+  { value: 'sinus_tachycardia', label: 'Taquicardia Sinusal' },
+  { value: 'sinus_pause', label: 'Pausa Sinusal' },
+  { value: 'ectopic_atrial', label: 'Ritmo Atrial Ectopico' },
   { value: 'afib', label: 'Fibrilação Atrial' },
   { value: 'aflutter', label: 'Flutter Atrial' },
   { value: 'svt', label: 'Taquicardia Supraventricular' },
   { value: 'mat', label: 'Taquicardia Atrial Multifocal' },
-  { value: 'vtach', label: 'Taquicardia Ventricular' },
+  { value: 'vtach', label: 'Taquicardia de QRS Largo' },
   { value: 'polymorphic_vtach', label: 'Taquicardia Ventricular Polimórfica' },
   { value: 'torsades', label: 'Torsades de Pointes' },
   { value: 'vfib', label: 'Fibrilação Ventricular' },
@@ -61,15 +64,19 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
 
   // Bloqueios de condução
   { value: 'rbbb', label: 'Bloqueio de Ramo Direito (BRD)', category: 'Condução' },
+  { value: 'incomplete_rbbb', label: 'BRD de 1º Grau (BRD Incompleto)', category: 'Condução' },
   { value: 'lbbb', label: 'Bloqueio de Ramo Esquerdo (BRE)', category: 'Condução' },
   { value: 'lafb', label: 'Bloqueio Divisional Anterossuperior (BDAS)', category: 'Condução' },
   { value: 'lpfb', label: 'Bloqueio Divisional Posteroinferior (BDPI)', category: 'Condução' },
   { value: 'interatrial_block', label: 'Bloqueio Interatrial', category: 'Condução' },
+  { value: 'ivcd', label: 'Disturbio de Conducao Intraventricular', category: 'Condução' },
 
   // Bloqueios AV
   { value: 'avb_1st', label: 'BAV 1º Grau', category: 'Bloqueio AV' },
   { value: 'avb_2nd_type1', label: 'BAV 2º Grau Tipo I (Wenckebach)', category: 'Bloqueio AV' },
   { value: 'avb_2nd_type2', label: 'BAV 2º Grau Tipo II', category: 'Bloqueio AV' },
+  { value: 'avb_2_1', label: 'BAV 2:1', category: 'Bloqueio AV' },
+  { value: 'avb_advanced', label: 'BAV Avancado', category: 'Bloqueio AV' },
   { value: 'avb_3rd', label: 'BAV 3º Grau (BAVT)', category: 'Bloqueio AV' },
 
   // Bloqueios SA
@@ -81,8 +88,8 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'ventricular_extrasystole', label: 'Extrassístole ventricular', category: 'Extrassístoles' },
   { value: 'supraventricular_extrasystole', label: 'Extrassístole supraventricular', category: 'Extrassístoles' },
 
-  // Infarto Oclusivo (single parent finding - walls selected separately)
-  { value: 'oca', label: 'Infarto Oclusivo', category: 'Infarto Oclusivo' },
+  // Sinais sugestivos de infarto oclusivo (single parent finding - walls selected separately)
+  { value: 'oca', label: 'Sinais sugestivos de infarto oclusivo', category: 'Sinais sugestivos de infarto oclusivo' },
 
   // Sinais de Fibrose
   { value: 'pathological_q', label: 'Onda Q Patológica', category: 'Sinais de Fibrose' },
@@ -97,6 +104,10 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'subtle_ste', label: 'Supra sutil', category: 'Sinais de Infarto Oclusivo' },
   { value: 'terminal_qrs_distortion', label: 'Distorção terminal do QRS', category: 'Sinais de Infarto Oclusivo' },
   { value: 'sgarbossa_modified', label: 'Sgarbossa modificado', category: 'Sinais de Infarto Oclusivo' },
+
+  // Outros sinais possivelmente isquêmicos
+  { value: 'wellens', label: 'OCA Reperfundida / Wellens', category: 'Outros sinais possivelmente isquêmicos' },
+  { value: 'avr_elevation_diffuse_std', label: 'Supra de aVR com Infra Difuso', category: 'Outros sinais possivelmente isquêmicos' },
 
   // Alterações de repolarização
   { value: 'secondary_t_wave', label: 'Alteração Secundária da Onda T', category: 'Repolarização' },
@@ -114,6 +125,13 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'pq_depression', label: 'Infradesnivelamento do PQ', category: 'Outros' },
   { value: 'spiked_helmet', label: 'Spiked Helmet Sign', category: 'Outros' },
   { value: 'dagger_q', label: 'Onda Q em Adaga', category: 'Outros' },
+  { value: 'ashman_phenomenon', label: 'Fenômeno de Ashman', category: 'Outros' },
+
+  // Pediatric chamber findings (shown instead of adult findings when is_pediatric)
+  { value: 'ped_left_atrial_disease', label: 'Doença atrial esquerda', category: 'Câmaras Pediátrico' },
+  { value: 'ped_left_ventricular_disease', label: 'Doença ventricular esquerda', category: 'Câmaras Pediátrico' },
+  { value: 'ped_right_atrial_disease', label: 'Doença atrial direita', category: 'Câmaras Pediátrico' },
+  { value: 'ped_right_ventricular_disease', label: 'Doença ventricular direita', category: 'Câmaras Pediátrico' },
 
   // Normal
   { value: 'normal', label: 'ECG Normal', category: 'Normal' },
@@ -190,6 +208,9 @@ export const MEDICAL_HISTORY_OPTIONS: { value: MedicalHistory; label: string }[]
   { value: 'cad', label: 'Doença coronariana' },
   { value: 'smoking', label: 'Tabagismo' },
   { value: 'dyslipidemia', label: 'Dislipidemia' },
+  { value: 'prior_mi', label: 'Infarto Previo' },
+  { value: 'obesity', label: 'Obesidade' },
+  { value: 'heart_failure', label: 'Historico de Insuficiencia Cardiaca' },
 ]
 
 // Family History options
@@ -260,16 +281,39 @@ export const ELECTRODE_SWAP_OPTIONS: { value: ElectrodeSwap; label: string; desc
   { value: 'swap_precordial', label: 'Precordiais', description: 'Troca de eletrodos precordiais' },
 ]
 
+// Age pattern options for pediatric ECGs
+export const AGE_PATTERN_OPTIONS: { value: AgePattern; label: string }[] = [
+  { value: 'expected_for_age', label: 'Esperado para idade' },
+  { value: 'outside_age_pattern', label: 'Fora do padrão de idade' },
+]
+
+// Adult chamber findings (to identify which to replace with pediatric ones)
+export const ADULT_CHAMBER_FINDINGS: Finding[] = [
+  'amplitude_criteria',
+  'tall_r_right_precordial',
+  'left_atrial_enlargement',
+  'right_atrial_enlargement',
+  'low_voltage',
+]
+
+// Pediatric chamber findings (shown instead of adult findings when is_pediatric)
+export const PEDIATRIC_CHAMBER_FINDINGS: Finding[] = [
+  'ped_left_atrial_disease',
+  'ped_left_ventricular_disease',
+  'ped_right_atrial_disease',
+  'ped_right_ventricular_disease',
+]
+
 /**
  * Format compound findings (e.g., wall-specific findings) to user-friendly labels
  * Handles dynamic findings like pathological_q_anteroapical, oca_wall_inferior, etc.
  */
 export function formatCompoundFinding(finding: string): string {
-  // Handle OCA wall findings: oca_wall_anterior → "Infarto Oclusivo (Anterior)"
+  // Handle OCA wall findings: oca_wall_anterior → "Sinais sugestivos de infarto oclusivo (Anterior)"
   if (finding.startsWith('oca_wall_')) {
     const wall = finding.replace('oca_wall_', '')
     const wallLabel = WALL_OPTIONS.find(w => w.value === wall)?.label || wall
-    return `Infarto Oclusivo (${wallLabel})`
+    return `Sinais sugestivos de infarto oclusivo (${wallLabel})`
   }
 
   // Handle pathological Q wall findings: pathological_q_anteroapical → "Onda Q Patológica (Anteroapical)"

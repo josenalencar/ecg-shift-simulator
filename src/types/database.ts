@@ -24,6 +24,9 @@ export type Rhythm =
   | 'sinus'
   | 'sinus_arrhythmia'
   | 'sinus_bradycardia'
+  | 'sinus_tachycardia'
+  | 'sinus_pause'
+  | 'ectopic_atrial'
   | 'afib'
   | 'aflutter'
   | 'svt'
@@ -127,6 +130,24 @@ export type Finding =
   // Extrasystoles
   | 'ventricular_extrasystole'
   | 'supraventricular_extrasystole'
+  // Additional AV blocks
+  | 'avb_2_1'
+  | 'avb_advanced'
+  // Conduction
+  | 'ivcd'
+  // Ischemic signs
+  | 'wellens'
+  | 'avr_elevation_diffuse_std'
+  // Additional conduction
+  | 'incomplete_rbbb'
+  | 'ashman_phenomenon'
+  // Pediatric chamber findings
+  | 'ped_left_atrial_disease'
+  | 'ped_left_ventricular_disease'
+  | 'ped_right_atrial_disease'
+  | 'ped_right_ventricular_disease'
+
+export type AgePattern = 'expected_for_age' | 'outside_age_pattern'
 
 export type MedicalHistory =
   | 'diabetes'
@@ -134,6 +155,9 @@ export type MedicalHistory =
   | 'cad'
   | 'smoking'
   | 'dyslipidemia'
+  | 'prior_mi'
+  | 'obesity'
+  | 'heart_failure'
 
 export type FamilyHistory =
   | 'sudden_death'
@@ -178,6 +202,8 @@ export interface Database {
           is_master_admin: boolean
           hospital_type: HospitalType | null
           granted_plan: GrantedPlan | null
+          email_notifications_enabled: boolean
+          unsubscribe_token: string
           created_at: string
           updated_at: string
         }
@@ -190,6 +216,8 @@ export interface Database {
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
           granted_plan?: GrantedPlan | null
+          email_notifications_enabled?: boolean
+          unsubscribe_token?: string
           created_at?: string
           updated_at?: string
         }
@@ -202,6 +230,8 @@ export interface Database {
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
           granted_plan?: GrantedPlan | null
+          email_notifications_enabled?: boolean
+          unsubscribe_token?: string
           created_at?: string
           updated_at?: string
         }
@@ -267,7 +297,7 @@ export interface Database {
           id: string
           ecg_id: string
           rhythm: Rhythm[]
-          regularity: Regularity
+          regularity: Regularity // kept for backward compatibility
           heart_rate: number
           axis: Axis
           pr_interval: Interval
@@ -275,6 +305,7 @@ export interface Database {
           qt_interval: Interval
           findings: Finding[]
           electrode_swap: ElectrodeSwap[] | null
+          age_pattern: AgePattern | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -283,7 +314,7 @@ export interface Database {
           id?: string
           ecg_id: string
           rhythm: Rhythm[]
-          regularity: Regularity
+          regularity?: Regularity // optional - not used in scoring
           heart_rate: number
           axis?: Axis
           pr_interval?: Interval
@@ -291,6 +322,7 @@ export interface Database {
           qt_interval?: Interval
           findings?: Finding[]
           electrode_swap?: ElectrodeSwap[] | null
+          age_pattern?: AgePattern | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -307,6 +339,7 @@ export interface Database {
           qt_interval?: Interval
           findings?: Finding[]
           electrode_swap?: ElectrodeSwap[] | null
+          age_pattern?: AgePattern | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -318,7 +351,7 @@ export interface Database {
           user_id: string
           ecg_id: string
           rhythm: Rhythm[]
-          regularity: Regularity
+          regularity: Regularity // kept for backward compatibility
           heart_rate: number
           axis: Axis
           pr_interval: Interval
@@ -326,6 +359,7 @@ export interface Database {
           qt_interval: Interval
           findings: Finding[]
           electrode_swap: ElectrodeSwap[] | null
+          age_pattern: AgePattern | null
           score: number
           feedback: Json
           created_at: string
@@ -335,7 +369,7 @@ export interface Database {
           user_id: string
           ecg_id: string
           rhythm: Rhythm[]
-          regularity: Regularity
+          regularity?: Regularity // optional - not used in scoring
           heart_rate: number
           axis?: Axis
           pr_interval?: Interval
@@ -343,6 +377,7 @@ export interface Database {
           qt_interval?: Interval
           findings?: Finding[]
           electrode_swap?: ElectrodeSwap[] | null
+          age_pattern?: AgePattern | null
           score?: number
           feedback?: Json
           created_at?: string
@@ -360,6 +395,7 @@ export interface Database {
           qt_interval?: Interval
           findings?: Finding[]
           electrode_swap?: ElectrodeSwap[] | null
+          age_pattern?: AgePattern | null
           score?: number
           feedback?: Json
           created_at?: string
@@ -644,6 +680,29 @@ export interface Database {
           sent_at?: string
         }
       }
+      ecg_dislikes: {
+        Row: {
+          id: string
+          ecg_id: string
+          user_id: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ecg_id: string
+          user_id: string
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ecg_id?: string
+          user_id?: string
+          reason?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -679,6 +738,7 @@ export type UserAchievement = Database['public']['Tables']['user_achievements'][
 export type XPEvent = Database['public']['Tables']['xp_events']['Row']
 export type UserXPEvent = Database['public']['Tables']['user_xp_events']['Row']
 export type InactivityEmail = Database['public']['Tables']['inactivity_emails']['Row']
+export type ECGDislike = Database['public']['Tables']['ecg_dislikes']['Row']
 
 export type AchievementWithProgress = Achievement & {
   earned: boolean
