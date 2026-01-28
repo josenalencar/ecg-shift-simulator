@@ -91,6 +91,23 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 /**
+ * Sanitize text for PDF rendering - replace special Unicode chars jsPDF can't handle
+ */
+function sanitizeForPDF(text: string): string {
+  return text
+    .replace(/≥/g, '>=')
+    .replace(/≤/g, '<=')
+    .replace(/"/g, '"')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/—/g, '-')
+    .replace(/–/g, '-')
+    .replace(/…/g, '...')
+    .replace(/•/g, '-')
+}
+
+/**
  * Generate a feedback PDF report
  */
 export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
@@ -353,57 +370,182 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
 
       yPosition += 11
 
-      // Responses
-      pdf.setTextColor(...colors.error)
+      // Responses - with text wrapping for long content
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`Sua resposta: ${item.userValue}`, margin + 5, yPosition)
-      yPosition += 6
 
+      // "Sua resposta:" with wrapping
+      pdf.setTextColor(...colors.error)
+      const userResponseText = `Sua resposta: ${item.userValue}`
+      const userResponseLines = pdf.splitTextToSize(userResponseText, contentWidth - 10)
+      for (const line of userResponseLines) {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage()
+          yPosition = margin
+        }
+        pdf.text(line, margin + 5, yPosition)
+        yPosition += 4
+      }
+      yPosition += 2
+
+      // "Esperado:" with wrapping
       pdf.setTextColor(...colors.success)
-      pdf.text(`Esperado: ${item.correctValue}`, margin + 5, yPosition)
-      yPosition += 9
+      const expectedText = `Esperado: ${item.correctValue}`
+      const expectedLines = pdf.splitTextToSize(expectedText, contentWidth - 10)
+      for (const line of expectedLines) {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage()
+          yPosition = margin
+        }
+        pdf.text(line, margin + 5, yPosition)
+        yPosition += 4
+      }
+      yPosition += 5
 
-      // Get explanations for this field
-      const explanations = getExplanationsForField(item.field, data.officialReport)
+      // For findings field, show explanations for BOTH user's false positives AND expected findings
+      if (item.field === 'findings' && item.rawUserFindings && item.rawExpectedFindings) {
+        const userFindings = item.rawUserFindings
+        const expectedFindings = item.rawExpectedFindings
+        const falsePositives = userFindings.filter(f => !expectedFindings.includes(f))
 
-      if (explanations.length > 0) {
-        pdf.setTextColor(...colors.text.secondary)
-        pdf.setFontSize(9)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Conceitos-chave:', margin + 5, yPosition)
-        yPosition += 6
-
-        for (const exp of explanations) {
-          if (yPosition > pageHeight - 30) {
+        // Section 1: Explain why false positives are WRONG
+        if (falsePositives.length > 0) {
+          if (yPosition > pageHeight - 40) {
             pdf.addPage()
             yPosition = margin
           }
 
-          // Bullet background
-          pdf.setFillColor(...colors.bg.light)
-          pdf.roundedRect(margin + 3, yPosition - 1.5, contentWidth - 8, 5, 1.5, 1.5, 'F')
-
-          pdf.setTextColor(...colors.primary)
+          pdf.setTextColor(...colors.error)
           pdf.setFontSize(9)
           pdf.setFont('helvetica', 'bold')
-          pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
+          pdf.text('Por que estes achados estão errados:', margin + 5, yPosition)
           yPosition += 6
 
+          for (const fp of falsePositives) {
+            const fpExplanations = getExplanationsForFinding(fp)
+            for (const exp of fpExplanations) {
+              if (yPosition > pageHeight - 30) {
+                pdf.addPage()
+                yPosition = margin
+              }
+
+              pdf.setFillColor(...colors.accent.error)
+              pdf.roundedRect(margin + 3, yPosition - 1.5, contentWidth - 8, 5, 1.5, 1.5, 'F')
+
+              pdf.setTextColor(...colors.error)
+              pdf.setFontSize(9)
+              pdf.setFont('helvetica', 'bold')
+              pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
+              yPosition += 6
+
+              pdf.setTextColor(...colors.text.secondary)
+              pdf.setFontSize(8)
+              pdf.setFont('helvetica', 'normal')
+              const sanitizedDesc = sanitizeForPDF(exp.description)
+              const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+              for (const line of descLines) {
+                if (yPosition > pageHeight - 20) {
+                  pdf.addPage()
+                  yPosition = margin
+                }
+                pdf.text(line, margin + 8, yPosition)
+                yPosition += 4
+              }
+              yPosition += 2
+            }
+          }
+          yPosition += 4
+        }
+
+        // Section 2: Explain expected findings (conceitos-chave)
+        if (expectedFindings.length > 0) {
+          if (yPosition > pageHeight - 40) {
+            pdf.addPage()
+            yPosition = margin
+          }
+
+          pdf.setTextColor(...colors.success)
+          pdf.setFontSize(9)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Achados corretos (conceitos-chave):', margin + 5, yPosition)
+          yPosition += 6
+
+          for (const ef of expectedFindings) {
+            const efExplanations = getExplanationsForFinding(ef)
+            for (const exp of efExplanations) {
+              if (yPosition > pageHeight - 30) {
+                pdf.addPage()
+                yPosition = margin
+              }
+
+              pdf.setFillColor(...colors.bg.light)
+              pdf.roundedRect(margin + 3, yPosition - 1.5, contentWidth - 8, 5, 1.5, 1.5, 'F')
+
+              pdf.setTextColor(...colors.primary)
+              pdf.setFontSize(9)
+              pdf.setFont('helvetica', 'bold')
+              pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
+              yPosition += 6
+
+              pdf.setTextColor(...colors.text.secondary)
+              pdf.setFontSize(8)
+              pdf.setFont('helvetica', 'normal')
+              const sanitizedDesc = sanitizeForPDF(exp.description)
+              const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+              for (const line of descLines) {
+                if (yPosition > pageHeight - 20) {
+                  pdf.addPage()
+                  yPosition = margin
+                }
+                pdf.text(line, margin + 8, yPosition)
+                yPosition += 4
+              }
+              yPosition += 2
+            }
+          }
+        }
+      } else {
+        // Non-findings fields: use existing logic
+        const explanations = getExplanationsForField(item.field, data.officialReport)
+
+        if (explanations.length > 0) {
           pdf.setTextColor(...colors.text.secondary)
-          pdf.setFontSize(8)
-          pdf.setFont('helvetica', 'normal')
-          const descLines = pdf.splitTextToSize(exp.description, contentWidth - 16)
-          for (const line of descLines) {
-            if (yPosition > pageHeight - 20) {
+          pdf.setFontSize(9)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Conceitos-chave:', margin + 5, yPosition)
+          yPosition += 6
+
+          for (const exp of explanations) {
+            if (yPosition > pageHeight - 30) {
               pdf.addPage()
               yPosition = margin
             }
-            pdf.text(line, margin + 8, yPosition)
-            yPosition += 4
-          }
 
-          yPosition += 2
+            pdf.setFillColor(...colors.bg.light)
+            pdf.roundedRect(margin + 3, yPosition - 1.5, contentWidth - 8, 5, 1.5, 1.5, 'F')
+
+            pdf.setTextColor(...colors.primary)
+            pdf.setFontSize(9)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
+            yPosition += 6
+
+            pdf.setTextColor(...colors.text.secondary)
+            pdf.setFontSize(8)
+            pdf.setFont('helvetica', 'normal')
+            const sanitizedDesc = sanitizeForPDF(exp.description)
+            const descLines = pdf.splitTextToSize(sanitizedDesc, contentWidth - 16)
+            for (const line of descLines) {
+              if (yPosition > pageHeight - 20) {
+                pdf.addPage()
+                yPosition = margin
+              }
+              pdf.text(line, margin + 8, yPosition)
+              yPosition += 4
+            }
+
+            yPosition += 2
+          }
         }
       }
 
@@ -652,6 +794,30 @@ function getExplanationsForField(field: string, officialReport: OfficialReport):
         }
       }
       break
+  }
+
+  return explanations
+}
+
+/**
+ * Get explanations for a single finding
+ * Used for showing explanations for both user's false positives and expected findings
+ */
+function getExplanationsForFinding(finding: string): ExplanationItem[] {
+  const explanations: ExplanationItem[] = []
+
+  // Try to get base finding explanation
+  const baseKey = finding.split('_')[0] === 'pathological' ? 'pathological_q' :
+                 finding.split('_')[0] === 'oca' ? 'oca' :
+                 finding.split('_')[0] === 'ste' ? 'ste' :
+                 finding.split('_')[0] === 'fragmented' ? 'fragmented_qrs' : finding
+
+  const explanation = FINDING_EXPLANATIONS[finding] || FINDING_EXPLANATIONS[baseKey]
+  if (explanation) {
+    explanations.push({
+      name: formatCompoundFinding(finding),
+      description: explanation.description
+    })
   }
 
   return explanations

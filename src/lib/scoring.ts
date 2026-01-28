@@ -11,6 +11,9 @@ interface FieldComparison {
   partialCredit?: number
   points: number
   maxPoints: number
+  // Raw findings arrays for PDF explanations
+  rawUserFindings?: Finding[]
+  rawExpectedFindings?: Finding[]
 }
 
 export interface CategoryWeights {
@@ -40,13 +43,13 @@ export interface ScoringResult {
 const CATEGORY_WEIGHTS: Record<Category, CategoryWeights> = {
   arrhythmia: { rhythm: 35, heart_rate: 8, axis: 5, pr_interval: 5, qrs_duration: 5, findings: 38, electrode_swap: 4 },
   ischemia:   { rhythm: 12, heart_rate: 5, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 68, electrode_swap: 4 },
-  structural: { rhythm: 15, heart_rate: 5, axis: 15, pr_interval: 5, qrs_duration: 5, findings: 50, electrode_swap: 5 },
+  structural: { rhythm: 15, heart_rate: 5, axis: 5, pr_interval: 5, qrs_duration: 5, findings: 60, electrode_swap: 5 },  // axis 15→5, findings 50→60
   emergency:  { rhythm: 25, heart_rate: 8, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 52, electrode_swap: 4 },
-  normal:     { rhythm: 20, heart_rate: 8, axis: 10, pr_interval: 4, qrs_duration: 4, findings: 50, electrode_swap: 4 },
-  routine:    { rhythm: 20, heart_rate: 8, axis: 10, pr_interval: 4, qrs_duration: 4, findings: 50, electrode_swap: 4 },
-  advanced:   { rhythm: 17, heart_rate: 7, axis: 7, pr_interval: 3, qrs_duration: 3, findings: 60, electrode_swap: 3 },
-  rare:       { rhythm: 17, heart_rate: 7, axis: 7, pr_interval: 3, qrs_duration: 3, findings: 60, electrode_swap: 3 },
-  other:      { rhythm: 17, heart_rate: 7, axis: 7, pr_interval: 3, qrs_duration: 3, findings: 60, electrode_swap: 3 },
+  normal:     { rhythm: 20, heart_rate: 8, axis: 5, pr_interval: 4, qrs_duration: 4, findings: 55, electrode_swap: 4 },  // axis 10→5, findings 50→55
+  routine:    { rhythm: 20, heart_rate: 8, axis: 5, pr_interval: 4, qrs_duration: 4, findings: 55, electrode_swap: 4 },  // axis 10→5, findings 50→55
+  advanced:   { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
+  rare:       { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
+  other:      { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
 }
 
 // Default weights (fallback)
@@ -86,29 +89,39 @@ const HIGH_SEVERITY_FP = new Set([
   'avb_2nd_type2', 'avb_2_1', 'avb_advanced', 'avb_3rd', 'sab_3rd',
   // Life-threatening patterns
   'brugada', 'hyperkalemia', 'preexcitation', 'giant_negative_t',
+  // Bundle branch blocks change ECG interpretation fundamentally
+  'lbbb', 'rbbb',
 ])
 
 const MEDIUM_SEVERITY_FP = new Set([
-  'lbbb', 'avb_1st', 'avb_2nd_type1', 'sab_2nd_type1', 'sab_2nd_type2',
+  'avb_1st', 'avb_2nd_type1', 'sab_2nd_type1', 'sab_2nd_type2',
   'pathological_q', 'fragmented_qrs', 'amplitude_criteria',
   'hypokalemia', 'digitalis',
 ])
 
 /**
  * Get false positive penalty based on clinical severity
- * HIGH: 6% of pool, MEDIUM: 3% of pool, LOW: 0%
+ * HIGH: 15% of pool, MEDIUM: 6% of pool, LOW: 0%
  */
 function getFalsePositivePenalty(finding: Finding, findingsPool: number): number {
   // Check prefixes for compound findings
   if (finding.startsWith('ste_') || finding.startsWith('oca_')) {
-    return findingsPool * 0.06 // HIGH
+    return findingsPool * 0.15 // HIGH
   }
   if (finding.startsWith('pathological_q_') || finding.startsWith('fragmented_qrs_')) {
-    return findingsPool * 0.03 // MEDIUM
+    return findingsPool * 0.06 // MEDIUM
   }
-  if (HIGH_SEVERITY_FP.has(finding)) return findingsPool * 0.06
-  if (MEDIUM_SEVERITY_FP.has(finding)) return findingsPool * 0.03
+  if (HIGH_SEVERITY_FP.has(finding)) return findingsPool * 0.15
+  if (MEDIUM_SEVERITY_FP.has(finding)) return findingsPool * 0.06
   return 0 // LOW - no penalty for benign findings
+}
+
+/**
+ * Check if a finding is HIGH severity for floor removal logic
+ */
+function isHighSeverityFP(finding: Finding): boolean {
+  if (finding.startsWith('ste_') || finding.startsWith('oca_')) return true
+  return HIGH_SEVERITY_FP.has(finding)
 }
 
 // ============ HELPER FUNCTIONS ============
@@ -425,16 +438,24 @@ export function calculateScore(
     // Cap at effective max (bonus can't push total above proportional max)
     earnedFindingsPoints = Math.min(earnedFindingsPoints, effectiveFindingsMax)
 
-    // Penalty for false positives (severity-based: 6% HIGH, 3% MEDIUM, 0% LOW)
+    // Penalty for false positives (severity-based: 15% HIGH, 6% MEDIUM, 0% LOW)
     const falsePositivesFindings = normalizedUserFindings.filter(f => !normalizedOfficialFindings.includes(f))
     let penalty = 0
     for (const fp of falsePositivesFindings) {
       penalty += getFalsePositivePenalty(fp, findingsPool)
     }
 
-    // Guarantee minimum: 50% of earned points
-    const minimumPoints = earnedFindingsPoints * 0.5
-    earnedFindingsPoints = Math.max(minimumPoints, earnedFindingsPoints - penalty)
+    // Check if any HIGH severity false positives - if so, remove the 50% floor protection
+    const hasHighSeverityFP = falsePositivesFindings.some(fp => isHighSeverityFP(fp))
+
+    if (hasHighSeverityFP) {
+      // No floor for dangerous false positives - full penalty applies
+      earnedFindingsPoints = Math.max(0, earnedFindingsPoints - penalty)
+    } else {
+      // Keep 50% floor only for benign mistakes (LOW/MEDIUM severity)
+      const minimumPoints = earnedFindingsPoints * 0.5
+      earnedFindingsPoints = Math.max(minimumPoints, earnedFindingsPoints - penalty)
+    }
   }
 
   const findingsPoints = Math.round(earnedFindingsPoints)
@@ -449,15 +470,50 @@ export function calculateScore(
     partialCredit: findingsCorrect ? undefined : (earnedFindingsPoints / effectiveFindingsMax),
     points: findingsPoints,
     maxPoints: effectiveFindingsMax, // Use proportional max
+    // Pass raw findings arrays for PDF explanations
+    rawUserFindings: userFindings,
+    rawExpectedFindings: officialFindings,
   })
 
   // ============ ELECTRODE SWAP COMPARISON ============
+  // CRITICAL: When there IS an electrode swap and user misses it = AUTOMATIC FAIL (0%)
   const officialSwap = officialReport.electrode_swap || []
   const userSwap = userReport.electrode_swap || []
   const swapCorrect = arraysEqual(userSwap, officialSwap)
-  const swapOverlap = arraysOverlap(userSwap, officialSwap)
-  const swapMaxPoints = weights.electrode_swap
+  const hasOfficialSwap = officialSwap.length > 0
 
+  // If there's an electrode swap and user missed it = automatic fail
+  if (hasOfficialSwap && !swapCorrect) {
+    // Add all comparisons up to this point
+    comparisons.push({
+      field: 'electrode_swap',
+      label: 'Troca de Eletrodos',
+      userValue: formatElectrodeSwap(userSwap),
+      correctValue: formatElectrodeSwap(officialSwap),
+      isCorrect: false,
+      points: 0,
+      maxPoints: 100, // Critical importance
+    })
+
+    // Determine primary category for display
+    const categoryUsed: Category | 'mixed' = categories.length === 1
+      ? categories[0]
+      : 'mixed'
+
+    // Return automatic fail
+    return {
+      score: 0,
+      totalPoints: 0,
+      maxPoints: 100,
+      comparisons,
+      isPassings: false,
+      categoryUsed,
+      categoryWeights: weights,
+    }
+  }
+
+  // Normal electrode swap scoring (when no official swap OR user got it right)
+  const swapMaxPoints = weights.electrode_swap
   let swapPartial: number
   if (swapCorrect) {
     swapPartial = 1
@@ -465,7 +521,7 @@ export function calculateScore(
     swapPartial = 1 // Both empty is correct
   } else {
     const totalExpectedSwaps = officialSwap.length || 1
-    const baseScore = swapOverlap / totalExpectedSwaps
+    const baseScore = arraysOverlap(userSwap, officialSwap) / totalExpectedSwaps
     const falsePositiveSwaps = userSwap.filter(s => !officialSwap.includes(s)).length
     const penalty = falsePositiveSwaps * 0.2
     swapPartial = Math.max(0, baseScore - penalty)
