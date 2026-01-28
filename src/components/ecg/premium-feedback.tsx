@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Crown, X, Check, FileDown, BookOpen, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { Crown, X, Check, FileDown, BookOpen, ChevronDown, ChevronUp, Loader2, ThumbsDown } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import type { ScoringResult } from '@/lib/scoring'
 import type { OfficialReport } from '@/types/database'
 import {
@@ -20,16 +21,45 @@ interface PremiumFeedbackProps {
   result: ScoringResult
   officialReport: OfficialReport
   ecgImageUrl: string
+  ecgId: string
   isPremium: boolean
+  userName?: string
 }
 
 const COURSE_URL = 'https://www.manole.com.br/curso-de-eletrocardiograma-com-jose-alencar-2-edicao/p'
 
-export function PremiumFeedback({ result, officialReport, ecgImageUrl, isPremium }: PremiumFeedbackProps) {
+export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, isPremium, userName }: PremiumFeedbackProps) {
+  const supabase = createClient()
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [isDisliked, setIsDisliked] = useState(false)
+  const [isDisliking, setIsDisliking] = useState(false)
 
   if (!isPremium) return null
+
+  const handleDislike = async () => {
+    if (isDisliked || isDisliking) return
+
+    setIsDisliking(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('ecg_dislikes').insert({
+        ecg_id: ecgId,
+        user_id: user.id
+      })
+
+      if (!error) {
+        setIsDisliked(true)
+      }
+    } catch {
+      // Silently fail - not critical functionality
+    } finally {
+      setIsDisliking(false)
+    }
+  }
 
   const incorrectItems = result.comparisons.filter(c => !c.isCorrect)
 
@@ -52,7 +82,8 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, isPremium
         ecgImageUrl,
         scoringResult: result,
         officialReport,
-        date: new Date()
+        date: new Date(),
+        userName
       })
       downloadPDF(blob, `feedback-ecg-${Date.now()}.pdf`)
     } catch (error) {
@@ -104,6 +135,22 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, isPremium
             )}
             Baixar Relatorio PDF
           </Button>
+
+          {/* Dislike button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handleDislike}
+              disabled={isDisliked || isDisliking}
+              className={`p-1.5 rounded transition-colors ${
+                isDisliked
+                  ? 'text-red-500 cursor-default'
+                  : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+              }`}
+              title={isDisliked ? 'Obrigado pelo feedback' : 'Reportar problema com este ECG'}
+            >
+              <ThumbsDown className={`h-4 w-4 ${isDisliking ? 'animate-pulse' : ''}`} />
+            </button>
+          </div>
         </CardContent>
       </Card>
     )
@@ -161,6 +208,22 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, isPremium
           )}
           Baixar Relatorio PDF
         </Button>
+
+        {/* Dislike button */}
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleDislike}
+            disabled={isDisliked || isDisliking}
+            className={`p-1.5 rounded transition-colors ${
+              isDisliked
+                ? 'text-red-500 cursor-default'
+                : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+            }`}
+            title={isDisliked ? 'Obrigado pelo feedback' : 'Reportar problema com este ECG'}
+          >
+            <ThumbsDown className={`h-4 w-4 ${isDisliking ? 'animate-pulse' : ''}`} />
+          </button>
+        </div>
       </CardContent>
     </Card>
   )
