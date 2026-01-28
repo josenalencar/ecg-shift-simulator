@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Activity, ArrowRight, CheckCircle2, Play, X, Send, ChevronDown, ChevronUp, Heart, Users, Zap, Target, BarChart3, Mail, Instagram, Linkedin, Twitter, Building2, Briefcase, Hospital, FileDown, BookOpen, Baby, HeartPulse } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 // Contact Modal Component
 function ContactModal({ isOpen, onClose, type = 'contact' }: { isOpen: boolean; onClose: () => void; type?: 'contact' | 'parceria' | 'suporte' }) {
@@ -190,10 +192,34 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [isScrolled, setIsScrolled] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [contactType, setContactType] = useState<'contact' | 'parceria' | 'suporte'>('contact')
   const [videoPlaying, setVideoPlaying] = useState(false)
+
+  // Handle auth redirects from Supabase (password recovery, magic links)
+  useEffect(() => {
+    const handleAuthRedirect = async () => {
+      // Check if there's an auth hash in the URL (Supabase implicit flow)
+      const hash = window.location.hash
+      if (hash && hash.includes('type=recovery')) {
+        // User clicked a password recovery link
+        // Supabase will handle setting up the session from the hash
+        const supabase = createClient()
+
+        // Wait for Supabase to process the hash
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (session) {
+          // Redirect to reset password page
+          router.replace('/reset-password')
+        }
+      }
+    }
+
+    handleAuthRedirect()
+  }, [router])
 
   useEffect(() => {
     const handleScroll = () => {

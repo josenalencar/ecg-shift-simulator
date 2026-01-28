@@ -52,12 +52,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
     }
 
+    // Build the redirect URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+    const redirectUrl = `${baseUrl}/auth/callback?next=/reset-password`
+
+    console.log('[Reset Password] Using redirect URL:', redirectUrl)
+    console.log('[Reset Password] NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
+    console.log('[Reset Password] NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
+
     // Generate password recovery link (does NOT send email)
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: targetUser.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
+        redirectTo: redirectUrl,
       }
     })
 
@@ -65,6 +73,8 @@ export async function POST(request: NextRequest) {
       console.error('[Reset Password] Error generating link:', linkError)
       return NextResponse.json({ error: 'Erro ao gerar link de recuperação' }, { status: 500 })
     }
+
+    console.log('[Reset Password] Generated link:', linkData.properties.action_link)
 
     // Send email via Resend with custom template
     const emailResult = await sendPasswordResetEmail(

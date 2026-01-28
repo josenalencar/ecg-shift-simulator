@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin()
 
+    // Build the redirect URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+    const redirectUrl = `${baseUrl}/auth/callback?next=/reset-password`
+
+    console.log('[Forgot Password] Using redirect URL:', redirectUrl)
+
     // Generate password recovery link (does NOT send email)
     // Note: If email doesn't exist, Supabase will return an error
     // For security, we don't reveal if the email exists or not
@@ -35,7 +41,7 @@ export async function POST(request: NextRequest) {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
+        redirectTo: redirectUrl,
       }
     })
 
