@@ -169,41 +169,52 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
     yPosition += 18
   }
 
-  // ============ SCORE SECTION - ENHANCED ============
+  // ============ SCORE SECTION - CENTERED VERTICAL LAYOUT ============
   const score = data.scoringResult.score
   const isPassings = data.scoringResult.isPassings
   const scoreBgColor = isPassings ? colors.accent.success : colors.accent.error
   const scoreColor = isPassings ? colors.success : colors.error
-  const scoreLabel = isPassings ? 'APROVADO' : 'CONTINUAR PRATICANDO'
+  const scoreLabel = isPassings ? 'APROVADO' : 'CONTINUE PRATICANDO'
+
+  // Performance phrases by tier
+  const getPerformanceText = (s: number): string => {
+    if (s === 100) return 'Interpretação impecável!'
+    if (s >= 90) return 'Excelente! Quase perfeito.'
+    if (s >= 80) return 'Muito bem! Você está afiado.'
+    if (s >= 70) return 'Bom trabalho! Continue praticando.'
+    if (s >= 60) return 'Progresso! Revise os pontos errados.'
+    if (s >= 50) return 'Atenção! Foque nos fundamentos.'
+    return 'Hora de estudar! Reveja os conceitos.'
+  }
 
   pdf.setFillColor(...scoreBgColor)
-  pdf.roundedRect(margin, yPosition, contentWidth, 50, 4, 4, 'F')
+  pdf.roundedRect(margin, yPosition, contentWidth, 55, 4, 4, 'F')
 
-  // Score percentage
+  const centerX = pageWidth / 2
+
+  // Score percentage - CENTERED
   pdf.setTextColor(...scoreColor)
-  pdf.setFontSize(56)
+  pdf.setFontSize(48)
   pdf.setFont('helvetica', 'bold')
-  pdf.text(`${score}%`, margin + 20, yPosition + 32)
+  pdf.text(`${score}%`, centerX, yPosition + 20, { align: 'center' })
 
-  // Status label
-  pdf.setFontSize(16)
+  // Status label - CENTERED below percentage
+  pdf.setFontSize(14)
   pdf.setFont('helvetica', 'bold')
-  pdf.text(scoreLabel, margin + 65, yPosition + 26)
+  pdf.text(scoreLabel, centerX, yPosition + 30, { align: 'center' })
 
-  // Points breakdown
+  // Points breakdown - CENTERED
   pdf.setFontSize(11)
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(...colors.text.secondary)
-  pdf.text(`${data.scoringResult.totalPoints} de ${data.scoringResult.maxPoints} pontos`, margin + 65, yPosition + 35)
+  pdf.text(`${data.scoringResult.totalPoints} de ${data.scoringResult.maxPoints} pontos`, centerX, yPosition + 40, { align: 'center' })
 
-  // Performance text
-  const performanceText = score >= 80 ? 'Excelente desempenho!' :
-    score >= 60 ? 'Bom trabalho, continue!' : 'Revise os conceitos-chave'
+  // Performance text - CENTERED
   pdf.setFontSize(10)
   pdf.setTextColor(...colors.text.light)
-  pdf.text(performanceText, margin + 65, yPosition + 42)
+  pdf.text(getPerformanceText(score), centerX, yPosition + 48, { align: 'center' })
 
-  yPosition += 58
+  yPosition += 62
 
   // ============ ANALYSIS TABLE ============
   pdf.setTextColor(...colors.text.primary)
@@ -232,18 +243,29 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
 
   yPosition += 12
 
-  // Table rows
+  // Table rows with dynamic height for long content
   pdf.setFont('helvetica', 'normal')
   for (let idx = 0; idx < data.scoringResult.comparisons.length; idx++) {
     const comparison = data.scoringResult.comparisons[idx]
 
-    // Check for page break
-    if (yPosition > pageHeight - 60) {
+    // Calculate how many lines each column needs
+    const colWidths = { user: 55, expected: 50 }
+
+    pdf.setFontSize(9)
+    const userLines = pdf.splitTextToSize(comparison.userValue, colWidths.user)
+    const expectedLines = pdf.splitTextToSize(comparison.correctValue, colWidths.expected)
+    const maxLines = Math.max(userLines.length, expectedLines.length, 1)
+
+    const lineHeight = 4
+    const rowPadding = 3
+    const rowHeight = Math.max(10, maxLines * lineHeight + rowPadding * 2)
+
+    // Check for page break (with dynamic row height)
+    if (yPosition > pageHeight - 30 - rowHeight) {
       pdf.addPage()
       yPosition = margin
     }
 
-    const rowHeight = 10
     const isEven = idx % 2 === 0
 
     // Alternating background
@@ -255,25 +277,37 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
     // Status indicator
     const statusColor = comparison.isCorrect ? colors.success : colors.error
     pdf.setFillColor(...statusColor)
-    pdf.circle(margin + 3, yPosition + 3.5, 2, 'F')
+    pdf.circle(margin + 3, yPosition + rowHeight / 2, 2, 'F')
 
+    // Label (single line, truncate is OK since labels are short)
     pdf.setTextColor(...colors.text.primary)
     pdf.setFontSize(9)
     pdf.setFont('helvetica', 'normal')
-    pdf.text(truncateText(comparison.label, 18), margin + 8, yPosition + 4.5)
+    pdf.text(truncateText(comparison.label, 18), margin + 8, yPosition + rowHeight / 2 + 1)
 
+    // User value - multi-line
     const userValueColor = comparison.isCorrect ? colors.success : colors.error
     pdf.setTextColor(...userValueColor)
     pdf.setFont('helvetica', 'bold')
-    pdf.text(truncateText(comparison.userValue, 28), margin + 52, yPosition + 4.5)
+    let userY = yPosition + rowPadding + 2
+    for (const line of userLines) {
+      pdf.text(line, margin + 52, userY)
+      userY += lineHeight
+    }
 
+    // Expected value - multi-line
     pdf.setTextColor(...colors.text.primary)
     pdf.setFont('helvetica', 'normal')
-    pdf.text(truncateText(comparison.correctValue, 28), margin + 115, yPosition + 4.5)
+    let expectedY = yPosition + rowPadding + 2
+    for (const line of expectedLines) {
+      pdf.text(line, margin + 115, expectedY)
+      expectedY += lineHeight
+    }
 
+    // Points
     pdf.setTextColor(...statusColor)
     pdf.setFont('helvetica', 'bold')
-    pdf.text(`${comparison.points}/${comparison.maxPoints}`, margin + 170, yPosition + 4.5)
+    pdf.text(`${comparison.points}/${comparison.maxPoints}`, margin + 170, yPosition + rowHeight / 2 + 1)
 
     yPosition += rowHeight
   }
