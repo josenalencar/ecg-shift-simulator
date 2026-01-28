@@ -1,6 +1,7 @@
 /**
  * PDF Generator for Premium Feedback Reports
- * Generates a downloadable PDF with ECG image, comparison, and explanations
+ * Generates a downloadable PDF with ECG comparison and explanations
+ * Design: Professional medical report with modern styling
  */
 
 import jsPDF from 'jspdf'
@@ -11,7 +12,6 @@ import {
   FINDING_EXPLANATIONS,
   AXIS_EXPLANATIONS,
   INTERVAL_EXPLANATIONS,
-  REGULARITY_EXPLANATIONS,
   ELECTRODE_SWAP_EXPLANATIONS
 } from './ecg-explanations'
 import { formatCompoundFinding } from './ecg-constants'
@@ -27,12 +27,34 @@ export interface PDFReportData {
 // Course promotion URL
 const COURSE_URL = 'https://www.manole.com.br/curso-de-eletrocardiograma-com-jose-alencar-2-edicao/p'
 
+// Color palette
+const colors = {
+  primary: [37, 99, 235] as [number, number, number],      // Blue-600
+  secondary: [30, 64, 175] as [number, number, number],    // Blue-800
+  success: [22, 163, 74] as [number, number, number],      // Green-600
+  error: [220, 38, 38] as [number, number, number],        // Red-600
+  bg: {
+    lighter: [248, 250, 252] as [number, number, number],  // Slate-50
+    light: [241, 245, 249] as [number, number, number],    // Slate-100
+  },
+  accent: {
+    success: [220, 252, 231] as [number, number, number],  // Green-100
+    error: [254, 226, 226] as [number, number, number],    // Red-100
+  },
+  text: {
+    primary: [15, 23, 42] as [number, number, number],     // Slate-900
+    secondary: [71, 85, 105] as [number, number, number],  // Slate-500
+    light: [148, 163, 184] as [number, number, number],    // Slate-400
+  }
+}
+
 /**
- * Load logo image as base64 data URL
+ * Load image from URL as base64
  */
-async function loadLogoAsBase64(): Promise<string | null> {
+async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
-    const response = await fetch('/plantaoecg.png')
+    const response = await fetch(url, { mode: 'cors' })
+    if (!response.ok) throw new Error('Failed to load image')
     const blob = await response.blob()
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -41,28 +63,31 @@ async function loadLogoAsBase64(): Promise<string | null> {
       reader.readAsDataURL(blob)
     })
   } catch (error) {
-    console.error('Failed to load logo:', error)
+    console.warn('Failed to load image:', url, error)
     return null
   }
 }
 
 /**
- * Load course image as base64 data URL
+ * Format date for display (Brazil timezone)
  */
-async function loadCourseImageAsBase64(): Promise<string | null> {
-  try {
-    const response = await fetch('https://manole.vtexassets.com/arquivos/ids/266919-1200-auto?v=638775683835930000&width=1200&height=auto&aspect=true')
-    const blob = await response.blob()
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-  } catch (error) {
-    console.error('Failed to load course image:', error)
-    return null
-  }
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+/**
+ * Truncate text with ellipsis
+ */
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength - 1) + '…'
 }
 
 /**
@@ -72,267 +97,279 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
   const pdf = new jsPDF('p', 'mm', 'a4')
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
-  const margin = 15
+  const margin = 16
   const contentWidth = pageWidth - 2 * margin
   let yPosition = margin
 
-  // Colors
-  const primaryColor: [number, number, number] = [124, 58, 237] // Purple-600
-  const textColor: [number, number, number] = [23, 23, 23] // Near black
-  const grayColor: [number, number, number] = [107, 114, 128] // Gray-500
-  const greenColor: [number, number, number] = [16, 185, 129] // Green-500
-  const redColor: [number, number, number] = [239, 68, 68] // Red-500
+  // Load images
+  const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGLogo.png'
+  const courseImageUrl = 'https://manole.vtexassets.com/arquivos/ids/266919-1200-auto?v=638775683835930000&width=1200&height=auto&aspect=true'
 
-  // Helper to reset text styles after page break
-  const resetTextStyles = () => {
-    pdf.setTextColor(...textColor)
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-  }
+  const logoBase64 = await loadImageAsBase64(logoUrl)
+  const courseImageBase64 = await loadImageAsBase64(courseImageUrl)
 
-  // === HEADER ===
-  pdf.setFillColor(...primaryColor)
-  pdf.rect(0, 0, pageWidth, 25, 'F')
+  // ============ HEADER ============
+  // Background
+  pdf.setFillColor(...colors.bg.lighter)
+  pdf.rect(0, 0, pageWidth, 55, 'F')
 
-  // Try to add logo
-  const logoBase64 = await loadLogoAsBase64()
+  // Top accent line
+  pdf.setFillColor(...colors.primary)
+  pdf.rect(0, 0, pageWidth, 3, 'F')
+
+  // Logo
   if (logoBase64) {
-    // Add logo image (positioned on left side of header)
-    pdf.addImage(logoBase64, 'PNG', margin, 4, 40, 17)
+    try {
+      pdf.addImage(logoBase64, 'PNG', margin, 5, 45, 20)
+    } catch {
+      pdf.setTextColor(...colors.primary)
+      pdf.setFontSize(22)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Plantao ECG', margin, 18)
+    }
   } else {
-    // Fallback to text if logo fails to load
-    pdf.setTextColor(255, 255, 255)
-    pdf.setFontSize(20)
+    pdf.setTextColor(...colors.primary)
+    pdf.setFontSize(22)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('Plantao ECG', margin, 16)
+    pdf.text('Plantao ECG', margin, 18)
   }
 
-  pdf.setTextColor(255, 255, 255)
+  // Header text
+  pdf.setTextColor(...colors.text.secondary)
   pdf.setFontSize(10)
-  pdf.setFont('helvetica', 'normal')
-  pdf.text('Relatorio de Feedback Premium', pageWidth - margin, 12, { align: 'right' })
+  pdf.setFont('helvetica', 'bold')
+  pdf.text('RELATÓRIO DE FEEDBACK PREMIUM', pageWidth - margin, 12, { align: 'right' })
+
+  pdf.setFontSize(8)
+  pdf.setTextColor(...colors.text.light)
   pdf.text(formatDate(data.date), pageWidth - margin, 18, { align: 'right' })
 
-  yPosition = 35
+  // Divider
+  pdf.setDrawColor(...colors.text.light)
+  pdf.setLineWidth(0.5)
+  pdf.line(margin, 28, pageWidth - margin, 28)
 
-  // === USER NAME (if available) ===
+  yPosition = 38
+
+  // ============ USER INFO CARD ============
   if (data.userName) {
-    pdf.setTextColor(...textColor)
-    pdf.setFontSize(12)
+    pdf.setFillColor(...colors.bg.light)
+    pdf.roundedRect(margin, yPosition, contentWidth, 14, 2, 2, 'F')
+
+    pdf.setTextColor(...colors.text.secondary)
+    pdf.setFontSize(8)
     pdf.setFont('helvetica', 'normal')
-    pdf.text(`Usuario: `, margin, yPosition)
+    pdf.text('USUÁRIO', margin + 5, yPosition + 4)
+
+    pdf.setTextColor(...colors.text.primary)
+    pdf.setFontSize(12)
     pdf.setFont('helvetica', 'bold')
-    pdf.text(data.userName, margin + 25, yPosition)
-    yPosition += 10
+    pdf.text(data.userName, margin + 5, yPosition + 10)
+
+    yPosition += 18
   }
 
-  // === SCORE SUMMARY ===
+  // ============ SCORE SECTION - ENHANCED ============
+  const score = data.scoringResult.score
   const isPassings = data.scoringResult.isPassings
-  const summaryBgColor: [number, number, number] = isPassings ? [220, 252, 231] : [254, 226, 226]
-  pdf.setFillColor(...summaryBgColor)
-  pdf.roundedRect(margin, yPosition, contentWidth, 25, 3, 3, 'F')
+  const scoreBgColor = isPassings ? colors.accent.success : colors.accent.error
+  const scoreColor = isPassings ? colors.success : colors.error
+  const scoreLabel = isPassings ? 'APROVADO' : 'CONTINUAR PRATICANDO'
 
-  const summaryTextColor = isPassings ? greenColor : redColor
-  pdf.setTextColor(...summaryTextColor)
-  pdf.setFontSize(24)
+  pdf.setFillColor(...scoreBgColor)
+  pdf.roundedRect(margin, yPosition, contentWidth, 50, 4, 4, 'F')
+
+  // Score percentage
+  pdf.setTextColor(...scoreColor)
+  pdf.setFontSize(56)
   pdf.setFont('helvetica', 'bold')
-  pdf.text(`${data.scoringResult.score}%`, margin + 10, yPosition + 16)
+  pdf.text(`${score}%`, margin + 20, yPosition + 32)
 
-  pdf.setFontSize(12)
-  pdf.text(
-    isPassings ? 'Aprovado!' : 'Continue praticando!',
-    margin + 45,
-    yPosition + 14
-  )
+  // Status label
+  pdf.setFontSize(16)
+  pdf.setFont('helvetica', 'bold')
+  pdf.text(scoreLabel, margin + 65, yPosition + 26)
 
-  pdf.setTextColor(...grayColor)
-  pdf.setFontSize(10)
+  // Points breakdown
+  pdf.setFontSize(11)
   pdf.setFont('helvetica', 'normal')
-  pdf.text(
-    `${data.scoringResult.totalPoints} / ${data.scoringResult.maxPoints} pontos`,
-    margin + 45,
-    yPosition + 21
-  )
+  pdf.setTextColor(...colors.text.secondary)
+  pdf.text(`${data.scoringResult.totalPoints} de ${data.scoringResult.maxPoints} pontos`, margin + 65, yPosition + 35)
 
-  yPosition += 35
+  // Performance text
+  const performanceText = score >= 80 ? 'Excelente desempenho!' :
+    score >= 60 ? 'Bom trabalho, continue!' : 'Revise os conceitos-chave'
+  pdf.setFontSize(10)
+  pdf.setTextColor(...colors.text.light)
+  pdf.text(performanceText, margin + 65, yPosition + 42)
 
-  // === COMPARISON TABLE ===
-  pdf.setTextColor(...textColor)
+  yPosition += 58
+
+  // ============ ANALYSIS TABLE ============
+  pdf.setTextColor(...colors.text.primary)
   pdf.setFontSize(14)
   pdf.setFont('helvetica', 'bold')
-  pdf.text('Comparacao Detalhada', margin, yPosition)
-  yPosition += 8
+  pdf.text('ANÁLISE DETALHADA', margin, yPosition)
+
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(...colors.text.light)
+  pdf.text('Comparação entre suas respostas e o gabarito', margin, yPosition + 5)
+
+  yPosition += 12
 
   // Table header
-  pdf.setFillColor(243, 244, 246) // Gray-100
-  pdf.rect(margin, yPosition, contentWidth, 8, 'F')
+  pdf.setFillColor(...colors.primary)
+  pdf.roundedRect(margin, yPosition, contentWidth, 10, 2, 2, 'F')
 
   pdf.setFontSize(9)
   pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(...grayColor)
-  pdf.text('Campo', margin + 2, yPosition + 5.5)
-  pdf.text('Sua Resposta', margin + 45, yPosition + 5.5)
-  pdf.text('Correto', margin + 105, yPosition + 5.5)
-  pdf.text('Pts', margin + 165, yPosition + 5.5)
-  yPosition += 10
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('CAMPO', margin + 5, yPosition + 6.5)
+  pdf.text('SUA RESPOSTA', margin + 52, yPosition + 6.5)
+  pdf.text('ESPERADO', margin + 115, yPosition + 6.5)
+  pdf.text('PTS', margin + 170, yPosition + 6.5)
+
+  yPosition += 12
 
   // Table rows
   pdf.setFont('helvetica', 'normal')
-  for (const comparison of data.scoringResult.comparisons) {
-    // Check if we need a new page
-    if (yPosition > pageHeight - 40) {
+  for (let idx = 0; idx < data.scoringResult.comparisons.length; idx++) {
+    const comparison = data.scoringResult.comparisons[idx]
+
+    // Check for page break
+    if (yPosition > pageHeight - 60) {
       pdf.addPage()
       yPosition = margin
-      addWatermark(pdf, pageWidth, pageHeight)
-      resetTextStyles()
     }
 
-    const rowHeight = 8
+    const rowHeight = 10
+    const isEven = idx % 2 === 0
 
-    // Alternating row background
-    if (data.scoringResult.comparisons.indexOf(comparison) % 2 === 0) {
-      pdf.setFillColor(249, 250, 251) // Gray-50
+    // Alternating background
+    if (isEven) {
+      pdf.setFillColor(...colors.bg.light)
       pdf.rect(margin, yPosition - 1, contentWidth, rowHeight, 'F')
     }
 
     // Status indicator
-    const statusColor = comparison.isCorrect ? greenColor : redColor
+    const statusColor = comparison.isCorrect ? colors.success : colors.error
     pdf.setFillColor(...statusColor)
-    pdf.circle(margin + 3, yPosition + 3, 1.5, 'F')
+    pdf.circle(margin + 3, yPosition + 3.5, 2, 'F')
 
-    pdf.setTextColor(...textColor)
-    pdf.setFontSize(8)
+    pdf.setTextColor(...colors.text.primary)
+    pdf.setFontSize(9)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(truncateText(comparison.label, 18), margin + 8, yPosition + 4.5)
 
-    // Field name
-    pdf.text(truncateText(comparison.label, 20), margin + 7, yPosition + 4.5)
-
-    // User value
-    const userValueColor = comparison.isCorrect ? greenColor : redColor
+    const userValueColor = comparison.isCorrect ? colors.success : colors.error
     pdf.setTextColor(...userValueColor)
-    pdf.text(truncateText(comparison.userValue, 30), margin + 45, yPosition + 4.5)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(truncateText(comparison.userValue, 28), margin + 52, yPosition + 4.5)
 
-    // Correct value
-    pdf.setTextColor(...textColor)
-    pdf.text(truncateText(comparison.correctValue, 30), margin + 105, yPosition + 4.5)
+    pdf.setTextColor(...colors.text.primary)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(truncateText(comparison.correctValue, 28), margin + 115, yPosition + 4.5)
 
-    // Points
-    const pointsColor = comparison.isCorrect ? greenColor : redColor
-    pdf.setTextColor(...pointsColor)
-    pdf.text(`${comparison.points}/${comparison.maxPoints}`, margin + 165, yPosition + 4.5)
+    pdf.setTextColor(...statusColor)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(`${comparison.points}/${comparison.maxPoints}`, margin + 170, yPosition + 4.5)
 
     yPosition += rowHeight
   }
 
   yPosition += 10
 
-  // === EXPLICAÇÕES SECTION ===
-  // Collect all incorrect items with their explanations
+  // ============ EXPLANATIONS ============
   const incorrectItems = data.scoringResult.comparisons.filter(item => !item.isCorrect)
 
   if (incorrectItems.length > 0) {
-    // Check if we need a new page
-    if (yPosition > pageHeight - 60) {
+    if (yPosition > pageHeight - 80) {
       pdf.addPage()
       yPosition = margin
-      addWatermark(pdf, pageWidth, pageHeight)
-      resetTextStyles()
     }
 
-    pdf.setTextColor(...textColor)
+    pdf.setTextColor(...colors.text.primary)
     pdf.setFontSize(14)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('Explicacoes', margin, yPosition)
-    yPosition += 10
+    pdf.text('EXPLICAÇÕES E FEEDBACK', margin, yPosition)
+
+    pdf.setFontSize(9)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(...colors.text.light)
+    pdf.text(`${incorrectItems.length} área(s) para revisar`, margin, yPosition + 5)
+
+    yPosition += 12
 
     for (const item of incorrectItems) {
-      // Check if we need a new page
-      if (yPosition > pageHeight - 40) {
+      if (yPosition > pageHeight - 60) {
         pdf.addPage()
         yPosition = margin
-        addWatermark(pdf, pageWidth, pageHeight)
-        resetTextStyles()
       }
 
-      // Field name header with background
-      pdf.setFillColor(243, 232, 255) // Purple-100
-      pdf.roundedRect(margin, yPosition - 1, contentWidth, 8, 2, 2, 'F')
-      pdf.setTextColor(...primaryColor)
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(item.label, margin + 3, yPosition + 5)
-      yPosition += 10
+      // Item header with accent line
+      pdf.setDrawColor(...colors.error)
+      pdf.setLineWidth(3)
+      pdf.line(margin, yPosition - 0.5, margin, yPosition + 8.5)
 
-      // Your answer
+      pdf.setTextColor(...colors.text.primary)
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(item.label, margin + 6, yPosition + 6)
+
+      yPosition += 11
+
+      // Responses
+      pdf.setTextColor(...colors.error)
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(...redColor)
       pdf.text(`Sua resposta: ${item.userValue}`, margin + 5, yPosition)
-      yPosition += 5
+      yPosition += 6
 
-      // Correct answer
-      pdf.setTextColor(...greenColor)
-      pdf.text(`Correto: ${item.correctValue}`, margin + 5, yPosition)
-      yPosition += 7
+      pdf.setTextColor(...colors.success)
+      pdf.text(`Esperado: ${item.correctValue}`, margin + 5, yPosition)
+      yPosition += 9
 
-      // Get individual explanations for this field
+      // Get explanations for this field
       const explanations = getExplanationsForField(item.field, data.officialReport)
 
       if (explanations.length > 0) {
-        pdf.setTextColor(...textColor)
-        pdf.setFontSize(8)
+        pdf.setTextColor(...colors.text.secondary)
+        pdf.setFontSize(9)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Por que:', margin + 5, yPosition)
-        yPosition += 5
+        pdf.text('Conceitos-chave:', margin + 5, yPosition)
+        yPosition += 6
 
-        // Render each explanation as a separate bullet point
         for (const exp of explanations) {
-          // Check if we need a new page
-          if (yPosition > pageHeight - 25) {
+          if (yPosition > pageHeight - 30) {
             pdf.addPage()
             yPosition = margin
-            addWatermark(pdf, pageWidth, pageHeight)
-            resetTextStyles()
           }
 
-          // Bullet with finding/item name in bold - wrapped if needed
-          pdf.setTextColor(...textColor)
-          pdf.setFontSize(8)
+          // Bullet background
+          pdf.setFillColor(...colors.bg.light)
+          pdf.roundedRect(margin + 3, yPosition - 1.5, contentWidth - 8, 5, 1.5, 1.5, 'F')
+
+          pdf.setTextColor(...colors.primary)
+          pdf.setFontSize(9)
           pdf.setFont('helvetica', 'bold')
-          const bulletText = `• ${exp.name}:`
-          const bulletLines = pdf.splitTextToSize(bulletText, contentWidth - 15)
-          for (let i = 0; i < bulletLines.length; i++) {
-            if (yPosition > pageHeight - 20) {
-              pdf.addPage()
-              yPosition = margin
-              addWatermark(pdf, pageWidth, pageHeight)
-              resetTextStyles()
-              pdf.setTextColor(...textColor)
-              pdf.setFontSize(8)
-              pdf.setFont('helvetica', 'bold')
-            }
-            pdf.text(i === 0 ? `  ${bulletLines[i]}` : `    ${bulletLines[i]}`, margin + 5, yPosition)
-            yPosition += 4
-          }
+          pdf.text(`• ${exp.name}`, margin + 6, yPosition + 1.5)
+          yPosition += 6
 
-          // Description in normal font, wrapped
-          pdf.setTextColor(...grayColor)
+          pdf.setTextColor(...colors.text.secondary)
           pdf.setFontSize(8)
           pdf.setFont('helvetica', 'normal')
-          const descLines = pdf.splitTextToSize(exp.description, contentWidth - 20)
+          const descLines = pdf.splitTextToSize(exp.description, contentWidth - 16)
           for (const line of descLines) {
             if (yPosition > pageHeight - 20) {
               pdf.addPage()
               yPosition = margin
-              addWatermark(pdf, pageWidth, pageHeight)
-              resetTextStyles()
-              pdf.setTextColor(...grayColor)
-              pdf.setFontSize(8)
-              pdf.setFont('helvetica', 'normal')
             }
-            pdf.text(`    ${line}`, margin + 8, yPosition)
+            pdf.text(line, margin + 8, yPosition)
             yPosition += 4
           }
-          yPosition += 3
+
+          yPosition += 2
         }
       }
 
@@ -340,126 +377,76 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
     }
   }
 
-  // === COURSE PROMOTION ===
-  // Check if we need a new page (need more space for image)
-  if (yPosition > pageHeight - 70) {
+  // ============ COURSE PROMOTION ============
+  if (yPosition > pageHeight - 100) {
     pdf.addPage()
     yPosition = margin
-    addWatermark(pdf, pageWidth, pageHeight)
-    resetTextStyles()
   }
 
   yPosition += 5
 
-  // Try to load course image
-  const courseImageBase64 = await loadCourseImageAsBase64()
-  const promoHeight = courseImageBase64 ? 50 : 25
+  // Promotion box
+  pdf.setFillColor(...colors.secondary)
+  pdf.roundedRect(margin, yPosition, contentWidth, 65, 4, 4, 'F')
 
-  pdf.setFillColor(239, 246, 255) // Blue-50
-  pdf.roundedRect(margin, yPosition, contentWidth, promoHeight, 3, 3, 'F')
+  // Try to add course image
+  const promoImageHeight = courseImageBase64 ? 60 : 0
+  const promoImageWidth = courseImageBase64 ? 40 : 0
 
   if (courseImageBase64) {
-    // Layout with image on left, text on right
-    const imageWidth = 35
-    const imageHeight = 45
-    pdf.addImage(courseImageBase64, 'JPEG', margin + 3, yPosition + 2.5, imageWidth, imageHeight)
-
-    const textStartX = margin + imageWidth + 8
-
-    pdf.setTextColor(30, 64, 175) // Blue-800
-    pdf.setFontSize(11)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Aprenda mais!', textStartX, yPosition + 10)
-
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.text('O melhor curso online de ECG do Brasil:', textStartX, yPosition + 18)
-
-    pdf.setTextColor(37, 99, 235) // Blue-600
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Curso de Eletrocardiograma', textStartX, yPosition + 28)
-    pdf.text('com Jose Alencar - 2a Edicao', textStartX, yPosition + 34)
-
-    pdf.setFontSize(8)
-    pdf.setTextColor(30, 64, 175)
-    pdf.text('Clique para saber mais', textStartX, yPosition + 44)
-  } else {
-    // Fallback: text only
-    pdf.setTextColor(30, 64, 175) // Blue-800
-    pdf.setFontSize(11)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Aprenda mais!', margin + 5, yPosition + 8)
-
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.text('O melhor curso online de ECG do Brasil:', margin + 5, yPosition + 14)
-
-    pdf.setTextColor(37, 99, 235) // Blue-600
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Curso de Eletrocardiograma com Jose Alencar - 2a Edicao', margin + 5, yPosition + 20)
+    try {
+      pdf.addImage(courseImageBase64, 'JPEG', margin + 3, yPosition + 2, promoImageWidth, promoImageHeight)
+    } catch {
+      console.warn('Could not render course image')
+    }
   }
 
+  const textStartX = courseImageBase64 ? margin + promoImageWidth + 10 : margin + 8
+
+  pdf.setTextColor(255, 255, 255)
+  pdf.setFontSize(13)
+  pdf.setFont('helvetica', 'bold')
+  pdf.text('APRENDA MAIS', textStartX, yPosition + 10)
+
+  pdf.setFontSize(10)
+  pdf.setFont('helvetica', 'normal')
+  pdf.text('Domine a Interpretação de ECG', textStartX, yPosition + 20)
+
+  pdf.setFontSize(11)
+  pdf.setFont('helvetica', 'bold')
+  pdf.text('Curso de Eletrocardiograma', textStartX, yPosition + 30)
+  pdf.text('com José Alencar - 2ª Edição', textStartX, yPosition + 38)
+
+  pdf.setFontSize(9)
+  pdf.setTextColor(200, 220, 255)
+  pdf.text('→ Clique para conhecer mais', textStartX, yPosition + 50)
+
   // Add link
-  pdf.link(margin, yPosition, contentWidth, promoHeight, { url: COURSE_URL })
+  pdf.link(margin, yPosition, contentWidth, 65, { url: COURSE_URL })
 
-  // === WATERMARK ===
-  addWatermark(pdf, pageWidth, pageHeight)
-
-  // === FOOTER ===
+  // ============ FOOTER ============
   const totalPages = pdf.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i)
-    pdf.setTextColor(...grayColor)
-    pdf.setFontSize(8)
+
+    // Footer divider
+    pdf.setDrawColor(...colors.text.light)
+    pdf.setLineWidth(0.5)
+    pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12)
+
+    // Footer text
+    pdf.setTextColor(...colors.text.light)
+    pdf.setFontSize(7)
     pdf.setFont('helvetica', 'normal')
     pdf.text(
-      `Plantao ECG - Simulador de Plantao de Tele-ECG | Pagina ${i} de ${totalPages}`,
+      `Plantão ECG - Simulador de Plantão de Tele-ECG | Página ${i} de ${totalPages}`,
       pageWidth / 2,
-      pageHeight - 8,
+      pageHeight - 7,
       { align: 'center' }
     )
   }
 
   return pdf.output('blob')
-}
-
-/**
- * Add watermark to the current page
- */
-function addWatermark(pdf: jsPDF, pageWidth: number, pageHeight: number): void {
-  pdf.setTextColor(200, 200, 200)
-  pdf.setFontSize(40)
-  pdf.setFont('helvetica', 'bold')
-
-  // Save current state
-  const currentPage = pdf.getCurrentPageInfo().pageNumber
-
-  // Add diagonal watermark
-  pdf.text('Plantao ECG', pageWidth / 2, pageHeight / 2, {
-    align: 'center',
-    angle: 45,
-  })
-}
-
-/**
- * Format date for display
- */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-/**
- * Truncate text to fit in table cells
- */
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength - 3) + '...'
 }
 
 /**
@@ -478,20 +465,23 @@ function formatRhythmName(key: string): string {
     sinus: 'Ritmo Sinusal',
     sinus_arrhythmia: 'Arritmia Sinusal',
     sinus_bradycardia: 'Bradicardia Sinusal',
-    afib: 'Fibrilacao Atrial',
+    sinus_tachycardia: 'Taquicardia Sinusal',
+    afib: 'Fibrilação Atrial',
     aflutter: 'Flutter Atrial',
     svt: 'Taquicardia Supraventricular',
     mat: 'Taquicardia Atrial Multifocal',
     vtach: 'Taquicardia Ventricular',
-    polymorphic_vtach: 'TV Polimorfica',
+    polymorphic_vtach: 'TV Polimórfica',
     torsades: 'Torsades de Pointes',
-    vfib: 'Fibrilacao Ventricular',
+    vfib: 'Fibrilação Ventricular',
     junctional: 'Ritmo Juncional',
     ventricular_escape: 'Escape Ventricular',
     riva: 'RIVA',
     paced: 'Ritmo de Marcapasso',
     asystole: 'Assistolia',
-    isorhythmic_dissociation: 'Dissociacao Isorritmicia',
+    isorhythmic_dissociation: 'Dissociação Isorrítmica',
+    ectopic_atrial: 'Ritmo Atrial Ectópico',
+    sinus_pause: 'Pausa Sinusal',
     other: 'Outro'
   }
   return rhythmNames[key] || key
@@ -508,17 +498,6 @@ function formatAxisName(key: string): string {
     extreme: 'Eixo Indeterminado'
   }
   return axisNames[key] || key
-}
-
-/**
- * Format regularity key to readable name
- */
-function formatRegularityName(key: string): string {
-  const regularityNames: Record<string, string> = {
-    regular: 'Regular',
-    irregular: 'Irregular'
-  }
-  return regularityNames[key] || key
 }
 
 /**
@@ -540,10 +519,10 @@ function formatIntervalName(type: string, key: string): string {
  */
 function formatElectrodeSwapName(key: string): string {
   const swapNames: Record<string, string> = {
-    swap_la_ra: 'Troca LA-RA',
-    swap_la_ll: 'Troca LA-LL',
-    swap_ra_ll: 'Troca RA-LL',
-    swap_rl_involved: 'Envolvendo RL',
+    swap_la_ra: 'Troca BE-BD',
+    swap_la_ll: 'Troca BE-PE',
+    swap_ra_ll: 'Troca BD-PE',
+    swap_rl_involved: 'Envolvendo PD',
     swap_precordial: 'Troca Precordial'
   }
   return swapNames[key] || key
@@ -592,16 +571,6 @@ function getExplanationsForField(field: string, officialReport: OfficialReport):
         explanations.push({
           name: formatAxisName(officialReport.axis),
           description: axisExp.description
-        })
-      }
-      break
-
-    case 'regularity':
-      const regExp = REGULARITY_EXPLANATIONS[officialReport.regularity]
-      if (regExp) {
-        explanations.push({
-          name: formatRegularityName(officialReport.regularity),
-          description: regExp.description
         })
       }
       break
