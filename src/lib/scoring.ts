@@ -72,6 +72,45 @@ const STRUCTURAL_FINDINGS = new Set([
   'interatrial_block', 'ivcd', 'incomplete_rbbb',
 ])
 
+// ============ FALSE POSITIVE SEVERITY TIERS ============
+// HIGH: Would trigger inappropriate urgent intervention (cath lab, pacemaker)
+// MEDIUM: Would lead to unnecessary workup
+// LOW (everything else): Benign findings, no penalty
+
+const HIGH_SEVERITY_FP = new Set([
+  // Ischemia findings that would activate cath lab
+  'ste', 'hyperacute_t', 'oca', 'std_v1v4', 'aslanger', 'de_winter',
+  'subtle_ste', 'terminal_qrs_distortion', 'sgarbossa_modified',
+  'wellens', 'avr_elevation_diffuse_std',
+  // High-degree blocks that would prompt pacemaker
+  'avb_2nd_type2', 'avb_2_1', 'avb_advanced', 'avb_3rd', 'sab_3rd',
+  // Life-threatening patterns
+  'brugada', 'hyperkalemia', 'preexcitation', 'giant_negative_t',
+])
+
+const MEDIUM_SEVERITY_FP = new Set([
+  'lbbb', 'avb_1st', 'avb_2nd_type1', 'sab_2nd_type1', 'sab_2nd_type2',
+  'pathological_q', 'fragmented_qrs', 'amplitude_criteria',
+  'hypokalemia', 'digitalis',
+])
+
+/**
+ * Get false positive penalty based on clinical severity
+ * HIGH: 6% of pool, MEDIUM: 3% of pool, LOW: 0%
+ */
+function getFalsePositivePenalty(finding: Finding, findingsPool: number): number {
+  // Check prefixes for compound findings
+  if (finding.startsWith('ste_') || finding.startsWith('oca_')) {
+    return findingsPool * 0.06 // HIGH
+  }
+  if (finding.startsWith('pathological_q_') || finding.startsWith('fragmented_qrs_')) {
+    return findingsPool * 0.03 // MEDIUM
+  }
+  if (HIGH_SEVERITY_FP.has(finding)) return findingsPool * 0.06
+  if (MEDIUM_SEVERITY_FP.has(finding)) return findingsPool * 0.03
+  return 0 // LOW - no penalty for benign findings
+}
+
 // ============ HELPER FUNCTIONS ============
 
 /**
@@ -341,36 +380,57 @@ export function calculateScore(
   const findingsPool = weights.findings
   const officialFindings = officialReport.findings
   const userFindings = userReport.findings
-  const findingsCorrect = arraysEqual(userFindings, officialFindings)
+
+  // BUG FIX: Treat empty user findings as equivalent to ['normal'] and vice versa
+  // "Nenhum" (no findings) = "ECG Normal" - both mean no pathological findings
+  const normalizedUserFindings = userFindings.length === 0 &&
+    officialFindings.length === 1 && officialFindings[0] === 'normal'
+      ? ['normal' as Finding]
+      : userFindings
+
+  const normalizedOfficialFindings = officialFindings.length === 0 &&
+    userFindings.length === 1 && userFindings[0] === 'normal'
+      ? ['normal' as Finding]
+      : officialFindings
+
+  const findingsCorrect = arraysEqual(normalizedUserFindings, normalizedOfficialFindings)
 
   // MIN_FINDINGS_DIVISOR = 3 caps max points per single finding
   const MIN_FINDINGS_DIVISOR = 3
-  const basePointsPerFinding = findingsPool / Math.max(officialFindings.length, MIN_FINDINGS_DIVISOR)
+  const basePointsPerFinding = findingsPool / Math.max(normalizedOfficialFindings.length, MIN_FINDINGS_DIVISOR)
+
+  // Calculate effective max for display FIRST (needed for final score calc)
+  const effectiveFindingsMax = normalizedOfficialFindings.length > 0
+    ? Math.round(basePointsPerFinding * normalizedOfficialFindings.length)
+    : findingsPool
 
   let earnedFindingsPoints = 0
-  const correctFindingsCount = arraysOverlap(userFindings, officialFindings)
+  const correctFindingsCount = arraysOverlap(normalizedUserFindings, normalizedOfficialFindings)
 
   if (findingsCorrect) {
-    // Perfect match gets full pool
-    earnedFindingsPoints = findingsPool
-  } else if (correctFindingsCount === 0 && officialFindings.length > 0) {
+    // Perfect match gets full effective max (not pool)
+    earnedFindingsPoints = effectiveFindingsMax
+  } else if (correctFindingsCount === 0 && normalizedOfficialFindings.length > 0) {
     // No correct findings = 0 points
     earnedFindingsPoints = 0
   } else {
     // Calculate points for each correct finding with category bonus
-    for (const finding of officialFindings) {
-      if (userFindings.includes(finding)) {
+    for (const finding of normalizedOfficialFindings) {
+      if (normalizedUserFindings.includes(finding)) {
         const categoryBonus = isFindingCategoryRelevant(finding, categories) ? 1.25 : 1.0
         earnedFindingsPoints += basePointsPerFinding * categoryBonus
       }
     }
 
-    // Cap at pool max (bonus can't push total above pool)
-    earnedFindingsPoints = Math.min(earnedFindingsPoints, findingsPool)
+    // Cap at effective max (bonus can't push total above proportional max)
+    earnedFindingsPoints = Math.min(earnedFindingsPoints, effectiveFindingsMax)
 
-    // Penalty for false positives (3% of pool per false positive)
-    const falsePositives = userFindings.filter(f => !officialFindings.includes(f)).length
-    const penalty = falsePositives * (findingsPool * 0.03)
+    // Penalty for false positives (severity-based: 6% HIGH, 3% MEDIUM, 0% LOW)
+    const falsePositivesFindings = normalizedUserFindings.filter(f => !normalizedOfficialFindings.includes(f))
+    let penalty = 0
+    for (const fp of falsePositivesFindings) {
+      penalty += getFalsePositivePenalty(fp, findingsPool)
+    }
 
     // Guarantee minimum: 50% of earned points
     const minimumPoints = earnedFindingsPoints * 0.5
@@ -378,23 +438,17 @@ export function calculateScore(
   }
 
   const findingsPoints = Math.round(earnedFindingsPoints)
-  const findingsMaxPoints = findingsPool
   totalPoints += findingsPoints
-
-  // Calculate effective max for display (based on number of findings)
-  const effectiveFindingsMax = officialFindings.length > 0
-    ? Math.round(basePointsPerFinding * officialFindings.length)
-    : findingsPool
 
   comparisons.push({
     field: 'findings',
     label: 'Achados',
-    userValue: formatFindings(userFindings),
+    userValue: formatFindings(userFindings), // Show original (not normalized) for display
     correctValue: formatFindings(officialFindings),
     isCorrect: findingsCorrect,
-    partialCredit: findingsCorrect ? undefined : (earnedFindingsPoints / findingsPool),
+    partialCredit: findingsCorrect ? undefined : (earnedFindingsPoints / effectiveFindingsMax),
     points: findingsPoints,
-    maxPoints: Math.min(effectiveFindingsMax, findingsMaxPoints), // Show proportional max
+    maxPoints: effectiveFindingsMax, // Use proportional max
   })
 
   // ============ ELECTRODE SWAP COMPARISON ============
@@ -432,8 +486,10 @@ export function calculateScore(
   })
 
   // ============ CALCULATE FINAL SCORE ============
+  // BUG FIX: Use effectiveFindingsMax (proportional) instead of weights.findings (full pool)
+  // This ensures the score matches what the user sees in the UI breakdown
   const maxPoints = weights.rhythm + weights.heart_rate + weights.axis +
-    weights.pr_interval + weights.qrs_duration + weights.findings + weights.electrode_swap
+    weights.pr_interval + weights.qrs_duration + effectiveFindingsMax + weights.electrode_swap
 
   const score = Math.round((totalPoints / maxPoints) * 100)
 
