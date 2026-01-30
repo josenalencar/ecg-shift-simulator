@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Crown, Sparkles, GraduationCap, Trash2, Loader2 } from 'lucide-react'
+import { Calendar, Crown, Sparkles, GraduationCap, Trash2, Loader2, XCircle } from 'lucide-react'
 import { UserActions } from './user-actions'
 import { UserDetailsModal } from './user-details-modal'
 import { GrantedPlan } from '@/types/database'
@@ -31,6 +31,7 @@ export function UsersTableClient({ users }: UsersTableClientProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
   const [detailsUserId, setDetailsUserId] = useState<string | null>(null)
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkGranting, setBulkGranting] = useState<string | null>(null) // stores plan being granted or 'remove'
 
   const toggleSelectAll = () => {
     if (selectedUsers.size === users.length) {
@@ -90,15 +91,47 @@ export function UsersTableClient({ users }: UsersTableClientProps) {
     router.refresh()
   }
 
+  const handleBulkGrantPlan = async (plan: GrantedPlan | null) => {
+    if (selectedUsers.size === 0) return
+
+    const action = plan === null ? 'remover cortesia de' : `conceder ${plan === 'premium' ? 'Premium' : plan === 'ai' ? 'Premium +AI' : 'Aluno ECG'} para`
+    if (!confirm(`Tem certeza que deseja ${action} ${selectedUsers.size} usuário(s)?`)) return
+
+    setBulkGranting(plan || 'remove')
+    let successCount = 0
+    let failCount = 0
+
+    for (const userId of selectedUsers) {
+      try {
+        const res = await fetch('/api/admin/users/grant-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, grantedPlan: plan }),
+        })
+
+        if (res.ok) successCount++
+        else failCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    setBulkGranting(null)
+    setSelectedUsers(new Set())
+    const actionDone = plan === null ? 'Cortesia removida' : 'Plano concedido'
+    alert(`${actionDone} para ${successCount} usuário(s). ${failCount} falha(s).`)
+    router.refresh()
+  }
+
   return (
     <>
       {/* Bulk action bar */}
       {selectedUsers.size > 0 && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-          <span className="text-blue-800 font-medium">
-            {selectedUsers.size} usuário(s) selecionado(s)
-          </span>
-          <div className="flex gap-2">
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-blue-800 font-medium">
+              {selectedUsers.size} usuário(s) selecionado(s)
+            </span>
             <Button
               variant="outline"
               size="sm"
@@ -106,11 +139,76 @@ export function UsersTableClient({ users }: UsersTableClientProps) {
             >
               Limpar seleção
             </Button>
+          </div>
+
+          {/* Bulk plan actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-600 mr-2">Cortesia:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleBulkGrantPlan('premium')}
+              disabled={bulkGranting !== null || bulkDeleting}
+              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              {bulkGranting === 'premium' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <Crown className="h-4 w-4 mr-1" />
+              )}
+              Premium
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleBulkGrantPlan('ai')}
+              disabled={bulkGranting !== null || bulkDeleting}
+              className="text-purple-600 border-purple-300 hover:bg-purple-50"
+            >
+              {bulkGranting === 'ai' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-1" />
+              )}
+              Premium +AI
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleBulkGrantPlan('aluno_ecg')}
+              disabled={bulkGranting !== null || bulkDeleting}
+              className="text-green-600 border-green-300 hover:bg-green-50"
+            >
+              {bulkGranting === 'aluno_ecg' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <GraduationCap className="h-4 w-4 mr-1" />
+              )}
+              Aluno ECG
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleBulkGrantPlan(null)}
+              disabled={bulkGranting !== null || bulkDeleting}
+              className="text-orange-600 border-orange-300 hover:bg-orange-50"
+            >
+              {bulkGranting === 'remove' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-1" />
+              )}
+              Remover
+            </Button>
+          </div>
+
+          {/* Delete action */}
+          <div className="flex items-center gap-2 pt-2 border-t border-blue-200">
             <Button
               variant="danger"
               size="sm"
               onClick={handleBulkDelete}
-              disabled={bulkDeleting}
+              disabled={bulkDeleting || bulkGranting !== null}
             >
               {bulkDeleting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
