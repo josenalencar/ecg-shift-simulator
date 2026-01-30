@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Crown, X, Check, FileDown, BookOpen, ChevronDown, ChevronUp, Loader2, ThumbsDown } from 'lucide-react'
+import { Crown, X, Check, FileDown, BookOpen, ChevronDown, ChevronUp, Loader2, ThumbsDown, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ScoringResult } from '@/lib/scoring'
 import type { OfficialReport } from '@/types/database'
@@ -16,6 +16,8 @@ import {
 } from '@/lib/ecg-explanations'
 import { formatCompoundFinding } from '@/lib/ecg-constants'
 import { generateFeedbackPDF, downloadPDF } from '@/lib/pdf-generator'
+import { AIChatModal } from './ai-chat'
+import type { AIChatContext } from '@/lib/ai/types'
 
 interface PremiumFeedbackProps {
   result: ScoringResult
@@ -34,6 +36,14 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, is
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [isDisliked, setIsDisliked] = useState(false)
   const [isDisliking, setIsDisliking] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
+  // Context for AI chat
+  const chatContext: AIChatContext = {
+    ecgId,
+    scoringResult: result,
+    officialReport
+  }
 
   if (!isPremium) return null
 
@@ -136,6 +146,22 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, is
             Baixar Relatorio PDF
           </Button>
 
+          {/* AI Chat Button */}
+          <Button
+            onClick={() => setIsChatOpen(true)}
+            className="mt-3 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Conversar com a ECG-IA sobre esses achados
+          </Button>
+
+          {/* AI Chat Modal */}
+          <AIChatModal
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            context={chatContext}
+          />
+
           {/* Dislike button */}
           <div className="mt-4 flex justify-end">
             <button
@@ -208,6 +234,22 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, is
           )}
           Baixar Relatorio PDF
         </Button>
+
+        {/* AI Chat Button */}
+        <Button
+          onClick={() => setIsChatOpen(true)}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          Conversar com a ECG-IA sobre esses achados
+        </Button>
+
+        {/* AI Chat Modal */}
+        <AIChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          context={chatContext}
+        />
 
         {/* Dislike button */}
         <div className="mt-4 flex justify-end">
