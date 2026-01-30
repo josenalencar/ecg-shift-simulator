@@ -560,6 +560,7 @@ export default function PracticePage() {
               ecgImageUrl={currentECG.image_url}
               ecgId={currentECG.id}
               isPremium={subscription.isActive}
+              hasAI={subscription.hasAI}
               userName={userName || undefined}
             />
           </div>

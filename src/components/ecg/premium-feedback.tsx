@@ -25,12 +25,13 @@ interface PremiumFeedbackProps {
   ecgImageUrl: string
   ecgId: string
   isPremium: boolean
+  hasAI?: boolean
   userName?: string
 }
 
 const COURSE_URL = 'https://www.manole.com.br/curso-de-eletrocardiograma-com-jose-alencar-2-edicao/p'
 
-export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, isPremium, userName }: PremiumFeedbackProps) {
+export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, isPremium, hasAI = false, userName }: PremiumFeedbackProps) {
   const supabase = createClient()
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -146,21 +147,25 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, is
             Baixar Relatorio PDF
           </Button>
 
-          {/* AI Chat Button */}
-          <Button
-            onClick={() => setIsChatOpen(true)}
-            className="mt-3 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Conversar com a ECG-IA sobre esses achados
-          </Button>
+          {/* AI Chat Button - only for Premium+AI users */}
+          {hasAI && (
+            <>
+              <Button
+                onClick={() => setIsChatOpen(true)}
+                className="mt-3 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Conversar com a ECG-IA sobre esses achados
+              </Button>
 
-          {/* AI Chat Modal */}
-          <AIChatModal
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            context={chatContext}
-          />
+              {/* AI Chat Modal */}
+              <AIChatModal
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                context={chatContext}
+              />
+            </>
+          )}
 
           {/* Dislike button */}
           <div className="mt-4 flex justify-end">
@@ -235,21 +240,25 @@ export function PremiumFeedback({ result, officialReport, ecgImageUrl, ecgId, is
           Baixar Relatorio PDF
         </Button>
 
-        {/* AI Chat Button */}
-        <Button
-          onClick={() => setIsChatOpen(true)}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Conversar com a ECG-IA sobre esses achados
-        </Button>
+        {/* AI Chat Button - only for Premium+AI users */}
+        {hasAI && (
+          <>
+            <Button
+              onClick={() => setIsChatOpen(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Conversar com a ECG-IA sobre esses achados
+            </Button>
 
-        {/* AI Chat Modal */}
-        <AIChatModal
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          context={chatContext}
-        />
+            {/* AI Chat Modal */}
+            <AIChatModal
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+              context={chatContext}
+            />
+          </>
+        )}
 
         {/* Dislike button */}
         <div className="mt-4 flex justify-end">

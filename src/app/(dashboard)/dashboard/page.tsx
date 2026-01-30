@@ -2,11 +2,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Building2, Stethoscope, Heart, AlertTriangle, Play, Baby, HeartPulse } from 'lucide-react'
+import { Activity, Target, TrendingUp, Clock, Crown, CreditCard, Trophy, TrendingDown, Building2, Stethoscope, Heart, AlertTriangle, Play, Baby, HeartPulse, Sparkles } from 'lucide-react'
 import { ManageSubscriptionButton } from './manage-subscription-button'
 import { PaymentSuccessHandler } from './payment-success-handler'
 import { FINDINGS, RHYTHMS, HOSPITAL_TYPES } from '@/lib/ecg-constants'
-import { DashboardWidget, LeaderboardXP } from '@/components/gamification'
+import { DashboardWidget, LeaderboardXP, XPEventBanner } from '@/components/gamification'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,30 +67,36 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Get user profile including hospital type
+  // Get user profile including hospital type and granted_plan
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('id, full_name, role, subscription_status, hospital_type')
+    .select('id, full_name, role, subscription_status, hospital_type, granted_plan')
     .eq('id', user.id)
     .single()
 
-  const profile = profileData as { id: string; full_name: string | null; role: string; subscription_status?: string; hospital_type?: string | null } | null
+  const profile = profileData as { id: string; full_name: string | null; role: string; subscription_status?: string; hospital_type?: string | null; granted_plan?: string | null } | null
 
   // Get subscription info
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: subscriptionData } = await (supabase as any)
     .from('subscriptions')
-    .select('status, current_period_end, cancel_at_period_end')
+    .select('status, plan, current_period_end, cancel_at_period_end')
     .eq('user_id', user.id)
     .maybeSingle()
 
   const subscription = subscriptionData as {
     status?: string
+    plan?: string
     current_period_end?: string
     cancel_at_period_end?: boolean
   } | null
 
-  const isSubscribed = subscription?.status === 'active'
+  // Check if user is subscribed (either granted or paid)
+  const grantedPlan = profile?.granted_plan
+  const isSubscribed = grantedPlan ? true : subscription?.status === 'active'
+
+  // Check if user has AI access
+  const hasAI = grantedPlan === 'ai' || grantedPlan === 'aluno_ecg' || subscription?.plan === 'ai'
 
   // Get user stats
   const { data: attempts } = await supabase
@@ -179,6 +185,9 @@ export default async function DashboardPage() {
       {/* Payment Success Handler - polls for subscription after Stripe redirect */}
       <PaymentSuccessHandler />
 
+      {/* XP Event Banner - shows active XP events */}
+      <XPEventBanner userId={user.id} />
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -189,9 +198,11 @@ export default async function DashboardPage() {
           </p>
         </div>
         {isSubscribed && (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
-            <Crown className="h-4 w-4" />
-            Premium
+          <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${
+            hasAI ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+          }`}>
+            {hasAI ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+            {hasAI ? 'Premium +AI' : 'Premium'}
           </span>
         )}
       </div>
