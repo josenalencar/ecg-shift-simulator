@@ -15,6 +15,17 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 )
 
+// Map Stripe price IDs to plan types
+// This allows detecting plan from price when metadata is missing (e.g., upgrades via billing portal)
+const PRICE_TO_PLAN: Record<string, string> = {
+  // Premium plans
+  [process.env.STRIPE_PRICE_ID || 'price_1Stx5KKbLDQdn5la39eMzjo6']: 'premium',
+  [process.env.STRIPE_PRICE_ID_PREMIUM_YEARLY || 'price_1Stx5OKbLDQdn5laLwHzIfzH']: 'premium',
+  // AI plans
+  [process.env.STRIPE_PRICE_ID_AI || 'price_1Stx5TKbLDQdn5laEcLFG0ac']: 'ai',
+  [process.env.STRIPE_PRICE_ID_AI_YEARLY || 'price_1Stx5XKbLDQdn5layyrDmqTr']: 'ai',
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')
@@ -107,12 +118,18 @@ export async function POST(request: NextRequest) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleSubscriptionChange(subscription: any, sendEmail = false) {
   const userId = subscription.metadata?.supabase_user_id
-  const plan = subscription.metadata?.plan || 'premium'
   const customerId = subscription.customer as string
+  const priceId = subscription.items?.data?.[0]?.price?.id as string | undefined
+
+  // Determine plan from metadata first, then fall back to price-to-plan mapping
+  // This ensures upgrades via billing portal (which don't set metadata) still work
+  const plan = subscription.metadata?.plan || PRICE_TO_PLAN[priceId || ''] || 'premium'
 
   console.log('[Webhook] handleSubscriptionChange:', {
     userId,
     plan,
+    planSource: subscription.metadata?.plan ? 'metadata' : (priceId && PRICE_TO_PLAN[priceId] ? 'price_id' : 'default'),
+    priceId,
     customerId,
     subscriptionId: subscription.id,
     status: subscription.status,

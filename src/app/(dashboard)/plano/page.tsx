@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/u
 import { Crown, Check, Calendar, CreditCard, AlertTriangle, Sparkles, GraduationCap, Gift } from 'lucide-react'
 import { CancelSubscriptionButton } from './cancel-subscription-button'
 import { ManageSubscriptionButton } from './manage-subscription-button'
+import { UpgradeButton } from './upgrade-button'
 import { GrantedPlan } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -256,14 +257,9 @@ export default async function PlanoPage() {
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-4">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">+R$ 30,00</p>
-                    <p className="text-sm text-gray-500">R$ 69,90/mês no total</p>
+                    <p className="text-sm text-gray-500">R$ 69,90/mês no total (proporcional)</p>
                   </div>
-                  <Link href="/pricing">
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Fazer Upgrade
-                    </Button>
-                  </Link>
+                  <UpgradeButton />
                 </div>
               </CardContent>
             </Card>
