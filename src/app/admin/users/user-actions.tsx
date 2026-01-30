@@ -195,52 +195,60 @@ export function UserActions({ userId, userEmail, currentRole, currentGrantedPlan
           <div className="border-t border-gray-200 my-1" />
           <div className="px-4 py-1 text-xs text-gray-500 font-medium">Plano Cortesia</div>
 
-          {/* Grant Premium */}
-          {currentGrantedPlan !== 'premium' && (
-            <button
-              onClick={() => handleGrantPlan('premium')}
-              disabled={isLoading}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <Crown className="h-4 w-4" />
-              Conceder Premium
-            </button>
-          )}
+          {/* If user has a granted plan, show current plan and remove option */}
+          {currentGrantedPlan ? (
+            <>
+              <div className="px-4 py-2 text-sm text-gray-600 flex items-center gap-2">
+                {currentGrantedPlan === 'premium' && <Crown className="h-4 w-4 text-blue-500" />}
+                {currentGrantedPlan === 'ai' && <Sparkles className="h-4 w-4 text-purple-500" />}
+                {currentGrantedPlan === 'aluno_ecg' && <GraduationCap className="h-4 w-4 text-green-500" />}
+                <span>
+                  {currentGrantedPlan === 'premium' && 'Premium (cortesia)'}
+                  {currentGrantedPlan === 'ai' && 'Premium +AI (cortesia)'}
+                  {currentGrantedPlan === 'aluno_ecg' && 'Aluno ECG (cortesia)'}
+                </span>
+              </div>
+              <button
+                onClick={() => handleGrantPlan(null)}
+                disabled={isLoading}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                <XCircle className="h-4 w-4" />
+                Remover Cortesia
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Grant Premium */}
+              <button
+                onClick={() => handleGrantPlan('premium')}
+                disabled={isLoading}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Crown className="h-4 w-4" />
+                Conceder Premium
+              </button>
 
-          {/* Grant Premium +AI */}
-          {currentGrantedPlan !== 'ai' && (
-            <button
-              onClick={() => handleGrantPlan('ai')}
-              disabled={isLoading}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-purple-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <Sparkles className="h-4 w-4" />
-              Conceder Premium +AI
-            </button>
-          )}
+              {/* Grant Premium +AI */}
+              <button
+                onClick={() => handleGrantPlan('ai')}
+                disabled={isLoading}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-purple-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" />
+                Conceder Premium +AI
+              </button>
 
-          {/* Grant Aluno ECG */}
-          {currentGrantedPlan !== 'aluno_ecg' && (
-            <button
-              onClick={() => handleGrantPlan('aluno_ecg')}
-              disabled={isLoading}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <GraduationCap className="h-4 w-4" />
-              Conceder Aluno ECG com JA
-            </button>
-          )}
-
-          {/* Remove granted plan */}
-          {currentGrantedPlan && (
-            <button
-              onClick={() => handleGrantPlan(null)}
-              disabled={isLoading}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <XCircle className="h-4 w-4" />
-              Remover Cortesia
-            </button>
+              {/* Grant Aluno ECG */}
+              <button
+                onClick={() => handleGrantPlan('aluno_ecg')}
+                disabled={isLoading}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <GraduationCap className="h-4 w-4" />
+                Conceder Aluno ECG com JA
+              </button>
+            </>
           )}
 
           {/* Divider */}
