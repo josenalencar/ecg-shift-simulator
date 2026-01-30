@@ -188,23 +188,13 @@ export default async function DashboardPage() {
       {/* XP Event Banner - shows active XP events */}
       <XPEventBanner userId={user.id} />
 
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Bem-vindo(a), {profile?.full_name || 'Doutor(a)'}!
-          </h1>
-          <p className="text-gray-700 mt-1">
-            Continue sua prática de interpretação de ECG
-          </p>
-        </div>
-        {isSubscribed && (
-          <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${
-            hasAI ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-          }`}>
-            {hasAI ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
-            {hasAI ? 'Premium +AI' : 'Premium'}
-          </span>
-        )}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Bem-vindo(a), {profile?.full_name || 'Doutor(a)'}!
+        </h1>
+        <p className="text-gray-700 mt-1">
+          Continue sua prática de interpretação de ECG
+        </p>
       </div>
 
       {/* Subscription Card for Free Users */}
@@ -237,27 +227,58 @@ export default async function DashboardPage() {
       )}
 
       {/* Subscription Management for Premium Users */}
-      {isSubscribed && subscription && (
-        <Card className="mb-8 border-purple-200 bg-purple-50">
+      {isSubscribed && (
+        <Card className={`mb-8 border-2 overflow-hidden ${
+          hasAI
+            ? 'border-purple-300 bg-gradient-to-r from-purple-50 via-fuchsia-50 to-violet-50'
+            : 'border-blue-200 bg-blue-50'
+        }`}>
           <CardContent className="py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-purple-600" />
+                <div className={`p-3 rounded-xl ${
+                  hasAI
+                    ? 'bg-gradient-to-br from-purple-500 to-fuchsia-500 shadow-lg shadow-purple-200'
+                    : 'bg-blue-100'
+                }`}>
+                  {hasAI ? (
+                    <Sparkles className="h-6 w-6 text-white" />
+                  ) : (
+                    <Crown className="h-6 w-6 text-blue-600" />
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Assinatura Premium</h3>
-                  <p className="text-sm text-gray-700">
-                    {subscription.current_period_end && new Date(subscription.current_period_end).getFullYear() > 2000
-                      ? subscription.cancel_at_period_end
-                        ? `Cancela em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
-                        : `Renova em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
-                      : 'Assinatura ativa'
+                  <div className="flex items-center gap-2">
+                    <h3 className={`font-bold text-lg ${hasAI ? 'text-purple-900' : 'text-gray-900'}`}>
+                      {hasAI ? 'Premium +AI' : 'Premium'}
+                    </h3>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      hasAI
+                        ? 'bg-purple-200 text-purple-700'
+                        : 'bg-blue-200 text-blue-700'
+                    }`}>
+                      Ativo
+                    </span>
+                  </div>
+                  <p className={`text-sm mt-1 ${hasAI ? 'text-purple-700' : 'text-gray-600'}`}>
+                    {grantedPlan
+                      ? (grantedPlan === 'aluno_ecg' ? 'Acesso de aluno ECG-IA' : 'Acesso concedido')
+                      : subscription?.current_period_end && new Date(subscription.current_period_end).getFullYear() > 2000
+                        ? subscription.cancel_at_period_end
+                          ? `Cancela em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
+                          : `Renova em ${new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}`
+                        : 'Assinatura ativa'
                     }
                   </p>
+                  {hasAI && (
+                    <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Converse com a ECG-IA sobre seus laudos
+                    </p>
+                  )}
                 </div>
               </div>
-              <ManageSubscriptionButton />
+              {subscription && <ManageSubscriptionButton />}
             </div>
           </CardContent>
         </Card>
