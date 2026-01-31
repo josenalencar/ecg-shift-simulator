@@ -3,16 +3,12 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// All audiences we need
+// Audiences available on Resend free plan (max 3)
+// To add more audiences, upgrade Resend plan
 const AUDIENCES = {
-  all: 'Plantão ECG - Todos',
-  free: 'Plantão ECG - Free',
-  premium: 'Plantão ECG - Premium',
-  premium_ai: 'Plantão ECG - Premium + IA',
-  ecg_com_ja: 'Plantão ECG - ECG com JA',
-  cortesia: 'Plantão ECG - Cortesia',
-  active_7d: 'Plantão ECG - Ativos 7 dias',
-  inactive_30d: 'Plantão ECG - Inativos 30 dias'
+  all: 'Plantão ECG - Todos',      // All users
+  premium: 'Plantão ECG - Premium', // Premium & Premium+AI users
+  cortesia: 'Cortesia'              // ECG com JA & other granted plans
 } as const
 
 type AudienceKey = keyof typeof AUDIENCES
@@ -86,14 +82,13 @@ export async function getOrCreateDefaultAudience(): Promise<string | null> {
 }
 
 /**
- * Determine which segment a user belongs to based on their plan
+ * Determine which segment audience a user belongs to based on their plan
+ * Returns null for free users (they only go to "all" audience)
  */
-function getUserSegment(grantedPlan: string | null): AudienceKey {
-  if (!grantedPlan) return 'free'
-  if (grantedPlan === 'ai') return 'premium_ai'
-  if (grantedPlan === 'premium') return 'premium'
-  if (grantedPlan === 'aluno_ecg') return 'ecg_com_ja'
-  return 'cortesia' // any other granted plan is cortesia
+function getUserSegmentAudience(grantedPlan: string | null): AudienceKey | null {
+  if (!grantedPlan) return null // Free users only in "all"
+  if (grantedPlan === 'ai' || grantedPlan === 'premium') return 'premium'
+  return 'cortesia' // aluno_ecg and other granted plans
 }
 
 /**
@@ -138,11 +133,11 @@ export async function syncUserToResend(
       return { success: false, error: error.message }
     }
 
-    // Also add to segment-specific audience if available
-    const segment = getUserSegment(grantedPlan ?? null)
-    const segmentAudienceId = audiences[segment]
+    // Also add to segment-specific audience if user has a plan
+    const segment = getUserSegmentAudience(grantedPlan ?? null)
+    const segmentAudienceId = segment ? audiences[segment] : null
 
-    if (segmentAudienceId && segment !== 'free') {
+    if (segmentAudienceId) {
       await rateLimitDelay()
       await resend.contacts.create({
         audienceId: segmentAudienceId,
