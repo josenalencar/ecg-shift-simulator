@@ -34,8 +34,10 @@ const eventOptions = [
   { value: 'subscription_activated', label: 'Assinatura ativada' },
   { value: 'subscription_canceled', label: 'Assinatura cancelada' },
   { value: 'streak_lost', label: 'Streak perdido' },
+  { value: 'streak_milestone', label: 'Marco de streak (7, 14, 30, 60, 100 dias)' },
   { value: 'level_up', label: 'Subiu de nivel' },
-  { value: 'achievement_unlocked', label: 'Conquista desbloqueada' }
+  { value: 'achievement_unlocked', label: 'Conquista desbloqueada' },
+  { value: 'xp_event_created', label: 'Evento XP criado (2x/3x)' }
 ]
 
 const scheduleOptions = [

@@ -248,14 +248,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
     }
 
-    // Send email announcements in the background (don't await)
+    // Check if XP event email automation is enabled before sending
     if (target_type === 'all' || !target_type) {
-      sendEventEmailsInBackground(
-        event.id,
-        name,
-        multiplier_type as '2x' | '3x',
-        endDate
-      ).catch(err => console.error('[XP Event] Background email sending failed:', err))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: automation } = await (supabase as any)
+        .from('email_automations')
+        .select('is_enabled, is_paused')
+        .eq('trigger_event', 'xp_event_created')
+        .eq('email_type', 'xp_event_announcement')
+        .single()
+
+      // Only send if automation exists and is enabled and not paused
+      if (automation?.is_enabled && !automation?.is_paused) {
+        sendEventEmailsInBackground(
+          event.id,
+          name,
+          multiplier_type as '2x' | '3x',
+          endDate
+        ).catch(err => console.error('[XP Event] Background email sending failed:', err))
+      } else {
+        console.log('[XP Event] Email automation is disabled or paused, skipping email send')
+      }
     }
 
     return NextResponse.json({ event }, { status: 201 })
