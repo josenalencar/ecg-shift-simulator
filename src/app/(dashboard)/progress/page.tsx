@@ -52,7 +52,7 @@ export default function ProgressPage() {
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
-        .single()
+        .single() as { data: { full_name: string | null } | null }
       if (profile?.full_name) {
         setUserName(profile.full_name)
       }

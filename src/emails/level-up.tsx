@@ -46,7 +46,7 @@ export default function LevelUpEmail({
   return (
     <Html>
       <Head />
-      <Preview>Level {newLevel} desbloqueado! Parabéns - Plantão ECG</Preview>
+      <Preview>{`Level ${newLevel} desbloqueado! Parabéns - Plantão ECG`}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}

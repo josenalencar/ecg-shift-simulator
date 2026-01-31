@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, FileImage, Users, BarChart3, Settings, LogOut, GraduationCap } from 'lucide-react'
+import { LayoutDashboard, FileImage, Users, Mail, BarChart3, Settings, LogOut, GraduationCap } from 'lucide-react'
 
 const navigation = [
   { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard },
   { name: 'Casos de ECG', href: '/admin/ecgs', icon: FileImage },
   { name: 'Usuários', href: '/admin/users', icon: Users },
+  { name: 'E-mails', href: '/admin/emails', icon: Mail },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Configurações', href: '/admin/settings', icon: Settings },
 ]

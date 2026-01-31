@@ -49,7 +49,7 @@ export default function WeeklyDigestEmail({
   return (
     <Html>
       <Head />
-      <Preview>Sua semana em números - {weekStats.ecgsCompleted} ECGs, +{weekStats.totalXpEarned} XP</Preview>
+      <Preview>{`Sua semana em números - ${weekStats.ecgsCompleted} ECGs, +${weekStats.totalXpEarned} XP`}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}

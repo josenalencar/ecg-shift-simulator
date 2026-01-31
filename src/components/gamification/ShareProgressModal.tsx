@@ -242,7 +242,7 @@ https://plantaoecg.com.br`
             <Button
               onClick={shareToTwitter}
               variant="outline"
-              size="icon"
+              size="sm"
               className="flex-1 h-10"
               title="Twitter/X"
             >
@@ -251,7 +251,7 @@ https://plantaoecg.com.br`
             <Button
               onClick={shareToWhatsApp}
               variant="outline"
-              size="icon"
+              size="sm"
               className="flex-1 h-10"
               title="WhatsApp"
             >
@@ -260,7 +260,7 @@ https://plantaoecg.com.br`
             <Button
               onClick={shareToLinkedIn}
               variant="outline"
-              size="icon"
+              size="sm"
               className="flex-1 h-10"
               title="LinkedIn"
             >
@@ -269,7 +269,7 @@ https://plantaoecg.com.br`
             <Button
               onClick={copyToClipboard}
               variant="outline"
-              size="icon"
+              size="sm"
               className="flex-1 h-10"
               title="Copiar texto"
             >

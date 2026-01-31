@@ -41,7 +41,7 @@ export default function StreakMilestoneEmail({
   return (
     <Html>
       <Head />
-      <Preview>{streakDays} DIAS! Você está entre os mais dedicados - Plantão ECG</Preview>
+      <Preview>{`${streakDays} DIAS! Você está entre os mais dedicados - Plantão ECG`}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}

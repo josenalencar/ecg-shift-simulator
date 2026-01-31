@@ -31,7 +31,7 @@ export default function StreakAtRiskEmail({
   return (
     <Html>
       <Head />
-      <Preview>Seu streak de {currentStreak} dias está em risco! - Plantão ECG</Preview>
+      <Preview>{`Seu streak de ${currentStreak} dias está em risco! - Plantão ECG`}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
