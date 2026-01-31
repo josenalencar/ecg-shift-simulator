@@ -104,43 +104,67 @@ export function checkStreakStatus(
 
 /**
  * Calculate the new streak value after an activity
+ * @param userCreatedAt - Optional user account creation date for sanity checking
  */
 export function calculateNewStreak(
   lastActivityDate: string | null,
   currentStreak: number,
-  config: GamificationConfig
+  config: GamificationConfig,
+  userCreatedAt?: string
 ): { newStreak: number; isNewDay: boolean; streakExtended: boolean } {
   const status = checkStreakStatus(lastActivityDate, currentStreak, config)
 
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
+  let newStreak: number
+
   if (!lastActivityDate) {
     // First activity ever
-    return { newStreak: 1, isNewDay: true, streakExtended: true }
+    newStreak = 1
+  } else {
+    const lastActivity = new Date(lastActivityDate)
+    const lastActivityDay = new Date(
+      lastActivity.getFullYear(),
+      lastActivity.getMonth(),
+      lastActivity.getDate()
+    )
+
+    const isSameDay = today.getTime() === lastActivityDay.getTime()
+
+    if (isSameDay) {
+      // Same day, streak doesn't increase
+      return { newStreak: currentStreak, isNewDay: false, streakExtended: false }
+    }
+
+    if (status.shouldReset) {
+      // Streak was broken, start fresh
+      newStreak = 1
+    } else {
+      // New day within valid period, extend streak
+      newStreak = currentStreak + 1
+    }
   }
 
-  const lastActivity = new Date(lastActivityDate)
-  const lastActivityDay = new Date(
-    lastActivity.getFullYear(),
-    lastActivity.getMonth(),
-    lastActivity.getDate()
-  )
+  // Sanity check: streak can't exceed days since account creation
+  if (userCreatedAt) {
+    const accountCreated = new Date(userCreatedAt)
+    const accountCreatedDay = new Date(
+      accountCreated.getFullYear(),
+      accountCreated.getMonth(),
+      accountCreated.getDate()
+    )
+    const daysSinceCreation = Math.floor(
+      (today.getTime() - accountCreatedDay.getTime()) / (1000 * 60 * 60 * 24)
+    ) + 1 // +1 because first day counts
 
-  const isSameDay = today.getTime() === lastActivityDay.getTime()
-
-  if (isSameDay) {
-    // Same day, streak doesn't increase
-    return { newStreak: currentStreak, isNewDay: false, streakExtended: false }
+    if (newStreak > daysSinceCreation) {
+      console.warn(`[Streak] Capping streak from ${newStreak} to ${daysSinceCreation} (max possible)`)
+      newStreak = daysSinceCreation
+    }
   }
 
-  if (status.shouldReset) {
-    // Streak was broken, start fresh
-    return { newStreak: 1, isNewDay: true, streakExtended: true }
-  }
-
-  // New day within valid period, extend streak
-  return { newStreak: currentStreak + 1, isNewDay: true, streakExtended: true }
+  return { newStreak, isNewDay: true, streakExtended: true }
 }
 
 /**

@@ -36,23 +36,24 @@ export const AXES: { value: Axis; label: string }[] = [
   { value: 'extreme', label: 'Eixo Indeterminado' },
 ]
 
-export const PR_INTERVALS: { value: Interval; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'prolonged', label: 'Prolongado (BAV 1º grau)' },
-  { value: 'short', label: 'Curto (Pré-excitação)' },
-  { value: 'na', label: 'Não se aplica' },
-]
+// DEPRECATED: Interval fields removed from UI - kept for backward compatibility with historical data
+// export const PR_INTERVALS: { value: Interval; label: string }[] = [
+//   { value: 'normal', label: 'Normal' },
+//   { value: 'prolonged', label: 'Prolongado (BAV 1º grau)' },
+//   { value: 'short', label: 'Curto (Pré-excitação)' },
+//   { value: 'na', label: 'Não se aplica' },
+// ]
 
-export const QRS_DURATIONS: { value: Interval; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'wide', label: 'Alargado' },
-]
+// export const QRS_DURATIONS: { value: Interval; label: string }[] = [
+//   { value: 'normal', label: 'Normal' },
+//   { value: 'wide', label: 'Alargado' },
+// ]
 
-export const QT_INTERVALS: { value: Interval; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'short', label: 'Curto' },
-  { value: 'prolonged', label: 'Prolongado' },
-]
+// export const QT_INTERVALS: { value: Interval; label: string }[] = [
+//   { value: 'normal', label: 'Normal' },
+//   { value: 'short', label: 'Curto' },
+//   { value: 'prolonged', label: 'Prolongado' },
+// ]
 
 export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   // Alterações de câmaras - renamed from SVE/SVD/SAE/SAD
@@ -114,6 +115,8 @@ export const FINDINGS: { value: Finding; label: string; category: string }[] = [
   { value: 'primary_t_wave', label: 'Alteração Primária da Onda T', category: 'Repolarização' },
   { value: 'early_repolarization', label: 'Repolarização Precoce', category: 'Repolarização' },
   { value: 'giant_negative_t', label: 'Onda T Negativa Gigante', category: 'Repolarização' },
+  { value: 'qt_short', label: 'Intervalo QT curto', category: 'Repolarização' },
+  { value: 'qt_long', label: 'Intervalo QT longo', category: 'Repolarização' },
 
   // Outros
   { value: 'hyperkalemia', label: 'Hipercalemia', category: 'Eletrólitos' },

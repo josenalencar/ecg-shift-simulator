@@ -1,4 +1,4 @@
-import type { OfficialReport, Rhythm, Finding, Axis, Interval, ElectrodeSwap, Category } from '@/types/database'
+import type { OfficialReport, Rhythm, Finding, Axis, ElectrodeSwap, Category, Interval } from '@/types/database'
 import type { ReportFormData } from '@/components/ecg'
 import { RHYTHMS, ELECTRODE_SWAP_OPTIONS, AXES, formatCompoundFinding } from './ecg-constants'
 
@@ -20,10 +20,11 @@ export interface CategoryWeights {
   rhythm: number
   heart_rate: number
   axis: number
-  pr_interval: number
-  qrs_duration: number
   findings: number
   electrode_swap: number
+  // Deprecated - kept for backward compatibility, always 0
+  pr_interval?: number
+  qrs_duration?: number
 }
 
 export interface ScoringResult {
@@ -40,16 +41,18 @@ export interface ScoringResult {
 // Each category has different point distributions based on what matters most
 // All totals sum to 100 points
 
+// PR_INTERVAL and QRS_DURATION points have been redistributed to FINDINGS
+// All totals still sum to 100 points
 const CATEGORY_WEIGHTS: Record<Category, CategoryWeights> = {
-  arrhythmia: { rhythm: 35, heart_rate: 8, axis: 5, pr_interval: 5, qrs_duration: 5, findings: 38, electrode_swap: 4 },
-  ischemia:   { rhythm: 12, heart_rate: 5, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 68, electrode_swap: 4 },
-  structural: { rhythm: 15, heart_rate: 5, axis: 5, pr_interval: 5, qrs_duration: 5, findings: 60, electrode_swap: 5 },  // axis 15→5, findings 50→60
-  emergency:  { rhythm: 25, heart_rate: 8, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 52, electrode_swap: 4 },
-  normal:     { rhythm: 20, heart_rate: 8, axis: 5, pr_interval: 4, qrs_duration: 4, findings: 55, electrode_swap: 4 },  // axis 10→5, findings 50→55
-  routine:    { rhythm: 20, heart_rate: 8, axis: 5, pr_interval: 4, qrs_duration: 4, findings: 55, electrode_swap: 4 },  // axis 10→5, findings 50→55
-  advanced:   { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
-  rare:       { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
-  other:      { rhythm: 17, heart_rate: 7, axis: 5, pr_interval: 3, qrs_duration: 3, findings: 62, electrode_swap: 3 },  // axis 7→5, findings 60→62
+  arrhythmia: { rhythm: 35, heart_rate: 8, axis: 5, findings: 48, electrode_swap: 4 },  // +10 to findings (was 38)
+  ischemia:   { rhythm: 12, heart_rate: 5, axis: 5, findings: 74, electrode_swap: 4 },  // +6 to findings (was 68)
+  structural: { rhythm: 15, heart_rate: 5, axis: 5, findings: 70, electrode_swap: 5 },  // +10 to findings (was 60)
+  emergency:  { rhythm: 25, heart_rate: 8, axis: 5, findings: 58, electrode_swap: 4 },  // +6 to findings (was 52)
+  normal:     { rhythm: 20, heart_rate: 8, axis: 5, findings: 63, electrode_swap: 4 },  // +8 to findings (was 55)
+  routine:    { rhythm: 20, heart_rate: 8, axis: 5, findings: 63, electrode_swap: 4 },  // +8 to findings (was 55)
+  advanced:   { rhythm: 17, heart_rate: 7, axis: 5, findings: 68, electrode_swap: 3 },  // +6 to findings (was 62)
+  rare:       { rhythm: 17, heart_rate: 7, axis: 5, findings: 68, electrode_swap: 3 },  // +6 to findings (was 62)
+  other:      { rhythm: 17, heart_rate: 7, axis: 5, findings: 68, electrode_swap: 3 },  // +6 to findings (was 62)
 }
 
 // Default weights (fallback)
@@ -141,8 +144,7 @@ function getWeightsForCategories(categories: Category[]): CategoryWeights {
 
   // Average all category weights
   const avgWeights: CategoryWeights = {
-    rhythm: 0, heart_rate: 0, axis: 0, pr_interval: 0,
-    qrs_duration: 0, findings: 0, electrode_swap: 0
+    rhythm: 0, heart_rate: 0, axis: 0, findings: 0, electrode_swap: 0
   }
 
   for (const cat of categories) {
@@ -150,8 +152,6 @@ function getWeightsForCategories(categories: Category[]): CategoryWeights {
     avgWeights.rhythm += w.rhythm / categories.length
     avgWeights.heart_rate += w.heart_rate / categories.length
     avgWeights.axis += w.axis / categories.length
-    avgWeights.pr_interval += w.pr_interval / categories.length
-    avgWeights.qrs_duration += w.qrs_duration / categories.length
     avgWeights.findings += w.findings / categories.length
     avgWeights.electrode_swap += w.electrode_swap / categories.length
   }
@@ -160,8 +160,6 @@ function getWeightsForCategories(categories: Category[]): CategoryWeights {
   avgWeights.rhythm = Math.round(avgWeights.rhythm)
   avgWeights.heart_rate = Math.round(avgWeights.heart_rate)
   avgWeights.axis = Math.round(avgWeights.axis)
-  avgWeights.pr_interval = Math.round(avgWeights.pr_interval)
-  avgWeights.qrs_duration = Math.round(avgWeights.qrs_duration)
   avgWeights.findings = Math.round(avgWeights.findings)
   avgWeights.electrode_swap = Math.round(avgWeights.electrode_swap)
 
@@ -344,52 +342,9 @@ export function calculateScore(
     maxPoints: axisMaxPoints,
   })
 
-  // ============ PR INTERVAL COMPARISON ============
-  const prCorrect = userReport.pr_interval === officialReport.pr_interval
-  const prMaxPoints = weights.pr_interval
-  const prPoints = prCorrect ? prMaxPoints : 0
-  totalPoints += prPoints
-
-  comparisons.push({
-    field: 'pr_interval',
-    label: 'Intervalo PR',
-    userValue: formatInterval(userReport.pr_interval, 'pr'),
-    correctValue: formatInterval(officialReport.pr_interval, 'pr'),
-    isCorrect: prCorrect,
-    points: prPoints,
-    maxPoints: prMaxPoints,
-  })
-
-  // ============ QRS DURATION COMPARISON ============
-  const qrsCorrect = userReport.qrs_duration === officialReport.qrs_duration
-  const qrsMaxPoints = weights.qrs_duration
-  const qrsPoints = qrsCorrect ? qrsMaxPoints : 0
-  totalPoints += qrsPoints
-
-  comparisons.push({
-    field: 'qrs_duration',
-    label: 'Duração do QRS',
-    userValue: formatInterval(userReport.qrs_duration, 'qrs'),
-    correctValue: formatInterval(officialReport.qrs_duration, 'qrs'),
-    isCorrect: qrsCorrect,
-    points: qrsPoints,
-    maxPoints: qrsMaxPoints,
-  })
-
-  // ============ QT INTERVAL - DISPLAY ONLY ============
-  const qtCorrect = userReport.qt_interval === officialReport.qt_interval
-
-  comparisons.push({
-    field: 'qt_interval',
-    label: 'Intervalo QT',
-    userValue: formatInterval(userReport.qt_interval, 'qt'),
-    correctValue: formatInterval(officialReport.qt_interval, 'qt'),
-    isCorrect: qtCorrect,
-    points: 0, // Not scored
-    maxPoints: 0, // Not scored
-  })
-
   // ============ FINDINGS COMPARISON (PROPORTIONAL) ============
+  // Note: PR interval, QRS duration, and QT interval have been removed from scoring
+  // QT abnormalities are now captured as findings (qt_short, qt_long)
   const findingsPool = weights.findings
   const officialFindings = officialReport.findings
   const userFindings = userReport.findings
@@ -545,7 +500,7 @@ export function calculateScore(
   // BUG FIX: Use effectiveFindingsMax (proportional) instead of weights.findings (full pool)
   // This ensures the score matches what the user sees in the UI breakdown
   const maxPoints = weights.rhythm + weights.heart_rate + weights.axis +
-    weights.pr_interval + weights.qrs_duration + effectiveFindingsMax + weights.electrode_swap
+    effectiveFindingsMax + weights.electrode_swap
 
   const score = Math.round((totalPoints / maxPoints) * 100)
 

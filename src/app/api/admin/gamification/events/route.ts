@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAllEvents, createGlobalEvent, deactivateEvent } from '@/lib/gamification'
+import { sendXPEventAnnouncementEmail } from '@/lib/email'
 import type { XPEventType } from '@/types/database'
+
+/**
+ * Convert datetime-local string to Date object treating input as Brazil time (UTC-3)
+ * datetime-local format: "2024-01-30T14:00" (no timezone info)
+ */
+function parseBrazilDateTime(dateString: string): Date {
+  // datetime-local gives us "2024-01-30T14:00" without seconds or timezone
+  // Append seconds and Brazil timezone offset (UTC-3)
+  const normalized = dateString.includes(':') && dateString.split(':').length === 2
+    ? dateString + ':00'
+    : dateString
+  return new Date(normalized + '-03:00')
+}
 
 async function checkMasterAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -15,6 +29,72 @@ async function checkMasterAdmin(supabase: Awaited<ReturnType<typeof createClient
     .single()
 
   return profile?.is_master_admin ? user.id : null
+}
+
+/**
+ * Send XP event announcement emails to all users with notifications enabled
+ * Runs in background with rate limiting to avoid overwhelming email service
+ */
+async function sendEventEmailsInBackground(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventName: string,
+  eventType: '2x' | '3x',
+  endDate: Date
+) {
+  console.log('[XP Event] Starting background email send for event:', eventName)
+
+  // Get all users with email notifications enabled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: users, error } = await (supabase as any)
+    .from('profiles')
+    .select('email, full_name, unsubscribe_token, email_notifications_enabled')
+
+  if (error) {
+    console.error('[XP Event] Failed to fetch users:', error)
+    return
+  }
+
+  // Filter users who have notifications enabled (default true for those without the column)
+  const eligibleUsers = (users || []).filter(
+    (u: { email_notifications_enabled?: boolean }) => u.email_notifications_enabled !== false
+  )
+
+  console.log(`[XP Event] Sending emails to ${eligibleUsers.length} users`)
+
+  const formattedEndDate = endDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  // Send emails sequentially with rate limiting (Resend limit: 2 req/sec = 500ms between emails)
+  const DELAY_BETWEEN_EMAILS_MS = 500
+
+  let sentCount = 0
+  for (const user of eligibleUsers) {
+    try {
+      await sendXPEventAnnouncementEmail(
+        user.email,
+        user.full_name,
+        eventName,
+        eventType,
+        formattedEndDate,
+        user.unsubscribe_token
+      )
+      sentCount++
+    } catch (err) {
+      console.error(`[XP Event] Failed to send to ${user.email}:`, err)
+    }
+
+    // Delay between emails to respect rate limit
+    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_EMAILS_MS))
+  }
+
+  console.log(`[XP Event] Successfully sent ${sentCount}/${eligibleUsers.length} emails`)
+
+  console.log('[XP Event] Finished sending emails')
 }
 
 export async function GET() {
@@ -60,9 +140,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid multiplier type' }, { status: 400 })
     }
 
-    // Validate dates
-    const startDate = new Date(start_at)
-    const endDate = new Date(end_at)
+    // Validate dates - treat input as Brazil time (UTC-3)
+    const startDate = parseBrazilDateTime(start_at)
+    const endDate = parseBrazilDateTime(end_at)
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
@@ -79,19 +159,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Event end date is in the past' }, { status: 400 })
     }
 
-    // Create event
+    // Create event (use already parsed Brazil time dates)
     const event = await createGlobalEvent(
       name,
       description || '',
       multiplier_type as XPEventType,
-      new Date(start_at),
-      new Date(end_at),
+      startDate,
+      endDate,
       adminId,
       supabase
     )
 
     if (!event) {
       return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
+    }
+
+    // Send email announcements in the background (don't await)
+    if (target_type === 'all' || !target_type) {
+      sendEventEmailsInBackground(
+        supabase,
+        name,
+        multiplier_type as '2x' | '3x',
+        endDate
+      ).catch(err => console.error('[XP Event] Background email sending failed:', err))
     }
 
     return NextResponse.json({ event }, { status: 201 })

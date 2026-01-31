@@ -18,6 +18,7 @@ interface PasswordResetEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function PasswordResetEmail({ name, resetLink }: PasswordResetEmailProps) {
   return (
@@ -29,7 +30,7 @@ export default function PasswordResetEmail({ name, resetLink }: PasswordResetEma
           {/* Header */}
           <Section style={header}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}

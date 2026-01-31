@@ -20,12 +20,13 @@ interface RenewalReminderEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function RenewalReminderEmail({
   name,
   plan,
   amount,
-  renewalDate
+  renewalDate,
 }: RenewalReminderEmailProps) {
   const planName = plan === 'ai' ? 'Premium + IA' : 'Premium'
   const planColor = plan === 'ai' ? '#7c3aed' : '#2563eb'
@@ -40,7 +41,7 @@ export default function RenewalReminderEmail({
           {/* Header */}
           <Section style={header}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}

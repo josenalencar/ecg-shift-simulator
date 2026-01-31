@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui'
-import { Menu, X, User, LogOut, LayoutDashboard, CreditCard, Settings, TrendingUp } from 'lucide-react'
+import { AvatarDisplay } from '@/components/profile/avatar-display'
+import { Menu, X, LogOut, LayoutDashboard, User, TrendingUp, Shield } from 'lucide-react'
 import Image from 'next/image'
 import type { Profile } from '@/types/database'
 
@@ -41,46 +42,20 @@ export function Header({ profile }: HeaderProps) {
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            {profile ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Dashboard
-                </Link>
-                {profile.role === 'admin' && (
-                  <Link
-                    href="/admin"
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Admin
-                  </Link>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-red-600 font-medium flex items-center gap-1"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Login
-                </Link>
-                <Link href="/register">
-                  <Button>Get Started</Button>
-                </Link>
-              </>
-            )}
-          </nav>
+          {/* Desktop Navigation - Only show for non-logged users */}
+          {!profile && (
+            <nav className="hidden md:flex items-center gap-6">
+              <Link
+                href="/login"
+                className="text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Login
+              </Link>
+              <Link href="/register">
+                <Button>Get Started</Button>
+              </Link>
+            </nav>
+          )}
 
           {/* User Menu (Desktop) */}
           {profile && (
@@ -89,9 +64,7 @@ export function Header({ profile }: HeaderProps) {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
               >
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-blue-600" />
-                </div>
+                <AvatarDisplay avatarId={profile.avatar} size="sm" />
                 <span className="font-medium">{profile.full_name || profile.email}</span>
               </button>
 
@@ -106,6 +79,14 @@ export function Header({ profile }: HeaderProps) {
                     Dashboard
                   </Link>
                   <Link
+                    href="/perfil"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    Perfil
+                  </Link>
+                  <Link
                     href="/progress"
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                     onClick={() => setIsUserMenuOpen(false)}
@@ -113,29 +94,23 @@ export function Header({ profile }: HeaderProps) {
                     <TrendingUp className="h-4 w-4" />
                     Meu Progresso
                   </Link>
-                  <Link
-                    href="/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    Configurações
-                  </Link>
-                  <Link
-                    href="/plano"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Plano
-                  </Link>
+                  {profile.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-gray-50"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin
+                    </Link>
+                  )}
                   <hr className="my-1" />
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-gray-50 w-full"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    Sair
                   </button>
                 </div>
               )}
@@ -170,6 +145,13 @@ export function Header({ profile }: HeaderProps) {
                   Dashboard
                 </Link>
                 <Link
+                  href="/perfil"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Perfil
+                </Link>
+                <Link
                   href="/progress"
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -179,7 +161,7 @@ export function Header({ profile }: HeaderProps) {
                 {profile.role === 'admin' && (
                   <Link
                     href="/admin"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                    className="block px-4 py-2 text-blue-600 hover:bg-gray-50 rounded-lg"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin
@@ -190,7 +172,7 @@ export function Header({ profile }: HeaderProps) {
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50 rounded-lg"
                 >
-                  Sign out
+                  Sair
                 </button>
               </>
             ) : (

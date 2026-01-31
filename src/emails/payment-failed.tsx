@@ -19,18 +19,19 @@ interface PaymentFailedEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Acao necessaria: Seu pagamento falhou - Atualize seu metodo de pagamento</Preview>
+      <Preview>Ação necessária: Seu pagamento falhou - Atualize seu método de pagamento</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}
@@ -40,18 +41,17 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
 
           {/* Alert Banner */}
           <Section style={alertBanner}>
-            <Text style={alertIcon}>&#9888;&#65039;</Text>
-            <Text style={alertTitle}>Acao Necessaria</Text>
+            <Text style={alertTitle}>Ação Necessária</Text>
           </Section>
 
           {/* Main Content */}
           <Section style={mainSection}>
             <Heading style={heading}>
-              Pagamento Nao Processado
+              Pagamento Não Processado
             </Heading>
             <Text style={heroText}>
-              Ola, {name || 'Doutor(a)'}. Nao conseguimos processar seu ultimo
-              pagamento da assinatura Premium do Plantao ECG.
+              Olá, {name || 'Doutor(a)'}. Não conseguimos processar seu último
+              pagamento da assinatura Premium do Plantão ECG.
             </Text>
           </Section>
 
@@ -65,8 +65,8 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
           {/* Warning Box */}
           <Section style={warningBox}>
             <Text style={warningText}>
-              <strong>Importante:</strong> Seu acesso Premium sera suspenso se o
-              pagamento nao for regularizado em breve.
+              <strong>Importante:</strong> Seu acesso Premium será suspenso se o
+              pagamento não for regularizado em breve.
             </Text>
           </Section>
 
@@ -74,41 +74,29 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
 
           {/* Reasons Section */}
           <Section style={reasonsSection}>
-            <Text style={sectionTitle}>Possiveis motivos da falha:</Text>
+            <Text style={sectionTitle}>Possíveis motivos da falha:</Text>
 
             <Row style={reasonRow}>
-              <Column style={reasonIconCol}>
-                <Text style={reasonIcon}>&#128179;</Text>
-              </Column>
               <Column style={reasonTextCol}>
-                <Text style={reasonText}>Cartao de credito expirado</Text>
+                <Text style={reasonText}>- Cartão de crédito expirado</Text>
               </Column>
             </Row>
 
             <Row style={reasonRow}>
-              <Column style={reasonIconCol}>
-                <Text style={reasonIcon}>&#128176;</Text>
-              </Column>
               <Column style={reasonTextCol}>
-                <Text style={reasonText}>Saldo ou limite insuficiente</Text>
+                <Text style={reasonText}>- Saldo ou limite insuficiente</Text>
               </Column>
             </Row>
 
             <Row style={reasonRow}>
-              <Column style={reasonIconCol}>
-                <Text style={reasonIcon}>&#128274;</Text>
-              </Column>
               <Column style={reasonTextCol}>
-                <Text style={reasonText}>Transacao bloqueada pelo banco</Text>
+                <Text style={reasonText}>- Transação bloqueada pelo banco</Text>
               </Column>
             </Row>
 
             <Row style={reasonRow}>
-              <Column style={reasonIconCol}>
-                <Text style={reasonIcon}>&#128221;</Text>
-              </Column>
               <Column style={reasonTextCol}>
-                <Text style={reasonText}>Dados de cobranca desatualizados</Text>
+                <Text style={reasonText}>- Dados de cobrança desatualizados</Text>
               </Column>
             </Row>
           </Section>
@@ -117,9 +105,9 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
 
           {/* Help Section */}
           <Section style={helpSection}>
-            <Text style={helpTitle}>&#128172; Precisa de ajuda?</Text>
+            <Text style={helpTitle}>Precisa de ajuda?</Text>
             <Text style={helpText}>
-              Se voce ja atualizou sua forma de pagamento, por favor ignore este
+              Se você já atualizou sua forma de pagamento, por favor ignore este
               email. Tentaremos processar o pagamento automaticamente.
             </Text>
             <Text style={helpText}>
@@ -134,7 +122,7 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Plantao ECG - Treinamento em interpretacao de ECG
+              Plantão ECG - Treinamento em interpretação de ECG
             </Text>
             <Text style={footerLinks}>
               <Link href={baseUrl} style={footerLink}>Site</Link>
@@ -144,7 +132,7 @@ export default function PaymentFailedEmail({ name }: PaymentFailedEmailProps) {
               <Link href={`${baseUrl}/privacidade`} style={footerLink}>Privacidade</Link>
             </Text>
             <Text style={copyright}>
-              © 2026 Plantao ECG. Todos os direitos reservados.
+              © 2026 Plantão ECG. Todos os direitos reservados.
             </Text>
           </Section>
         </Container>

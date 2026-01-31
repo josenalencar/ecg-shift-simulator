@@ -305,9 +305,10 @@ export default function PracticePage() {
         rhythm: userReport.rhythm,
         heart_rate: userReport.heart_rate,
         axis: userReport.axis,
-        pr_interval: userReport.pr_interval,
-        qrs_duration: userReport.qrs_duration,
-        qt_interval: userReport.qt_interval,
+        // Deprecated fields - set defaults for DB compatibility
+        pr_interval: 'normal',
+        qrs_duration: 'normal',
+        qt_interval: 'normal',
         findings: userReport.findings,
         electrode_swap: userReport.electrode_swap.length > 0 ? userReport.electrode_swap : null,
         score: result.score,

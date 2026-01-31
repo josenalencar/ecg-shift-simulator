@@ -182,9 +182,10 @@ export default function NewECGPage() {
           rhythm: reportData.rhythm,
           heart_rate: reportData.heart_rate,
           axis: reportData.axis,
-          pr_interval: reportData.pr_interval,
-          qrs_duration: reportData.qrs_duration,
-          qt_interval: reportData.qt_interval,
+          // Deprecated fields - set defaults for DB compatibility
+          pr_interval: 'normal',
+          qrs_duration: 'normal',
+          qt_interval: 'normal',
           findings: reportData.findings,
           electrode_swap: reportData.electrode_swap.length > 0 ? reportData.electrode_swap : null,
           notes: reportData.notes || null,

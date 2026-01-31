@@ -20,6 +20,7 @@ interface SubscriptionCanceledEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function SubscriptionCanceledEmail({
   name,
@@ -28,13 +29,13 @@ export default function SubscriptionCanceledEmail({
   return (
     <Html>
       <Head />
-      <Preview>Sua assinatura foi cancelada - Voce ainda pode usar ate {endDate}</Preview>
+      <Preview>Sua assinatura foi cancelada - Você ainda pode usar até {endDate}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}
@@ -44,27 +45,23 @@ export default function SubscriptionCanceledEmail({
 
           {/* Main Content */}
           <Section style={mainSection}>
-            <Text style={sadIcon}>&#128532;</Text>
             <Heading style={heading}>
               Assinatura Cancelada
             </Heading>
             <Text style={heroText}>
-              Ola, {name || 'Doutor(a)'}. Recebemos seu pedido de cancelamento da
-              assinatura Premium do Plantao ECG.
+              Olá, {name || 'Doutor(a)'}. Recebemos seu pedido de cancelamento da
+              assinatura Premium do Plantão ECG.
             </Text>
           </Section>
 
           {/* Info Box */}
           <Section style={infoBox}>
             <Row>
-              <Column style={infoIconCol}>
-                <Text style={infoIcon}>&#128197;</Text>
-              </Column>
               <Column style={infoTextCol}>
-                <Text style={infoTitle}>Acesso ate:</Text>
+                <Text style={infoTitle}>Acesso até:</Text>
                 <Text style={infoValue}>{endDate}</Text>
                 <Text style={infoDesc}>
-                  Voce ainda pode usar todos os recursos Premium ate esta data.
+                  Você ainda pode usar todos os recursos Premium até esta data.
                 </Text>
               </Column>
             </Row>
@@ -74,41 +71,29 @@ export default function SubscriptionCanceledEmail({
 
           {/* What you'll miss section */}
           <Section style={missSection}>
-            <Text style={sectionTitle}>O que voce perdera apos {endDate}:</Text>
+            <Text style={sectionTitle}>O que você perderá após {endDate}:</Text>
 
             <Row style={missRow}>
-              <Column style={missIconCol}>
-                <Text style={missIcon}>&#10060;</Text>
-              </Column>
               <Column style={missTextCol}>
-                <Text style={missText}>Acesso a casos ilimitados de ECG</Text>
+                <Text style={missText}>- Acesso a casos ilimitados de ECG</Text>
               </Column>
             </Row>
 
             <Row style={missRow}>
-              <Column style={missIconCol}>
-                <Text style={missIcon}>&#10060;</Text>
-              </Column>
               <Column style={missTextCol}>
-                <Text style={missText}>Niveis avancados de dificuldade</Text>
+                <Text style={missText}>- Níveis avançados de dificuldade</Text>
               </Column>
             </Row>
 
             <Row style={missRow}>
-              <Column style={missIconCol}>
-                <Text style={missIcon}>&#10060;</Text>
-              </Column>
               <Column style={missTextCol}>
-                <Text style={missText}>Estatisticas detalhadas de desempenho</Text>
+                <Text style={missText}>- Estatísticas detalhadas de desempenho</Text>
               </Column>
             </Row>
 
             <Row style={missRow}>
-              <Column style={missIconCol}>
-                <Text style={missIcon}>&#10060;</Text>
-              </Column>
               <Column style={missTextCol}>
-                <Text style={missText}>Analise com Inteligencia Artificial</Text>
+                <Text style={missText}>- Análise com Inteligência Artificial</Text>
               </Column>
             </Row>
           </Section>
@@ -117,10 +102,10 @@ export default function SubscriptionCanceledEmail({
 
           {/* Win-back section */}
           <Section style={winbackSection}>
-            <Text style={winbackTitle}>&#128161; Mudou de ideia?</Text>
+            <Text style={winbackTitle}>Mudou de ideia?</Text>
             <Text style={winbackText}>
-              Voce pode reativar sua assinatura a qualquer momento e continuar
-              de onde parou. Seu progresso e estatisticas serao mantidos.
+              Você pode reativar sua assinatura a qualquer momento e continuar
+              de onde parou. Seu progresso e estatísticas serão mantidos.
             </Text>
             <Link style={button} href={`${baseUrl}/pricing`}>
               Reativar Assinatura
@@ -131,8 +116,8 @@ export default function SubscriptionCanceledEmail({
           <Section style={feedbackSection}>
             <Text style={feedbackTitle}>Nos ajude a melhorar</Text>
             <Text style={feedbackText}>
-              Se tiver um momento, adorariamos saber o motivo do cancelamento
-              para podermos melhorar nosso servico. Responda este email com
+              Se tiver um momento, adoraríamos saber o motivo do cancelamento
+              para podermos melhorar nosso serviço. Responda este email com
               seu feedback - lemos todas as mensagens!
             </Text>
           </Section>
@@ -150,7 +135,7 @@ export default function SubscriptionCanceledEmail({
               <Link href={`${baseUrl}/privacidade`} style={footerLink}>Privacidade</Link>
             </Text>
             <Text style={copyright}>
-              © 2026 Plantao ECG. Todos os direitos reservados.
+              © 2026 Plantão ECG. Todos os direitos reservados.
             </Text>
           </Section>
         </Container>

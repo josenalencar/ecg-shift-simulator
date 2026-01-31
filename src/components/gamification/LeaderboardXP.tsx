@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { AvatarDisplay } from '@/components/profile/avatar-display'
 import { getXPLeaderboard } from '@/lib/gamification'
 import type { UserGamificationStats, GamificationConfig } from '@/types/database'
 import { Medal, Crown, TrendingUp } from 'lucide-react'
@@ -18,6 +19,7 @@ interface LeaderboardEntry extends UserGamificationStats {
   profiles: {
     full_name: string | null
     email: string
+    avatar?: string | null
   }
 }
 
@@ -107,14 +109,17 @@ export function LeaderboardXP({ userId, limit = 10, showUserPosition = true }: L
                   )}
                 </div>
 
+                {/* Avatar */}
+                <AvatarDisplay avatarId={user.profiles?.avatar} size="sm" />
+
                 {/* User Info */}
                 <div className="flex-1 min-w-0">
                   <p className={`font-medium truncate ${isCurrentUser ? 'text-blue-700' : 'text-gray-900'}`}>
-                    {user.profiles?.full_name || user.profiles?.email?.split('@')[0] || 'Usuario'}
-                    {isCurrentUser && <span className="ml-2 text-xs text-blue-600">(voce)</span>}
+                    {user.profiles?.full_name || 'Usuário'}
+                    {isCurrentUser && <span className="ml-2 text-xs text-blue-600">(você)</span>}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Nivel {user.current_level}
+                    Nível {user.current_level}
                   </p>
                 </div>
 
@@ -132,17 +137,17 @@ export function LeaderboardXP({ userId, limit = 10, showUserPosition = true }: L
           })}
         </div>
 
-        {/* User Position (if not in top N) */}
+        {/* User Position (if not in top 10) - show only percentile to maintain mystery */}
         {showUserPosition && !isInTopN && userRank && (
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
               <div className="flex items-center justify-center w-8">
-                <span className="text-lg font-bold text-blue-600">#{userRank}</span>
+                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-blue-700">Sua Posicao</p>
+                <p className="font-medium text-blue-700">Sua Posição</p>
                 <p className="text-sm text-blue-600">
-                  Top {userPercentile}% de {totalUsers} usuarios
+                  Você está no top {userPercentile}% dos jogadores
                 </p>
               </div>
               <div className="text-right">

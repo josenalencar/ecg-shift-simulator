@@ -5,9 +5,6 @@ import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/compo
 import {
   RHYTHMS,
   AXES,
-  PR_INTERVALS,
-  QRS_DURATIONS,
-  QT_INTERVALS,
   FINDINGS_BY_CATEGORY,
   WALL_OPTIONS,
   OCA_SIGNS,
@@ -19,15 +16,12 @@ import {
   PEDIATRIC_CHAMBER_FINDINGS,
   FINDINGS,
 } from '@/lib/ecg-constants'
-import type { Rhythm, Finding, Axis, Interval, ElectrodeSwap, AgePattern } from '@/types/database'
+import type { Rhythm, Finding, Axis, ElectrodeSwap, AgePattern } from '@/types/database'
 
 export interface ReportFormData {
   rhythm: Rhythm[]
   heart_rate: number
   axis: Axis
-  pr_interval: Interval
-  qrs_duration: Interval
-  qt_interval: Interval
   findings: Finding[]
   electrode_swap: ElectrodeSwap[]
   notes: string
@@ -46,9 +40,6 @@ const defaultData: ReportFormData = {
   rhythm: ['sinus'],
   heart_rate: 75,
   axis: 'normal',
-  pr_interval: 'normal',
-  qrs_duration: 'normal',
-  qt_interval: 'normal',
   findings: [],
   electrode_swap: [],
   notes: '',
@@ -386,12 +377,12 @@ export function ReportForm({
         </Card>
       )}
 
-      {/* Rate and Measurements */}
+      {/* Rate and Axis */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-900">Frequência e Medidas</CardTitle>
+          <CardTitle className="text-lg text-gray-900">Frequência e Eixo</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
@@ -435,98 +426,6 @@ export function ReportForm({
                       className="sr-only"
                     />
                     {axis.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Intervalo PR
-              </label>
-              <div className="flex flex-col gap-2">
-                {PR_INTERVALS.map((interval) => (
-                  <label
-                    key={interval.value}
-                    className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
-                      ${formData.pr_interval === interval.value
-                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
-                        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                      }
-                    `}
-                  >
-                    <input
-                      type="radio"
-                      name="pr_interval"
-                      value={interval.value}
-                      checked={formData.pr_interval === interval.value}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, pr_interval: e.target.value as Interval }))}
-                      className="sr-only"
-                    />
-                    {interval.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Duração do QRS
-              </label>
-              <div className="flex flex-col gap-2">
-                {QRS_DURATIONS.map((duration) => (
-                  <label
-                    key={duration.value}
-                    className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
-                      ${formData.qrs_duration === duration.value
-                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
-                        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                      }
-                    `}
-                  >
-                    <input
-                      type="radio"
-                      name="qrs_duration"
-                      value={duration.value}
-                      checked={formData.qrs_duration === duration.value}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, qrs_duration: e.target.value as Interval }))}
-                      className="sr-only"
-                    />
-                    {duration.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Intervalo QT
-              </label>
-              <div className="flex flex-col gap-2">
-                {QT_INTERVALS.map((interval) => (
-                  <label
-                    key={interval.value}
-                    className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
-                      ${formData.qt_interval === interval.value
-                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
-                        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                      }
-                    `}
-                  >
-                    <input
-                      type="radio"
-                      name="qt_interval"
-                      value={interval.value}
-                      checked={formData.qt_interval === interval.value}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, qt_interval: e.target.value as Interval }))}
-                      className="sr-only"
-                    />
-                    {interval.label}
                   </label>
                 ))}
               </div>

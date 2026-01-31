@@ -20,6 +20,7 @@ interface SubscriptionActivatedEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function SubscriptionActivatedEmail({
   name,
@@ -34,32 +35,31 @@ export default function SubscriptionActivatedEmail({
   return (
     <Html>
       <Head />
-      <Preview>Parabens! Sua assinatura {planDisplay} esta ativa - Aproveite todos os recursos!</Preview>
+      <Preview>Parabéns! Sua assinatura {planDisplay} está ativa - Aproveite todos os recursos!</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
           <Section style={{ ...header, backgroundColor: headerColor }}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}
               style={logo}
             />
             <Text style={headerBadge}>
-              {isPremiumAI ? '&#10024; PREMIUM + IA' : '&#11088; PREMIUM'}
+              {isPremiumAI ? 'PREMIUM + IA' : 'PREMIUM'}
             </Text>
           </Section>
 
           {/* Success Icon */}
           <Section style={successSection}>
-            <Text style={successIcon}>&#9989;</Text>
             <Heading style={heading}>
               Assinatura Ativada!
             </Heading>
             <Text style={heroText}>
-              Ola, {name || 'Doutor(a)'}! Sua assinatura <strong>{planDisplay}</strong> esta
-              ativa e voce ja pode aproveitar todos os recursos exclusivos.
+              Olá, {name || 'Doutor(a)'}! Sua assinatura <strong>{planDisplay}</strong> está
+              ativa e você já pode aproveitar todos os recursos exclusivos.
             </Text>
           </Section>
 
@@ -72,7 +72,7 @@ export default function SubscriptionActivatedEmail({
               </Column>
               <Column style={planDetailCol}>
                 <Text style={planLabel}>Status</Text>
-                <Text style={statusActive}>&#9679; Ativo</Text>
+                <Text style={statusActive}>Ativo</Text>
               </Column>
             </Row>
           </Section>
@@ -80,7 +80,7 @@ export default function SubscriptionActivatedEmail({
           {/* CTA Button */}
           <Section style={buttonContainer}>
             <Link style={{ ...button, backgroundColor: headerColor }} href={`${baseUrl}/practice`}>
-              Comecar a Praticar
+              Começar a Praticar
             </Link>
           </Section>
 
@@ -89,41 +89,32 @@ export default function SubscriptionActivatedEmail({
           {/* Features Section */}
           <Section style={featuresSection}>
             <Text style={sectionTitle}>
-              {isPremiumAI ? 'Seus beneficios Premium + IA:' : 'Seus beneficios Premium:'}
+              {isPremiumAI ? 'Seus benefícios Premium + IA:' : 'Seus benefícios Premium:'}
             </Text>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#9989;</Text>
-              </Column>
               <Column style={featureTextCol}>
                 <Text style={featureTitle}>Casos Ilimitados</Text>
                 <Text style={featureDesc}>
-                  Acesso completo a todos os casos de ECG disponiveis na plataforma
+                  Acesso completo a todos os casos de ECG disponíveis na plataforma
                 </Text>
               </Column>
             </Row>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#9989;</Text>
-              </Column>
               <Column style={featureTextCol}>
-                <Text style={featureTitle}>Niveis Avancados</Text>
+                <Text style={featureTitle}>Níveis Avançados</Text>
                 <Text style={featureDesc}>
-                  Casos de dificuldade media e alta para aprimorar suas habilidades
+                  Casos de dificuldade média e alta para aprimorar suas habilidades
                 </Text>
               </Column>
             </Row>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#9989;</Text>
-              </Column>
               <Column style={featureTextCol}>
-                <Text style={featureTitle}>Estatisticas Detalhadas</Text>
+                <Text style={featureTitle}>Estatísticas Detalhadas</Text>
                 <Text style={featureDesc}>
-                  Analise completa do seu desempenho e areas para melhoria
+                  Análise completa do seu desempenho e áreas para melhoria
                 </Text>
               </Column>
             </Row>
@@ -131,25 +122,19 @@ export default function SubscriptionActivatedEmail({
             {isPremiumAI && (
               <>
                 <Row style={featureRow}>
-                  <Column style={featureIconCol}>
-                    <Text style={featureIcon}>&#129302;</Text>
-                  </Column>
                   <Column style={featureTextCol}>
-                    <Text style={{ ...featureTitle, color: '#7c3aed' }}>Analise com IA</Text>
+                    <Text style={{ ...featureTitle, color: '#7c3aed' }}>Análise com IA</Text>
                     <Text style={featureDesc}>
-                      Inteligencia Artificial para auxiliar na interpretacao dos traçados
+                      Inteligência Artificial para auxiliar na interpretação dos traçados
                     </Text>
                   </Column>
                 </Row>
 
                 <Row style={featureRow}>
-                  <Column style={featureIconCol}>
-                    <Text style={featureIcon}>&#128161;</Text>
-                  </Column>
                   <Column style={featureTextCol}>
                     <Text style={{ ...featureTitle, color: '#7c3aed' }}>Dicas Personalizadas</Text>
                     <Text style={featureDesc}>
-                      Recomendacoes de estudo baseadas no seu perfil de aprendizado
+                      Recomendações de estudo baseadas no seu perfil de aprendizado
                     </Text>
                   </Column>
                 </Row>
@@ -161,9 +146,9 @@ export default function SubscriptionActivatedEmail({
 
           {/* Tips Section */}
           <Section style={tipsSection}>
-            <Text style={tipsTitle}>&#128073; Dica para comecar</Text>
+            <Text style={tipsTitle}>Dica para começar</Text>
             <Text style={tipsText}>
-              Recomendamos comecar com casos de dificuldade media e ir aumentando
+              Recomendamos começar com casos de dificuldade média e ir aumentando
               gradualmente. Pratique pelo menos 3 casos por dia para manter o ritmo
               de aprendizado!
             </Text>
@@ -172,7 +157,7 @@ export default function SubscriptionActivatedEmail({
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Duvidas sobre sua assinatura?{' '}
+              Dúvidas sobre sua assinatura?{' '}
               <Link href={`${baseUrl}/plano`} style={footerLink}>
                 Gerenciar assinatura
               </Link>
@@ -185,7 +170,7 @@ export default function SubscriptionActivatedEmail({
               <Link href={`${baseUrl}/privacidade`} style={footerLink}>Privacidade</Link>
             </Text>
             <Text style={copyright}>
-              © 2026 Plantao ECG. Todos os direitos reservados.
+              © 2026 Plantão ECG. Todos os direitos reservados.
             </Text>
           </Section>
         </Container>

@@ -143,11 +143,19 @@ export async function onAttemptComplete(
   const activeEvent = await getActiveEvent(userId, supabase)
   const eventType: XPEventType | null = activeEvent?.multiplier_type ?? null
 
-  // Calculate streak
+  // Get user creation date for streak sanity check
+  const { data: profileForStreak } = await supabase
+    .from('profiles')
+    .select('created_at')
+    .eq('id', userId)
+    .single()
+
+  // Calculate streak with sanity check
   const streakResult = calculateNewStreak(
     stats.last_activity_date,
     stats.current_streak,
-    config
+    config,
+    profileForStreak?.created_at
   )
 
   // Calculate XP
@@ -394,7 +402,8 @@ export async function getXPLeaderboard(
       *,
       profiles:user_id (
         full_name,
-        email
+        email,
+        avatar
       )
     `)
     .order('total_xp', { ascending: false })

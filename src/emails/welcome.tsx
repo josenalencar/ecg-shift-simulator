@@ -19,18 +19,19 @@ interface WelcomeEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
 
 export default function WelcomeEmail({ name }: WelcomeEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Bem-vindo ao Plantao ECG - Sua jornada de aprendizado comeca agora!</Preview>
+      <Preview>Bem-vindo ao Plantão ECG - Sua jornada de aprendizado começa agora!</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
             <Img
-              src={`${baseUrl}/logo.png`}
+              src={logoUrl}
               alt="Plantão ECG"
               width={160}
               height={40}
@@ -42,19 +43,19 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
           <Section style={heroSection}>
             <Text style={welcomeBadge}>BEM-VINDO!</Text>
             <Heading style={heading}>
-              Ola, {name || 'Doutor(a)'}!
+              Olá, {name || 'Doutor(a)'}!
             </Heading>
             <Text style={heroText}>
-              Sua conta foi criada com sucesso. Estamos muito felizes em ter voce
-              na nossa comunidade de profissionais dedicados a excelencia em
-              interpretacao de ECG.
+              Sua conta foi criada com sucesso. Estamos muito felizes em ter você
+              na nossa comunidade de profissionais dedicados à excelência em
+              interpretação de ECG.
             </Text>
           </Section>
 
           {/* CTA Button */}
           <Section style={buttonContainer}>
             <Link style={button} href={`${baseUrl}/dashboard`}>
-              Comecar a Praticar Agora
+              Começar a Praticar Agora
             </Link>
           </Section>
 
@@ -62,40 +63,31 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
 
           {/* Features Section */}
           <Section style={featuresSection}>
-            <Text style={sectionTitle}>O que voce pode fazer:</Text>
+            <Text style={sectionTitle}>O que você pode fazer:</Text>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#128200;</Text>
-              </Column>
               <Column style={featureTextCol}>
                 <Text style={featureTitle}>Pratique com Casos Reais</Text>
                 <Text style={featureDesc}>
-                  Acesse casos de ECG baseados em cenarios clinicos reais de plantao
+                  Acesse casos de ECG baseados em cenários clínicos reais de plantão
                 </Text>
               </Column>
             </Row>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#127942;</Text>
-              </Column>
               <Column style={featureTextCol}>
                 <Text style={featureTitle}>Acompanhe seu Progresso</Text>
                 <Text style={featureDesc}>
-                  Veja suas estatisticas, pontuacao e evolucao ao longo do tempo
+                  Veja suas estatísticas, pontuação e evolução ao longo do tempo
                 </Text>
               </Column>
             </Row>
 
             <Row style={featureRow}>
-              <Column style={featureIconCol}>
-                <Text style={featureIcon}>&#128218;</Text>
-              </Column>
               <Column style={featureTextCol}>
                 <Text style={featureTitle}>Aprenda com Feedback</Text>
                 <Text style={featureDesc}>
-                  Receba explicacoes detalhadas sobre cada diagnostico
+                  Receba explicações detalhadas sobre cada diagnóstico
                 </Text>
               </Column>
             </Row>
@@ -105,10 +97,10 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
 
           {/* Upgrade CTA */}
           <Section style={upgradeSection}>
-            <Text style={upgradeTitle}>Quer ir alem?</Text>
+            <Text style={upgradeTitle}>Quer ir além?</Text>
             <Text style={upgradeText}>
-              Com o plano <strong>Premium</strong>, voce tem acesso ilimitado a todos os
-              casos, niveis avancados de dificuldade e analise com Inteligencia Artificial.
+              Com o plano <strong>Premium</strong>, você tem acesso ilimitado a todos os
+              casos, níveis avançados de dificuldade e análise com Inteligência Artificial.
             </Text>
             <Link style={upgradeLink} href={`${baseUrl}/pricing`}>
               Conhecer planos Premium →
@@ -118,7 +110,7 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Plantao ECG - Treinamento em interpretacao de ECG
+              Plantão ECG - Treinamento em interpretação de ECG
             </Text>
             <Text style={footerLinks}>
               <Link href={baseUrl} style={footerLink}>Site</Link>
@@ -128,7 +120,7 @@ export default function WelcomeEmail({ name }: WelcomeEmailProps) {
               <Link href={`${baseUrl}/privacidade`} style={footerLink}>Privacidade</Link>
             </Text>
             <Text style={copyright}>
-              © 2026 Plantao ECG. Todos os direitos reservados.
+              © 2026 Plantão ECG. Todos os direitos reservados.
             </Text>
           </Section>
         </Container>

@@ -114,36 +114,35 @@ export function ResultComparison({ result, notes }: ResultComparisonProps) {
           <CardTitle className="text-sm">Distribuição de Pontos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Ritmo</span>
-              <span className="font-semibold text-gray-900 ml-2">25 pts</span>
+              <span className="font-semibold text-gray-900 ml-2">12-35 pts</span>
             </div>
             <div>
               <span className="text-gray-600">Achados</span>
-              <span className="font-semibold text-gray-900 ml-2">35 pts</span>
+              <span className="font-semibold text-gray-900 ml-2">48-74 pts</span>
             </div>
             <div>
               <span className="text-gray-600">Frequência</span>
-              <span className="font-semibold text-gray-900 ml-2">10 pts</span>
+              <span className="font-semibold text-gray-900 ml-2">5-8 pts</span>
             </div>
             <div>
               <span className="text-gray-600">Eixo</span>
-              <span className="font-semibold text-gray-900 ml-2">10 pts</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Intervalos</span>
-              <span className="font-semibold text-gray-900 ml-2">15 pts</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Regularidade</span>
               <span className="font-semibold text-gray-900 ml-2">5 pts</span>
             </div>
-            <div className="col-span-2">
-              <span className="text-gray-600">Nota para aprovação</span>
+            <div>
+              <span className="text-gray-600">Troca de Eletrodos</span>
+              <span className="font-semibold text-gray-900 ml-2">3-5 pts</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Aprovação</span>
               <span className="font-semibold text-gray-900 ml-2">80%+</span>
             </div>
           </div>
+          <p className="text-xs text-gray-500 mt-3">
+            * Pontuação varia conforme a categoria do ECG
+          </p>
         </CardContent>
       </Card>
     </div>

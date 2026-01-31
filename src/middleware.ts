@@ -84,7 +84,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Auth page with valid auth → redirect to dashboard
-  if (isAuthPath && isAuthenticated && pathname !== '/auth/callback') {
+  // Exception: /reset-password needs auth (after recovery flow) so don't redirect
+  if (isAuthPath && isAuthenticated && pathname !== '/auth/callback' && pathname !== '/reset-password') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

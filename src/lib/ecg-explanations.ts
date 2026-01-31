@@ -214,6 +214,12 @@ export const FINDING_EXPLANATIONS: Record<string, ECGExplanation> = {
   giant_negative_t: {
     description: "T profundamente negativa (>10mm), simétrica. Causas: cardiomiopatia hipertrófica apical, causas cerebrais ou cardiocerebrais, pós-isquemia, Spiked Helmet Sign."
   },
+  qt_short: {
+    description: "QTc < 350ms. Associado a risco aumentado de arritmias ventriculares e morte súbita. Causas: hipercalcemia, hipertermia, acidose, efeito digitálico, síndrome do QT curto congênita (canalopatia). Avaliar histórico familiar de morte súbita."
+  },
+  qt_long: {
+    description: "QTc > 480ms (ou >500ms para alto risco). Risco de Torsades de Pointes, especialmente se QTc ≥500ms. Causas: medicamentos (antiarrítmicos classe IA/III, antipsicóticos, antibióticos macrolídeos/fluoroquinolonas), distúrbios eletrolíticos (hipocalemia, hipomagnesemia, hipocalcemia), síndrome do QT longo congênita, bradicardia."
+  },
 
   // Eletrólitos
   hyperkalemia: {
