@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { bulkSyncUsersToResend, getSyncStatus } from '@/lib/resend-sync'
+import { bulkSyncUsersToResend, getSyncStatus, getOrCreateAllAudiences } from '@/lib/resend-sync'
 
 async function checkMasterAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -36,8 +36,8 @@ export async function GET() {
   }
 }
 
-// POST - Bulk sync all users to Resend
-export async function POST(_request: NextRequest) {
+// POST - Bulk sync all users to Resend or create audiences
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -45,6 +45,25 @@ export async function POST(_request: NextRequest) {
     const adminId = await checkMasterAdmin(supabase)
     if (!adminId) {
       return NextResponse.json({ error: 'Forbidden - Master admin only' }, { status: 403 })
+    }
+
+    // Check if this is just to create audiences
+    const { searchParams } = new URL(request.url)
+    const action = searchParams.get('action')
+
+    if (action === 'create-audiences') {
+      console.log('[Sync Contacts] Creating all audiences...')
+      const audiences = await getOrCreateAllAudiences()
+
+      if (!audiences) {
+        return NextResponse.json({ error: 'Failed to create audiences' }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        audiences,
+        message: 'Audiences created successfully'
+      })
     }
 
     console.log('[Sync Contacts] Starting bulk sync...')

@@ -2,14 +2,39 @@ import { Resend } from 'resend'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const DEFAULT_AUDIENCE_NAME = 'Plantão ECG - Todos'
+
+// All audiences we need
+const AUDIENCES = {
+  all: 'Plantão ECG - Todos',
+  free: 'Plantão ECG - Free',
+  premium: 'Plantão ECG - Premium',
+  premium_ai: 'Plantão ECG - Premium + IA',
+  ecg_com_ja: 'Plantão ECG - ECG com JA',
+  cortesia: 'Plantão ECG - Cortesia',
+  active_7d: 'Plantão ECG - Ativos 7 dias',
+  inactive_30d: 'Plantão ECG - Inativos 30 dias'
+} as const
+
+type AudienceKey = keyof typeof AUDIENCES
+
+// Cache for audience IDs
+let audienceCache: Record<string, string> | null = null
 
 /**
- * Get or create the default Resend audience for all users
+ * Helper to add delay for rate limiting (max 2 req/sec)
  */
-export async function getOrCreateDefaultAudience(): Promise<string | null> {
+async function rateLimitDelay(): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, 600)) // 600ms between calls
+}
+
+/**
+ * Get or create all Resend audiences
+ */
+export async function getOrCreateAllAudiences(): Promise<Record<string, string> | null> {
+  if (audienceCache) return audienceCache
+
   try {
-    // Check existing audiences
+    // Get existing audiences
     const { data: audiences, error: listError } = await resend.audiences.list()
 
     if (listError) {
@@ -17,71 +42,91 @@ export async function getOrCreateDefaultAudience(): Promise<string | null> {
       return null
     }
 
-    // Find existing default audience
-    const existing = audiences?.data?.find(a => a.name === DEFAULT_AUDIENCE_NAME)
-    if (existing) {
-      console.log(`[Resend Sync] Found existing audience: ${existing.id}`)
-      return existing.id
+    const existingAudiences = audiences?.data || []
+    const result: Record<string, string> = {}
+
+    // Check each required audience
+    for (const [key, name] of Object.entries(AUDIENCES)) {
+      const existing = existingAudiences.find(a => a.name === name)
+
+      if (existing) {
+        result[key] = existing.id
+        console.log(`[Resend Sync] Found audience ${name}: ${existing.id}`)
+      } else {
+        // Create missing audience
+        await rateLimitDelay()
+        const { data: newAudience, error: createError } = await resend.audiences.create({ name })
+
+        if (createError) {
+          console.error(`[Resend Sync] Error creating audience ${name}:`, createError)
+          continue
+        }
+
+        if (newAudience?.id) {
+          result[key] = newAudience.id
+          console.log(`[Resend Sync] Created audience ${name}: ${newAudience.id}`)
+        }
+      }
     }
 
-    // Create new audience
-    const { data: newAudience, error: createError } = await resend.audiences.create({
-      name: DEFAULT_AUDIENCE_NAME
-    })
-
-    if (createError) {
-      console.error('[Resend Sync] Error creating audience:', createError)
-      return null
-    }
-
-    console.log(`[Resend Sync] Created new audience: ${newAudience?.id}`)
-    return newAudience?.id || null
+    audienceCache = result
+    return result
   } catch (error) {
-    console.error('[Resend Sync] Error in getOrCreateDefaultAudience:', error)
+    console.error('[Resend Sync] Error in getOrCreateAllAudiences:', error)
     return null
   }
 }
 
 /**
- * Sync a single user to Resend default audience
+ * Get or create the default Resend audience for all users
+ */
+export async function getOrCreateDefaultAudience(): Promise<string | null> {
+  const audiences = await getOrCreateAllAudiences()
+  return audiences?.all || null
+}
+
+/**
+ * Determine which segment a user belongs to based on their plan
+ */
+function getUserSegment(grantedPlan: string | null): AudienceKey {
+  if (!grantedPlan) return 'free'
+  if (grantedPlan === 'ai') return 'premium_ai'
+  if (grantedPlan === 'premium') return 'premium'
+  if (grantedPlan === 'aluno_ecg') return 'ecg_com_ja'
+  return 'cortesia' // any other granted plan is cortesia
+}
+
+/**
+ * Sync a single user to Resend audiences (default + segment)
  */
 export async function syncUserToResend(
   userId: string,
   email: string,
-  fullName: string | null
+  fullName: string | null,
+  grantedPlan?: string | null
 ): Promise<{ success: boolean; contactId?: string; error?: string }> {
   try {
-    // Get or create default audience
-    const audienceId = await getOrCreateDefaultAudience()
+    // Get or create all audiences
+    const audiences = await getOrCreateAllAudiences()
 
-    if (!audienceId) {
-      return { success: false, error: 'Failed to get/create default audience' }
+    if (!audiences?.all) {
+      return { success: false, error: 'Failed to get/create audiences' }
     }
 
-    // Create contact in Resend
+    const supabase = createServiceRoleClient()
+    const firstName = fullName?.split(' ')[0] || ''
+    const lastName = fullName?.split(' ').slice(1).join(' ') || ''
+
+    // Add to default "all" audience
+    await rateLimitDelay()
     const { data, error } = await resend.contacts.create({
-      audienceId,
+      audienceId: audiences.all,
       email,
-      firstName: fullName?.split(' ')[0] || '',
-      lastName: fullName?.split(' ').slice(1).join(' ') || '',
+      firstName,
+      lastName,
     })
 
-    const supabase = createServiceRoleClient()
-
-    if (error) {
-      // Check if contact already exists (not a real error)
-      if (error.message?.includes('already exists')) {
-        // Update sync tracking as synced
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any).from('resend_contact_sync').upsert({
-          user_id: userId,
-          default_audience_id: audienceId,
-          sync_status: 'synced',
-          last_synced_at: new Date().toISOString()
-        })
-        return { success: true }
-      }
-
+    if (error && !error.message?.includes('already exists')) {
       // Real error - track failure
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('resend_contact_sync').upsert({
@@ -89,27 +134,67 @@ export async function syncUserToResend(
         sync_status: 'failed',
         error_message: error.message
       })
-
       console.error(`[Resend Sync] Error syncing user ${email}:`, error)
       return { success: false, error: error.message }
+    }
+
+    // Also add to segment-specific audience if available
+    const segment = getUserSegment(grantedPlan ?? null)
+    const segmentAudienceId = audiences[segment]
+
+    if (segmentAudienceId && segment !== 'free') {
+      await rateLimitDelay()
+      await resend.contacts.create({
+        audienceId: segmentAudienceId,
+        email,
+        firstName,
+        lastName,
+      }).catch(() => {}) // Ignore errors for segment audiences
     }
 
     // Success - update sync tracking
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from('resend_contact_sync').upsert({
       user_id: userId,
-      resend_contact_id: data?.id,
-      default_audience_id: audienceId,
+      resend_contact_id: data?.id || null,
+      default_audience_id: audiences.all,
+      segment_audiences: segmentAudienceId ? [segmentAudienceId] : [],
       sync_status: 'synced',
       last_synced_at: new Date().toISOString()
     })
 
-    console.log(`[Resend Sync] Synced user ${email} (contact: ${data?.id})`)
+    console.log(`[Resend Sync] Synced user ${email} to ${segment}`)
     return { success: true, contactId: data?.id }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error(`[Resend Sync] Error syncing user ${email}:`, error)
     return { success: false, error: errorMessage }
+  }
+}
+
+/**
+ * Get all audience info from Resend
+ */
+export async function getAllAudiencesInfo(): Promise<{
+  audiences: Array<{ id: string; name: string; contactCount?: number }>
+  error?: string
+}> {
+  try {
+    const { data: audiences, error: listError } = await resend.audiences.list()
+
+    if (listError) {
+      return { audiences: [], error: listError.message }
+    }
+
+    return {
+      audiences: (audiences?.data || []).map(a => ({
+        id: a.id,
+        name: a.name
+      }))
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return { audiences: [], error: message }
   }
 }
 
@@ -122,6 +207,7 @@ export async function getSyncStatus(): Promise<{
   pending: number
   failed: number
   defaultAudienceId: string | null
+  audiences: Array<{ id: string; name: string }>
 }> {
   try {
     const supabase = createServiceRoleClient()
@@ -144,16 +230,20 @@ export async function getSyncStatus(): Promise<{
     const failed = syncRecords?.filter(s => s.sync_status === 'failed').length || 0
     const defaultAudienceId = syncRecords?.[0]?.default_audience_id || null
 
+    // Get audiences info
+    const { audiences } = await getAllAudiencesInfo()
+
     return {
       total: totalUsers || 0,
       synced,
       pending,
       failed,
-      defaultAudienceId
+      defaultAudienceId,
+      audiences
     }
   } catch (error) {
     console.error('[Resend Sync] Error getting sync status:', error)
-    return { total: 0, synced: 0, pending: 0, failed: 0, defaultAudienceId: null }
+    return { total: 0, synced: 0, pending: 0, failed: 0, defaultAudienceId: null, audiences: [] }
   }
 }
 
@@ -176,17 +266,17 @@ export async function bulkSyncUsersToResend(
   let failed = 0
 
   try {
-    // Get or create default audience
-    const audienceId = await getOrCreateDefaultAudience()
+    // Get or create all audiences first
+    const audiences = await getOrCreateAllAudiences()
 
-    if (!audienceId) {
+    if (!audiences?.all) {
       return {
         success: false,
         synced: 0,
         failed: 0,
         total: 0,
         audienceId: null,
-        errors: ['Failed to get/create default audience']
+        errors: ['Failed to get/create audiences']
       }
     }
 
@@ -200,6 +290,7 @@ export async function bulkSyncUsersToResend(
         id,
         email,
         full_name,
+        granted_plan,
         resend_contact_sync (
           sync_status
         )
@@ -212,7 +303,7 @@ export async function bulkSyncUsersToResend(
         synced: 0,
         failed: 0,
         total: 0,
-        audienceId,
+        audienceId: audiences.all,
         errors: [`Failed to fetch users: ${usersError.message}`]
       }
     }
@@ -221,6 +312,7 @@ export async function bulkSyncUsersToResend(
       id: string
       email: string | null
       full_name: string | null
+      granted_plan: string | null
       resend_contact_sync: { sync_status: string }[] | null
     }
 
@@ -239,44 +331,37 @@ export async function bulkSyncUsersToResend(
         synced: 0,
         failed: 0,
         total: 0,
-        audienceId,
+        audienceId: audiences.all,
         errors: []
       }
     }
 
     console.log(`[Resend Sync] Starting bulk sync of ${total} users`)
 
-    // Process in batches of 50
-    const BATCH_SIZE = 50
-    for (let i = 0; i < usersToSync.length; i += BATCH_SIZE) {
-      const batch = usersToSync.slice(i, i + BATCH_SIZE)
+    // Process users SEQUENTIALLY to respect rate limits (2 req/sec)
+    for (let i = 0; i < usersToSync.length; i++) {
+      const user = usersToSync[i]
 
-      await Promise.all(
-        batch.map(async (user) => {
-          if (!user.email) {
-            failed++
-            return
-          }
+      if (!user.email) {
+        failed++
+        continue
+      }
 
-          const result = await syncUserToResend(user.id, user.email, user.full_name)
+      const result = await syncUserToResend(user.id, user.email, user.full_name, user.granted_plan)
 
-          if (result.success) {
-            synced++
-          } else {
-            failed++
-            if (result.error) {
-              errors.push(`${user.email}: ${result.error}`)
-            }
-          }
-        })
-      )
+      if (result.success) {
+        synced++
+      } else {
+        failed++
+        if (result.error) {
+          errors.push(`${user.email}: ${result.error}`)
+        }
+      }
 
-      // Report progress
-      onProgress?.(synced, failed, total)
-
-      // Small delay to avoid rate limiting
-      if (i + BATCH_SIZE < usersToSync.length) {
-        await new Promise(resolve => setTimeout(resolve, 100))
+      // Report progress every 10 users
+      if ((i + 1) % 10 === 0) {
+        onProgress?.(synced, failed, total)
+        console.log(`[Resend Sync] Progress: ${synced + failed}/${total}`)
       }
     }
 
@@ -287,7 +372,7 @@ export async function bulkSyncUsersToResend(
       synced,
       failed,
       total,
-      audienceId,
+      audienceId: audiences.all,
       errors: errors.slice(0, 10) // Limit errors to first 10
     }
   } catch (error) {
