@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import {
+  sendWelcomeEmail,
+  sendSubscriptionActivatedEmail,
+  sendSubscriptionCanceledEmail,
+  sendPaymentFailedEmail,
+  sendPasswordResetEmail,
+  sendRenewalReminderEmail,
+  sendXPEventAnnouncementEmail,
   sendFirstCaseCompletedEmail,
   sendDay2SecondTouchEmail,
   sendDay3ProgressCheckEmail,
@@ -91,11 +98,21 @@ const mockMonthlyComparison: MonthlyComparison = {
 // Email type definitions for the test endpoint
 type TestEmailType =
   | 'all'
+  // Account emails
+  | 'welcome'
+  | 'subscriptionActivated'
+  | 'subscriptionCanceled'
+  | 'paymentFailed'
+  | 'passwordReset'
+  | 'renewalReminder'
+  | 'xpEventAnnouncement'
+  // Onboarding emails
   | 'firstCase'
   | 'day2'
   | 'day3'
   | 'day5'
   | 'day7'
+  // Engagement emails
   | 'streakStarter'
   | 'streakAtRisk'
   | 'streakMilestone'
@@ -150,6 +167,49 @@ export async function POST(request: Request) {
     }
 
     console.log(`[Test Emails] Starting test email send to: ${targetEmail}, type: ${emailType}`)
+
+    // Account Emails
+    if (emailType === 'all' || emailType === 'welcome') {
+      await sendAndRecord('welcome', () =>
+        sendWelcomeEmail(targetEmail, testName)
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'subscriptionActivated') {
+      await sendAndRecord('subscriptionActivated', () =>
+        sendSubscriptionActivatedEmail(targetEmail, testName, 'Premium + IA')
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'subscriptionCanceled') {
+      await sendAndRecord('subscriptionCanceled', () =>
+        sendSubscriptionCanceledEmail(targetEmail, testName, '28/02/2026')
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'paymentFailed') {
+      await sendAndRecord('paymentFailed', () =>
+        sendPaymentFailedEmail(targetEmail, testName)
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'passwordReset') {
+      await sendAndRecord('passwordReset', () =>
+        sendPasswordResetEmail(targetEmail, testName, 'https://plantaoecg.com.br/reset-password?token=test-token-123')
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'renewalReminder') {
+      await sendAndRecord('renewalReminder', () =>
+        sendRenewalReminderEmail(targetEmail, testName, 'premium', 'R$ 49,90', '15/02/2026')
+      )
+    }
+
+    if (emailType === 'all' || emailType === 'xpEventAnnouncement') {
+      await sendAndRecord('xpEventAnnouncement', () =>
+        sendXPEventAnnouncementEmail(targetEmail, testName, 'Fim de Semana Turbinado', '2x', '02/02/2026 23:59')
+      )
+    }
 
     // Phase 1 - Onboarding Emails
     if (emailType === 'all' || emailType === 'firstCase') {
@@ -278,12 +338,22 @@ export async function GET() {
 
     return NextResponse.json({
       availableTypes: [
-        { type: 'all', description: 'Send all 12 email types' },
+        { type: 'all', description: 'Send all 19 email types' },
+        // Account emails
+        { type: 'welcome', description: 'Welcome email - new user registration' },
+        { type: 'subscriptionActivated', description: 'Subscription activated - payment confirmed' },
+        { type: 'subscriptionCanceled', description: 'Subscription canceled - goodbye email' },
+        { type: 'paymentFailed', description: 'Payment failed - action required' },
+        { type: 'passwordReset', description: 'Password reset link' },
+        { type: 'renewalReminder', description: 'Renewal reminder - 3 days before' },
+        { type: 'xpEventAnnouncement', description: 'XP Event announcement (2x/3x)' },
+        // Phase 1 - Onboarding
         { type: 'firstCase', description: 'First ECG completed (Phase 1)' },
         { type: 'day2', description: 'Day 2 - Second touch (Phase 1)' },
         { type: 'day3', description: 'Day 3 - Progress check (Phase 1)' },
         { type: 'day5', description: 'Day 5 - Feature discovery (Phase 1)' },
         { type: 'day7', description: 'Day 7 - Week summary (Phase 1)' },
+        // Phase 2 - Engagement
         { type: 'streakStarter', description: 'Streak starter - re-engagement (Phase 2)' },
         { type: 'streakAtRisk', description: 'Streak at risk - urgent alert (Phase 2)' },
         { type: 'streakMilestone', description: 'Streak milestone celebration (Phase 2)' },
@@ -296,7 +366,7 @@ export async function GET() {
         method: 'POST',
         body: {
           targetEmail: 'email@example.com',
-          emailType: 'all | firstCase | day2 | day3 | day5 | day7 | streakStarter | streakAtRisk | streakMilestone | levelUp | achievement | weeklyDigest | monthlyReport',
+          emailType: 'all | welcome | subscriptionActivated | subscriptionCanceled | paymentFailed | passwordReset | renewalReminder | xpEventAnnouncement | firstCase | day2 | day3 | day5 | day7 | streakStarter | streakAtRisk | streakMilestone | levelUp | achievement | weeklyDigest | monthlyReport',
         },
       },
     })

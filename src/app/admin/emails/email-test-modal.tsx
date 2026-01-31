@@ -20,11 +20,21 @@ export function EmailTestModal({ isOpen, onClose, emailType, emailName }: EmailT
   // Map email_type to the test API format
   const mapEmailType = (type: string): string => {
     const mapping: Record<string, string> = {
+      // Account emails
+      'welcome': 'welcome',
+      'subscription_activated': 'subscriptionActivated',
+      'subscription_canceled': 'subscriptionCanceled',
+      'payment_failed': 'paymentFailed',
+      'password_reset': 'passwordReset',
+      'renewal_reminder': 'renewalReminder',
+      'xp_event_announcement': 'xpEventAnnouncement',
+      // Onboarding emails
       'first_case': 'firstCase',
       'day2': 'day2',
       'day3': 'day3',
       'day5': 'day5',
       'day7': 'day7',
+      // Engagement emails
       'streak_starter': 'streakStarter',
       'streak_at_risk': 'streakAtRisk',
       'streak_milestone': 'streakMilestone',
@@ -53,14 +63,42 @@ export function EmailTestModal({ isOpen, onClose, emailType, emailName }: EmailT
       })
 
       const data = await res.json()
+      console.log('[Test Email] Response:', data) // Log for debugging
 
       if (res.ok) {
-        setResult({ success: true, message: `E-mail "${emailName}" enviado para ${email}` })
-        setEmail('')
+        // Check if the specific email was actually sent
+        const emailResult = data.results?.find((r: { type: string }) =>
+          r.type === mapEmailType(emailType || '')
+        )
+
+        if (data.summary?.success > 0 || emailResult?.success) {
+          setResult({
+            success: true,
+            message: `E-mail "${emailName}" enviado para ${email}`
+          })
+          setEmail('')
+        } else if (emailResult && !emailResult.success) {
+          setResult({
+            success: false,
+            message: `Falha ao enviar "${emailName}": ${emailResult.error || 'Erro desconhecido'}`
+          })
+        } else if (data.summary?.total === 0) {
+          setResult({
+            success: false,
+            message: `Tipo de e-mail "${emailName}" nao suportado para teste`
+          })
+        } else {
+          setResult({
+            success: true,
+            message: `E-mail "${emailName}" enviado para ${email}`
+          })
+          setEmail('')
+        }
       } else {
         setResult({ success: false, message: data.error || 'Erro ao enviar e-mail' })
       }
     } catch (error) {
+      console.error('[Test Email] Error:', error)
       setResult({ success: false, message: 'Erro de conexao' })
     } finally {
       setSending(false)
