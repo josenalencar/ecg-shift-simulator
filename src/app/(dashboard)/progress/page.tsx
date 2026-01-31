@@ -25,6 +25,7 @@ export default function ProgressPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string>('')
   const [stats, setStats] = useState<UserGamificationStats | null>(null)
   const [config, setConfig] = useState<GamificationConfig | null>(null)
   const [achievements, setAchievements] = useState<AchievementWithProgress[]>([])
@@ -45,6 +46,16 @@ export default function ProgressPage() {
         return
       }
       setUserId(user.id)
+
+      // Get user's name from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+      if (profile?.full_name) {
+        setUserName(profile.full_name)
+      }
 
       // First, check and award any pending achievements (server-side)
       // This ensures users get achievements they've earned but weren't awarded due to previous bugs
@@ -112,6 +123,7 @@ export default function ProgressPage() {
         percentile={percentile}
         isInTopN={isInTopN}
         achievementCount={earnedCount}
+        userName={userName}
       />
 
       {/* Tab Navigation */}
@@ -128,7 +140,7 @@ export default function ProgressPage() {
             `}
           >
             <Activity className="h-4 w-4" />
-            Visao Geral
+            Visão Geral
           </button>
           <button
             onClick={() => setActiveTab('achievements')}
@@ -171,7 +183,7 @@ export default function ProgressPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="h-5 w-5 text-green-600" />
-                  Estatisticas
+                  Estatísticas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -180,7 +192,7 @@ export default function ProgressPage() {
                   <h4 className="text-sm font-medium text-gray-700 mb-2">ECGs por Dificuldade</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Facil</span>
+                      <span className="text-sm text-gray-600">Fácil</span>
                       <div className="flex items-center gap-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div
@@ -196,7 +208,7 @@ export default function ProgressPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Medio</span>
+                      <span className="text-sm text-gray-600">Médio</span>
                       <div className="flex items-center gap-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div
@@ -212,7 +224,7 @@ export default function ProgressPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Dificil</span>
+                      <span className="text-sm text-gray-600">Difícil</span>
                       <div className="flex items-center gap-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div
@@ -248,7 +260,7 @@ export default function ProgressPage() {
                 {/* Current Perfect Streak */}
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Sequencia de Perfeitos</span>
+                    <span className="text-sm text-gray-600">Sequência de Perfeitos</span>
                     <span className="text-lg font-bold text-purple-600">
                       {stats.perfect_streak}
                     </span>
@@ -339,10 +351,10 @@ export default function ProgressPage() {
 // Category labels for grouping
 const CATEGORY_LABELS: Record<string, string> = {
   ecg_count: 'Quantidade de ECGs',
-  diagnosis: 'Diagnosticos',
-  streak: 'Sequencia',
-  perfect: 'Pontuacao Perfeita',
-  level: 'Nivel',
+  diagnosis: 'Diagnósticos',
+  streak: 'Sequência',
+  perfect: 'Pontuação Perfeita',
+  level: 'Nível',
   special: 'Especiais',
   hospital: 'Hospital',
   pediatric: 'Pediatria',
@@ -385,7 +397,7 @@ function AchievementListModal({
           <div>
             <h2 className="text-xl font-bold text-gray-900">Lista de Conquistas</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Todas as conquistas disponiveis e como obte-las
+              Todas as conquistas disponíveis e como obtê-las
             </p>
           </div>
           <button

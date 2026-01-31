@@ -96,6 +96,8 @@ export type Finding =
   | 'primary_t_wave'
   | 'early_repolarization'
   | 'giant_negative_t'
+  | 'qt_short'
+  | 'qt_long'
   // Electrolytes/Medications
   | 'hyperkalemia'
   | 'hypokalemia'
@@ -198,6 +200,7 @@ export interface Database {
           email: string
           full_name: string | null
           bio: string | null
+          avatar: string
           role: UserRole
           is_master_admin: boolean
           hospital_type: HospitalType | null
@@ -212,6 +215,7 @@ export interface Database {
           email: string
           full_name?: string | null
           bio?: string | null
+          avatar?: string
           role?: UserRole
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
@@ -226,6 +230,7 @@ export interface Database {
           email?: string
           full_name?: string | null
           bio?: string | null
+          avatar?: string
           role?: UserRole
           is_master_admin?: boolean
           hospital_type?: HospitalType | null
@@ -752,4 +757,89 @@ export type UserStatsWithRanking = UserGamificationStats & {
     full_name: string | null
     email: string
   }
+}
+
+// ============================================
+// Email Stats Types
+// ============================================
+
+export interface WeeklyStats {
+  ecgsCompleted: number
+  perfectScores: number
+  totalXpEarned: number
+  activeDays: number
+  streakAtEnd: number
+  levelAtEnd: number
+  totalXpAtEnd: number
+  bestScore: number
+  worstScore: number
+  averageScore: number
+  categoriesPracticed: Record<string, number>
+  difficultiesPracticed: Record<string, number>
+  achievementsEarned: string[]
+  ecgsDelta: number
+  xpDelta: number
+  averageScoreDelta: number
+}
+
+export interface MonthlyStats extends WeeklyStats {
+  levelStart: number
+  levelEnd: number
+  levelsGained: number
+  xpStart: number
+  xpEnd: number
+  streakBest: number
+  rankAtEnd: number | null
+  rankPercentile: number | null
+  totalAchievementsAtEnd: number
+  perfectDelta: number
+  activeDaysDelta: number
+  rankDelta: number
+}
+
+export interface MonthlyComparison {
+  ecgsDelta: number
+  perfectScoresDelta: number
+  xpDelta: number
+  levelDelta: number
+  averageScoreDelta: number
+  activeDaysDelta: number
+}
+
+export type EmailType =
+  | 'first_case'
+  | 'day2'
+  | 'day3'
+  | 'day5'
+  | 'day7'
+  | 'streak_starter'
+  | 'streak_at_risk'
+  | 'streak_milestone'
+  | 'level_up'
+  | 'achievement'
+  | 'weekly_digest'
+  | 'monthly_report'
+
+export interface EmailTracking {
+  id: string
+  user_id: string
+  email_type: EmailType
+  sent_at: string
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface UserEmailPreferences {
+  user_id: string
+  onboarding_emails: boolean
+  streak_emails: boolean
+  achievement_emails: boolean
+  level_up_emails: boolean
+  weekly_digest: boolean
+  monthly_report: boolean
+  marketing_emails: boolean
+  preferred_hour: number
+  timezone: string
+  created_at: string
+  updated_at: string
 }

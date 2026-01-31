@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import type { UserGamificationStats, GamificationConfig } from '@/types/database'
 import { xpProgressToNextLevel } from '@/lib/gamification'
-import { Star, TrendingUp, Flame, Trophy } from 'lucide-react'
+import { Star, TrendingUp, Flame, Trophy, Share2 } from 'lucide-react'
+import { ShareProgressModal } from './ShareProgressModal'
 
 interface ProgressHeaderProps {
   stats: UserGamificationStats
@@ -11,6 +13,7 @@ interface ProgressHeaderProps {
   percentile: number
   isInTopN: boolean
   achievementCount: number
+  userName?: string
 }
 
 export function ProgressHeader({
@@ -20,11 +23,24 @@ export function ProgressHeader({
   percentile,
   isInTopN,
   achievementCount,
+  userName,
 }: ProgressHeaderProps) {
+  const [showShareModal, setShowShareModal] = useState(false)
   const xpProgress = xpProgressToNextLevel(stats.total_xp, config)
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white">
+    <>
+    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white relative">
+      {/* Share Button */}
+      <button
+        onClick={() => setShowShareModal(true)}
+        className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-sm text-white/80 hover:text-white"
+        title="Compartilhar progresso"
+      >
+        <Share2 className="h-4 w-4" />
+        <span className="hidden sm:inline">Compartilhar</span>
+      </button>
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         {/* Level & XP */}
         <div className="flex items-center gap-4">
@@ -110,6 +126,24 @@ export function ProgressHeader({
         </div>
       </div>
     </div>
+
+    {/* Share Modal */}
+    <ShareProgressModal
+      isOpen={showShareModal}
+      onClose={() => setShowShareModal(false)}
+      userName={userName || ''}
+      stats={{
+        level: stats.current_level,
+        totalXp: stats.total_xp,
+        currentStreak: stats.current_streak,
+        longestStreak: stats.longest_streak,
+        ecgsCompleted: stats.total_ecgs_completed,
+        perfectScores: stats.total_perfect_scores,
+        rank,
+        percentile,
+      }}
+    />
+    </>
   )
 }
 
