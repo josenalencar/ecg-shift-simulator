@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/email'
+import { syncUserToResend } from '@/lib/resend-sync'
 
 // Admin client to bypass RLS
 function getSupabaseAdmin() {
@@ -58,6 +59,11 @@ export async function GET(request: Request) {
         if (email) {
           sendWelcomeEmail(email, fullName).catch((err) => {
             console.error('Failed to send welcome email for OAuth user:', err)
+          })
+
+          // Sync new user to Resend audience
+          syncUserToResend(user.id, email, fullName).catch((err) => {
+            console.error('Failed to sync user to Resend:', err)
           })
         }
       }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { GrantedPlan } from '@/types/database'
+import { syncUserToResend } from '@/lib/resend-sync'
 
 // Helper to create admin client (bypasses RLS)
 function getSupabaseAdmin() {
@@ -108,6 +109,11 @@ export async function POST(request: NextRequest) {
     if (resetError) {
       console.error('[Create User] Reset link error:', resetError)
     }
+
+    // Sync user to Resend audience (non-blocking)
+    syncUserToResend(authData.user.id, email.toLowerCase(), fullName || null).catch((err) => {
+      console.error('[Create User] Failed to sync to Resend:', err)
+    })
 
     return NextResponse.json({
       success: true,

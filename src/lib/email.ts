@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import WelcomeEmail from '@/emails/welcome'
 import SubscriptionActivatedEmail from '@/emails/subscription-activated'
 import SubscriptionCanceledEmail from '@/emails/subscription-canceled'
@@ -26,6 +27,120 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'onboarding@resend.dev'
 const FROM_NAME = 'Plantao ECG'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
+
+// ============================================
+// Custom Template Utilities
+// ============================================
+
+interface EmailConfig {
+  email_type: string
+  is_enabled: boolean
+  custom_html: string | null
+  custom_subject: string | null
+  use_custom_template: boolean
+}
+
+async function getEmailConfig(emailType: string): Promise<EmailConfig | null> {
+  try {
+    const supabase = createServiceRoleClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from('email_config')
+      .select('email_type, is_enabled, custom_html, custom_subject, use_custom_template')
+      .eq('email_type', emailType)
+      .single()
+
+    if (error || !data) return null
+    return data as EmailConfig
+  } catch {
+    return null
+  }
+}
+
+function replaceTemplateVariables(
+  template: string,
+  variables: Record<string, string | number | null | undefined>
+): string {
+  let result = template
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
+    result = result.replace(regex, String(value ?? ''))
+  }
+  return result
+}
+
+interface SendEmailOptions<T> {
+  emailType: string
+  to: string
+  defaultSubject: string
+  reactComponent: React.ReactElement
+  templateVariables: Record<string, string | number | null | undefined>
+}
+
+async function sendEmailWithCustomTemplate<T>({
+  emailType,
+  to,
+  defaultSubject,
+  reactComponent,
+  templateVariables,
+}: SendEmailOptions<T>): Promise<{ success: boolean; data?: unknown; error?: unknown }> {
+  try {
+    const config = await getEmailConfig(emailType)
+
+    // Use custom template if enabled
+    if (config?.use_custom_template && config?.custom_html) {
+      const html = replaceTemplateVariables(config.custom_html, {
+        ...templateVariables,
+        siteUrl: SITE_URL,
+        unsubscribeUrl: templateVariables.unsubscribeToken
+          ? `${SITE_URL}/api/email/unsubscribe?token=${templateVariables.unsubscribeToken}`
+          : '#',
+      })
+      const subject = config.custom_subject
+        ? replaceTemplateVariables(config.custom_subject, templateVariables)
+        : defaultSubject
+
+      const { data, error } = await resend.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject,
+        html,
+      })
+
+      if (error) {
+        console.error(`[Email] Failed to send ${emailType} email (custom template):`, error)
+        return { success: false, error }
+      }
+
+      console.log(`[Email] ${emailType} email sent with custom template:`, data)
+      return { success: true, data }
+    }
+
+    // Fall back to React template
+    const { data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to,
+      subject: defaultSubject,
+      react: reactComponent,
+    })
+
+    if (error) {
+      console.error(`[Email] Failed to send ${emailType} email:`, error)
+      return { success: false, error }
+    }
+
+    console.log(`[Email] ${emailType} email sent successfully:`, data)
+    return { success: true, data }
+  } catch (error) {
+    console.error(`[Email] Exception sending ${emailType} email:`, error)
+    return { success: false, error }
+  }
+}
+
+// ============================================
+// Email Functions
+// ============================================
 
 export async function sendWelcomeEmail(email: string, name: string) {
   console.log('[Email] Sending welcome email to:', email, 'name:', name)
@@ -410,25 +525,19 @@ export async function sendStreakAtRiskEmail(
 ) {
   console.log('[Email] Sending streak at risk email to:', email, 'streak:', currentStreak)
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: email,
-      subject: `Seu streak de ${currentStreak} dias termina em ${hoursRemaining} horas!`,
-      react: StreakAtRiskEmail({ name, currentStreak, hoursRemaining, unsubscribeToken }),
-    })
-
-    if (error) {
-      console.error('[Email] Failed to send streak at risk email:', error)
-      return { success: false, error }
-    }
-
-    console.log('[Email] Streak at risk email sent successfully:', data)
-    return { success: true, data }
-  } catch (error) {
-    console.error('[Email] Exception sending streak at risk email:', error)
-    return { success: false, error }
-  }
+  return sendEmailWithCustomTemplate({
+    emailType: 'streak_at_risk',
+    to: email,
+    defaultSubject: `Seu streak de ${currentStreak} dias termina em ${hoursRemaining} horas!`,
+    reactComponent: StreakAtRiskEmail({ name, currentStreak, hoursRemaining, unsubscribeToken }),
+    templateVariables: {
+      userName: name,
+      userEmail: email,
+      streak: currentStreak,
+      hoursRemaining,
+      unsubscribeToken,
+    },
+  })
 }
 
 export async function sendStreakMilestoneEmail(
@@ -441,25 +550,20 @@ export async function sendStreakMilestoneEmail(
 ) {
   console.log('[Email] Sending streak milestone email to:', email, 'streak:', streakDays)
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: email,
-      subject: `${streakDays} DIAS! Voce esta entre os mais dedicados`,
-      react: StreakMilestoneEmail({ name, streakDays, nextMilestone, xpBonus, unsubscribeToken }),
-    })
-
-    if (error) {
-      console.error('[Email] Failed to send streak milestone email:', error)
-      return { success: false, error }
-    }
-
-    console.log('[Email] Streak milestone email sent successfully:', data)
-    return { success: true, data }
-  } catch (error) {
-    console.error('[Email] Exception sending streak milestone email:', error)
-    return { success: false, error }
-  }
+  return sendEmailWithCustomTemplate({
+    emailType: 'streak_milestone',
+    to: email,
+    defaultSubject: `${streakDays} DIAS! Voce esta entre os mais dedicados`,
+    reactComponent: StreakMilestoneEmail({ name, streakDays, nextMilestone, xpBonus, unsubscribeToken }),
+    templateVariables: {
+      userName: name,
+      userEmail: email,
+      streak: streakDays,
+      xpBonus,
+      nextMilestone,
+      unsubscribeToken,
+    },
+  })
 }
 
 export async function sendLevelUpEmail(
@@ -472,25 +576,20 @@ export async function sendLevelUpEmail(
 ) {
   console.log('[Email] Sending level up email to:', email, 'level:', newLevel)
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: email,
-      subject: `Level ${newLevel} desbloqueado!`,
-      react: LevelUpEmail({ name, newLevel, previousLevel, totalXp, unsubscribeToken }),
-    })
-
-    if (error) {
-      console.error('[Email] Failed to send level up email:', error)
-      return { success: false, error }
-    }
-
-    console.log('[Email] Level up email sent successfully:', data)
-    return { success: true, data }
-  } catch (error) {
-    console.error('[Email] Exception sending level up email:', error)
-    return { success: false, error }
-  }
+  return sendEmailWithCustomTemplate({
+    emailType: 'level_up',
+    to: email,
+    defaultSubject: `Level ${newLevel} desbloqueado!`,
+    reactComponent: LevelUpEmail({ name, newLevel, previousLevel, totalXp, unsubscribeToken }),
+    templateVariables: {
+      userName: name,
+      userEmail: email,
+      level: newLevel,
+      previousLevel,
+      totalXp: totalXp.toLocaleString(),
+      unsubscribeToken,
+    },
+  })
 }
 
 export async function sendAchievementUnlockedEmail(
@@ -536,25 +635,21 @@ export async function sendWeeklyDigestEmail(
 ) {
   console.log('[Email] Sending weekly digest email to:', email)
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: email,
-      subject: `Sua semana em numeros: ${weekStats.ecgsCompleted} ECGs, +${weekStats.totalXpEarned} XP`,
-      react: WeeklyDigestEmail({ name, weekStats, topAchievement, leaderboardPosition, unsubscribeToken }),
-    })
-
-    if (error) {
-      console.error('[Email] Failed to send weekly digest email:', error)
-      return { success: false, error }
-    }
-
-    console.log('[Email] Weekly digest email sent successfully:', data)
-    return { success: true, data }
-  } catch (error) {
-    console.error('[Email] Exception sending weekly digest email:', error)
-    return { success: false, error }
-  }
+  return sendEmailWithCustomTemplate({
+    emailType: 'weekly_digest',
+    to: email,
+    defaultSubject: `Sua semana em numeros: ${weekStats.ecgsCompleted} ECGs, +${weekStats.totalXpEarned} XP`,
+    reactComponent: WeeklyDigestEmail({ name, weekStats, topAchievement, leaderboardPosition, unsubscribeToken }),
+    templateVariables: {
+      userName: name,
+      userEmail: email,
+      ecgsCompleted: weekStats.ecgsCompleted,
+      xpEarned: weekStats.totalXpEarned,
+      streak: weekStats.streakAtEnd,
+      perfectScores: weekStats.perfectScores,
+      unsubscribeToken,
+    },
+  })
 }
 
 export async function sendMonthlyReportEmail(
@@ -589,5 +684,65 @@ export async function sendMonthlyReportEmail(
   } catch (error) {
     console.error('[Email] Exception sending monthly report email:', error)
     return { success: false, error }
+  }
+}
+
+// ============================================
+// Automation Email Function
+// ============================================
+
+/**
+ * Send an email based on email type configuration
+ * Used by automation system to send any configured email type
+ */
+export async function sendAutomationEmail(
+  to: string,
+  emailType: string,
+  variables: Record<string, string | number | null | undefined>
+): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  try {
+    const config = await getEmailConfig(emailType)
+
+    if (!config) {
+      return { success: false, error: `Email type ${emailType} not found` }
+    }
+
+    if (!config.is_enabled) {
+      return { success: false, error: `Email type ${emailType} is disabled` }
+    }
+
+    // Use custom template if available
+    if (config.use_custom_template && config.custom_html) {
+      const html = replaceTemplateVariables(config.custom_html, {
+        ...variables,
+        siteUrl: SITE_URL,
+      })
+      const subject = config.custom_subject
+        ? replaceTemplateVariables(config.custom_subject, variables)
+        : `Mensagem do Plantao ECG`
+
+      const { data, error } = await resend.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject,
+        html,
+      })
+
+      if (error) {
+        console.error(`[Email] Failed to send automation ${emailType}:`, error)
+        return { success: false, error: error.message }
+      }
+
+      console.log(`[Email] Automation ${emailType} sent:`, data)
+      return { success: true, emailId: data?.id }
+    }
+
+    // For emails without custom template, return an error
+    // Automation should only use emails with custom templates configured
+    return { success: false, error: `Email type ${emailType} has no custom template configured` }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[Email] Exception sending automation ${emailType}:`, error)
+    return { success: false, error: message }
   }
 }

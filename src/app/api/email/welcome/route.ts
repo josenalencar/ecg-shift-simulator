@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
+import { syncUserToResend } from '@/lib/resend-sync'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -20,7 +21,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No email found' }, { status: 400 })
     }
 
+    // Send welcome email
     const result = await sendWelcomeEmail(email, fullName)
+
+    // Sync user to Resend audience (non-blocking)
+    syncUserToResend(user.id, email, fullName).catch((err) => {
+      console.error('Failed to sync user to Resend:', err)
+    })
 
     if (result.success) {
       return NextResponse.json({ success: true })

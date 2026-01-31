@@ -17,6 +17,11 @@ import {
 import { EmailConfigCard } from './email-config-card'
 import { EmailTestModal } from './email-test-modal'
 import { EmailPreviewModal } from './email-preview-modal'
+import { EmailHistory } from './email-history'
+import { EmailManagementModal } from './email-management-modal'
+import { EmailSegments } from './email-segments'
+import { EmailAutomations } from './email-automations'
+import { Plus, Target, Clock } from 'lucide-react'
 
 interface EmailConfig {
   email_type: string
@@ -25,6 +30,9 @@ interface EmailConfig {
   description_pt: string | null
   is_enabled: boolean
   trigger_config: Record<string, unknown>
+  custom_html: string | null
+  custom_subject: string | null
+  use_custom_template: boolean
   created_at: string
   updated_at: string
 }
@@ -56,7 +64,7 @@ interface UserPrefsStats {
   by_preference: Record<string, { enabled: number; disabled: number }>
 }
 
-type TabType = 'overview' | 'analytics' | 'preferences'
+type TabType = 'overview' | 'analytics' | 'preferences' | 'history' | 'segments' | 'automations'
 
 const categoryConfig = {
   account: {
@@ -98,6 +106,10 @@ export function EmailDashboard() {
   const [testEmailType, setTestEmailType] = useState<string | null>(null)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [previewEmailType, setPreviewEmailType] = useState<string | null>(null)
+  const [managementModalOpen, setManagementModalOpen] = useState(false)
+  const [managementMode, setManagementMode] = useState<'create' | 'delete'>('create')
+  const [deleteEmailType, setDeleteEmailType] = useState<string | null>(null)
+  const [deleteEmailName, setDeleteEmailName] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -199,6 +211,66 @@ export function EmailDashboard() {
     }
   }
 
+  const handleUpdateCustomTemplate = async (emailType: string, html: string, subject: string, useCustom: boolean) => {
+    try {
+      const res = await fetch('/api/admin/emails/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_type: emailType,
+          custom_html: html,
+          custom_subject: subject,
+          use_custom_template: useCustom
+        })
+      })
+
+      if (res.ok) {
+        setConfigs(prev =>
+          prev.map(c =>
+            c.email_type === emailType
+              ? { ...c, custom_html: html, custom_subject: subject, use_custom_template: useCustom }
+              : c
+          )
+        )
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Error updating custom template:', error)
+      return false
+    }
+  }
+
+  const handleResetTemplate = async (emailType: string) => {
+    try {
+      const res = await fetch('/api/admin/emails/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_type: emailType,
+          custom_html: null,
+          custom_subject: null,
+          use_custom_template: false
+        })
+      })
+
+      if (res.ok) {
+        setConfigs(prev =>
+          prev.map(c =>
+            c.email_type === emailType
+              ? { ...c, custom_html: null, custom_subject: null, use_custom_template: false }
+              : c
+          )
+        )
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Error resetting template:', error)
+      return false
+    }
+  }
+
   const handleTest = (emailType: string) => {
     setTestEmailType(emailType)
     setTestModalOpen(true)
@@ -207,6 +279,96 @@ export function EmailDashboard() {
   const handlePreview = (emailType: string) => {
     setPreviewEmailType(emailType)
     setPreviewModalOpen(true)
+  }
+
+  const handleOpenCreateModal = () => {
+    setManagementMode('create')
+    setManagementModalOpen(true)
+  }
+
+  const handleOpenDeleteModal = (emailType: string, emailName: string) => {
+    setManagementMode('delete')
+    setDeleteEmailType(emailType)
+    setDeleteEmailName(emailName)
+    setManagementModalOpen(true)
+  }
+
+  const handleManagementConfirm = async (data: { emailType?: string; category?: string; name?: string }) => {
+    if (managementMode === 'create' && data.emailType && data.category && data.name) {
+      try {
+        const res = await fetch('/api/admin/emails/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email_type: data.emailType,
+            category: data.category,
+            name_pt: data.name,
+            description_pt: null,
+            is_enabled: false,
+            trigger_config: {}
+          })
+        })
+
+        if (res.ok) {
+          const result = await res.json()
+          setConfigs(prev => [...prev, result.config])
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error creating email config:', error)
+        return false
+      }
+    } else if (managementMode === 'delete' && deleteEmailType) {
+      try {
+        const res = await fetch(`/api/admin/emails/config?email_type=${deleteEmailType}`, {
+          method: 'DELETE'
+        })
+
+        if (res.ok) {
+          setConfigs(prev => prev.filter(c => c.email_type !== deleteEmailType))
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error deleting email config:', error)
+        return false
+      }
+    }
+    return false
+  }
+
+  const handleDuplicate = async (emailType: string) => {
+    const original = configs.find(c => c.email_type === emailType)
+    if (!original) return
+
+    const newType = `${emailType}_copy`
+    const newName = `${original.name_pt} (Copia)`
+
+    try {
+      const res = await fetch('/api/admin/emails/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_type: newType,
+          category: original.category,
+          name_pt: newName,
+          description_pt: original.description_pt,
+          is_enabled: false,
+          trigger_config: original.trigger_config,
+          custom_html: original.custom_html,
+          custom_subject: original.custom_subject,
+          use_custom_template: original.use_custom_template
+        })
+      })
+
+      if (res.ok) {
+        const result = await res.json()
+        setConfigs(prev => [...prev, result.config])
+      }
+    } catch (error) {
+      console.error('Error duplicating email config:', error)
+    }
   }
 
   const getStatsForType = (emailType: string) => {
@@ -240,9 +402,18 @@ export function EmailDashboard() {
             Configure, teste e monitore todos os e-mails da plataforma
           </p>
         </div>
-        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full">
-          Master Admin
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleOpenCreateModal}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Template
+          </button>
+          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full">
+            Master Admin
+          </span>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -340,6 +511,39 @@ export function EmailDashboard() {
             <Users className="h-4 w-4 inline-block mr-2" />
             Preferencias
           </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'history'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Send className="h-4 w-4 inline-block mr-2" />
+            Historico
+          </button>
+          <button
+            onClick={() => setActiveTab('segments')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'segments'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Target className="h-4 w-4 inline-block mr-2" />
+            Segmentos
+          </button>
+          <button
+            onClick={() => setActiveTab('automations')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'automations'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Clock className="h-4 w-4 inline-block mr-2" />
+            Automacao
+          </button>
         </nav>
       </div>
 
@@ -393,6 +597,10 @@ export function EmailDashboard() {
                         categoryColor={config.color}
                         onToggleEnabled={(enabled) => handleToggleEnabled(email.email_type, enabled)}
                         onUpdateConfig={(triggerConfig) => handleUpdateConfig(email.email_type, triggerConfig)}
+                        onUpdateCustomTemplate={(html, subject, useCustom) => handleUpdateCustomTemplate(email.email_type, html, subject, useCustom)}
+                        onResetTemplate={() => handleResetTemplate(email.email_type)}
+                        onDelete={() => handleOpenDeleteModal(email.email_type, email.name_pt)}
+                        onDuplicate={() => handleDuplicate(email.email_type)}
                         onTest={() => handleTest(email.email_type)}
                         onPreview={() => handlePreview(email.email_type)}
                       />
@@ -543,6 +751,24 @@ export function EmailDashboard() {
         </div>
       )}
 
+      {activeTab === 'history' && (
+        <div className="bg-white rounded-lg border p-6">
+          <EmailHistory />
+        </div>
+      )}
+
+      {activeTab === 'segments' && (
+        <div className="bg-white rounded-lg border p-6">
+          <EmailSegments />
+        </div>
+      )}
+
+      {activeTab === 'automations' && (
+        <div className="bg-white rounded-lg border p-6">
+          <EmailAutomations />
+        </div>
+      )}
+
       {/* Modals */}
       <EmailTestModal
         isOpen={testModalOpen}
@@ -556,6 +782,19 @@ export function EmailDashboard() {
         onClose={() => setPreviewModalOpen(false)}
         emailType={previewEmailType}
         emailName={configs.find(c => c.email_type === previewEmailType)?.name_pt || ''}
+      />
+
+      <EmailManagementModal
+        isOpen={managementModalOpen}
+        onClose={() => {
+          setManagementModalOpen(false)
+          setDeleteEmailType(null)
+          setDeleteEmailName(null)
+        }}
+        mode={managementMode}
+        emailType={deleteEmailType || undefined}
+        emailName={deleteEmailName || undefined}
+        onConfirm={handleManagementConfirm}
       />
     </div>
   )
