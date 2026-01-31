@@ -21,7 +21,7 @@ interface XPEventAnnouncementEmailProps {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://plantaoecg.com.br'
-const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
+const logoUrl = 'https://plantaoecg.com.br/logo-email.png'
 
 export default function XPEventAnnouncementEmail({
   name,

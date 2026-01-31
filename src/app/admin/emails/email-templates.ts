@@ -17,7 +17,7 @@ const baseStyles = `
   .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
 `
 
-const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
+const logoUrl = 'https://plantaoecg.com.br/logo-email.png'
 
 // ============================================
 // ACCOUNT EMAILS

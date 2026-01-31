@@ -141,7 +141,7 @@ export async function generateFeedbackPDF(data: PDFReportData): Promise<Blob> {
   let yPosition = margin
 
   // Load images
-  const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
+  const logoUrl = 'https://plantaoecg.com.br/logo-email.png'
   const courseImageUrl = 'https://manole.vtexassets.com/arquivos/ids/266919-1200-auto?v=638775683835930000&width=1200&height=auto&aspect=true'
 
   const logoBase64 = await loadImageAsBase64(logoUrl)
