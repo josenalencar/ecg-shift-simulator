@@ -49,7 +49,7 @@ interface ShareProgressModalProps {
   }
 }
 
-const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGsemBG-HR.png'
+const logoUrl = 'https://hwgsjpjbyydpittefnjd.supabase.co/storage/v1/object/public/assets/PlantaoECGOG.png'
 
 export function ShareProgressModal({
   isOpen,
@@ -158,7 +158,7 @@ https://plantaoecg.com.br`
             {/* Logo */}
             <div className="mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoUrl} alt="Plantao ECG" className="h-8" />
+              <img src={logoUrl} alt="Plantao ECG" className="h-12" />
             </div>
 
             {/* User name */}
@@ -204,8 +204,10 @@ https://plantaoecg.com.br`
             )}
 
             {/* URL */}
-            <div className="text-center text-blue-300 text-xs">
-              plantaoecg.com.br
+            <div className="text-center">
+              <span className="inline-block bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-white text-sm font-medium">
+                plantaoecg.com.br
+              </span>
             </div>
           </div>
         </div>

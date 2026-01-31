@@ -7,8 +7,15 @@ import {
   Send,
   Eye,
   Save,
-  Loader2
+  Loader2,
+  Code,
+  Trash2,
+  Copy,
+  MoreVertical,
+  Download,
+  Clock
 } from 'lucide-react'
+import { EmailEditor } from './email-editor'
 
 interface EmailConfig {
   email_type: string
@@ -17,6 +24,9 @@ interface EmailConfig {
   description_pt: string | null
   is_enabled: boolean
   trigger_config: Record<string, unknown>
+  custom_html: string | null
+  custom_subject: string | null
+  use_custom_template: boolean
   created_at: string
   updated_at: string
 }
@@ -35,6 +45,10 @@ interface EmailConfigCardProps {
   categoryColor: string
   onToggleEnabled: (enabled: boolean) => Promise<void>
   onUpdateConfig: (triggerConfig: Record<string, unknown>) => Promise<boolean>
+  onUpdateCustomTemplate: (html: string, subject: string, useCustom: boolean) => Promise<boolean>
+  onResetTemplate: () => Promise<boolean>
+  onDelete?: () => void
+  onDuplicate?: () => void
   onTest: () => void
   onPreview: () => void
 }
@@ -76,12 +90,39 @@ const editableFields: Record<string, Array<{ key: string; label: string; type: '
   ]
 }
 
+// Default email subjects for reference
+const defaultSubjects: Record<string, string> = {
+  welcome: 'Bem-vindo ao Plantao ECG!',
+  subscription_activated: 'Sua assinatura foi ativada!',
+  subscription_canceled: 'Assinatura cancelada',
+  payment_failed: 'Problema com seu pagamento',
+  password_reset: 'Redefinir sua senha',
+  renewal_reminder: 'Lembrete: sua assinatura sera renovada',
+  first_case: 'Primeiro ECG concluido!',
+  day2: 'Dia 2 - Continue sua jornada',
+  day3: 'Dia 3 - Seu progresso ate agora',
+  day5: 'Dia 5 - Recursos para explorar',
+  day7: 'Dia 7 - Resumo da sua primeira semana',
+  streak_starter: 'Hora de recomecar seu streak!',
+  streak_at_risk: 'Seu streak de {{streak}} dias esta em risco!',
+  streak_milestone: '{{streak}} DIAS! Voce e incrivel!',
+  level_up: 'Parabens! Voce subiu para o Level {{level}}!',
+  achievement: 'Nova conquista desbloqueada!',
+  weekly_digest: 'Sua semana em numeros',
+  monthly_report: 'Seu relatorio mensal chegou',
+  xp_event_announcement: 'Evento de XP em andamento!'
+}
+
 export function EmailConfigCard({
   config,
   stats,
   categoryColor,
   onToggleEnabled,
   onUpdateConfig,
+  onUpdateCustomTemplate,
+  onResetTemplate,
+  onDelete,
+  onDuplicate,
   onTest,
   onPreview
 }: EmailConfigCardProps) {
@@ -90,6 +131,7 @@ export function EmailConfigCard({
   const [isSaving, setIsSaving] = useState(false)
   const [localConfig, setLocalConfig] = useState<Record<string, unknown>>(config.trigger_config)
   const [hasChanges, setHasChanges] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   const fields = editableFields[config.email_type] || []
   const hasEditableFields = fields.length > 0
@@ -180,6 +222,92 @@ export function EmailConfigCard({
             <p className="font-medium text-gray-900">{stats?.last_30_days || 0}</p>
             <p className="text-xs">30 dias</p>
           </div>
+        </div>
+
+        {/* More Options Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <MoreVertical className="h-4 w-4 text-gray-400" />
+          </button>
+          {showMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-20 py-1">
+                <button
+                  onClick={() => {
+                    onTest()
+                    setShowMenu(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Send className="h-4 w-4" />
+                  Enviar Teste
+                </button>
+                <button
+                  onClick={() => {
+                    onPreview()
+                    setShowMenu(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Eye className="h-4 w-4" />
+                  Ver Preview
+                </button>
+                {onDuplicate && (
+                  <button
+                    onClick={() => {
+                      onDuplicate()
+                      setShowMenu(false)
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Duplicar
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    // Export template as HTML file
+                    const html = config.custom_html || ''
+                    const blob = new Blob([html], { type: 'text/html' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${config.email_type}.html`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    setShowMenu(false)
+                  }}
+                  disabled={!config.custom_html}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar HTML
+                </button>
+                {onDelete && (
+                  <>
+                    <div className="border-t my-1" />
+                    <button
+                      onClick={() => {
+                        onDelete()
+                        setShowMenu(false)
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Excluir Template
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Expand Button */}
@@ -277,6 +405,23 @@ export function EmailConfigCard({
                 Salvar
               </button>
             )}
+          </div>
+
+          {/* HTML Editor Section */}
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Code className="h-4 w-4 text-gray-500" />
+              <h5 className="text-sm font-medium text-gray-700">Editor de Template</h5>
+            </div>
+            <EmailEditor
+              emailType={config.email_type}
+              currentHtml={config.custom_html}
+              currentSubject={config.custom_subject}
+              isUsingCustom={config.use_custom_template}
+              defaultSubject={defaultSubjects[config.email_type] || 'Plantao ECG'}
+              onSave={onUpdateCustomTemplate}
+              onReset={onResetTemplate}
+            />
           </div>
         </div>
       )}

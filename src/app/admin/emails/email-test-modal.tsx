@@ -17,6 +17,25 @@ export function EmailTestModal({ isOpen, onClose, emailType, emailName }: EmailT
 
   if (!isOpen || !emailType) return null
 
+  // Map email_type to the test API format
+  const mapEmailType = (type: string): string => {
+    const mapping: Record<string, string> = {
+      'first_case': 'firstCase',
+      'day2': 'day2',
+      'day3': 'day3',
+      'day5': 'day5',
+      'day7': 'day7',
+      'streak_starter': 'streakStarter',
+      'streak_at_risk': 'streakAtRisk',
+      'streak_milestone': 'streakMilestone',
+      'level_up': 'levelUp',
+      'achievement': 'achievement',
+      'weekly_digest': 'weeklyDigest',
+      'monthly_report': 'monthlyReport',
+    }
+    return mapping[type] || type
+  }
+
   const handleSend = async () => {
     if (!email) return
 
@@ -27,7 +46,10 @@ export function EmailTestModal({ isOpen, onClose, emailType, emailName }: EmailT
       const res = await fetch('/api/admin/test-emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, emailType })
+        body: JSON.stringify({
+          targetEmail: email,
+          emailType: emailType ? mapEmailType(emailType) : 'all'
+        })
       })
 
       const data = await res.json()

@@ -1,7 +1,8 @@
 import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { render } from '@react-email/render'
+import { emailTemplates } from '@/app/admin/emails/email-templates'
 
 // Import all email templates with correct paths
 import WelcomeEmail from '@/emails/welcome'
@@ -23,6 +24,90 @@ import PaymentFailedEmail from '@/emails/payment-failed'
 import PasswordResetEmail from '@/emails/password-reset'
 import RenewalReminderEmail from '@/emails/renewal-reminder'
 import XPEventAnnouncementEmail from '@/emails/xp-event-announcement'
+
+// Replace template variables with preview mock data
+function replaceTemplateVariables(html: string): string {
+  return html
+    // User data
+    .replace(/\{\{userName\}\}/g, 'Dr. José Silva')
+    .replace(/\{\{userEmail\}\}/g, 'jose@exemplo.com')
+    // Streak data
+    .replace(/\{\{streak\}\}/g, '7')
+    .replace(/\{\{hoursRemaining\}\}/g, '8')
+    .replace(/\{\{streakXpBonus\}\}/g, '3.5')
+    .replace(/\{\{longestStreak\}\}/g, '21')
+    .replace(/\{\{previousStreak\}\}/g, '14')
+    .replace(/\{\{daysSinceLastActivity\}\}/g, '3')
+    .replace(/\{\{nextMilestone\}\}/g, '14')
+    .replace(/\{\{daysToNextMilestone\}\}/g, '7')
+    // Level data
+    .replace(/\{\{level\}\}/g, '15')
+    .replace(/\{\{previousLevel\}\}/g, '14')
+    .replace(/\{\{currentLevel\}\}/g, '15')
+    .replace(/\{\{xpToNextLevel\}\}/g, '1,250')
+    .replace(/\{\{percentToNextLevel\}\}/g, '65')
+    // XP data
+    .replace(/\{\{totalXp\}\}/g, '4,406')
+    .replace(/\{\{xpBonus\}\}/g, '100')
+    .replace(/\{\{xpEarned\}\}/g, '500')
+    .replace(/\{\{xpDelta\}\}/g, '+120')
+    .replace(/\{\{xpReward\}\}/g, '250')
+    // ECG data
+    .replace(/\{\{ecgsCompleted\}\}/g, '25')
+    .replace(/\{\{ecgsDelta\}\}/g, '+5')
+    .replace(/\{\{totalEcgs\}\}/g, '156')
+    .replace(/\{\{perfectScores\}\}/g, '10')
+    .replace(/\{\{perfectDelta\}\}/g, '+3')
+    .replace(/\{\{averageScore\}\}/g, '85')
+    .replace(/\{\{averageScoreDelta\}\}/g, '+2.5')
+    .replace(/\{\{score\}\}/g, '92')
+    .replace(/\{\{easyCount\}\}/g, '8')
+    .replace(/\{\{mediumCount\}\}/g, '12')
+    .replace(/\{\{hardCount\}\}/g, '5')
+    // Activity data
+    .replace(/\{\{activeDays\}\}/g, '5')
+    .replace(/\{\{activeDaysDelta\}\}/g, '+1')
+    // Ranking data
+    .replace(/\{\{rank\}\}/g, '42')
+    .replace(/\{\{rankDelta\}\}/g, '+8')
+    .replace(/\{\{percentile\}\}/g, '15.3')
+    // Achievement data
+    .replace(/\{\{achievementName\}\}/g, 'Mestre dos ECGs')
+    .replace(/\{\{achievementDescription\}\}/g, 'Complete 100 ECGs com sucesso')
+    .replace(/\{\{achievementIcon\}\}/g, 'trophy')
+    .replace(/\{\{rarity\}\}/g, 'rare')
+    .replace(/\{\{rarityLabel\}\}/g, 'Rara')
+    .replace(/\{\{totalAchievements\}\}/g, '15')
+    .replace(/\{\{achievementsCount\}\}/g, '100')
+    .replace(/\{\{achievementsEarned\}\}/g, '3')
+    .replace(/\{\{topAchievement\}\}/g, 'Streak de 7 dias')
+    // Monthly data
+    .replace(/\{\{monthName\}\}/g, 'Janeiro')
+    .replace(/\{\{levelStart\}\}/g, '12')
+    .replace(/\{\{levelEnd\}\}/g, '15')
+    .replace(/\{\{levelsGained\}\}/g, '3')
+    .replace(/\{\{bestStreak\}\}/g, '14')
+    // Subscription data
+    .replace(/\{\{plan\}\}/g, 'premium')
+    .replace(/\{\{planDisplay\}\}/g, 'Premium')
+    .replace(/\{\{amount\}\}/g, 'R$ 29,90')
+    .replace(/\{\{renewalDate\}\}/g, '15/02/2026')
+    .replace(/\{\{endDate\}\}/g, '28/02/2026')
+    // Onboarding data
+    .replace(/\{\{difficulty\}\}/g, 'medium')
+    .replace(/\{\{difficultyLabel\}\}/g, 'Médio')
+    .replace(/\{\{featureName\}\}/g, 'Modo Competitivo')
+    .replace(/\{\{featureDescription\}\}/g, 'Compete com outros usuários em tempo real')
+    // Event data
+    .replace(/\{\{eventName\}\}/g, 'Fim de Semana Especial')
+    .replace(/\{\{eventType\}\}/g, '2x')
+    .replace(/\{\{eventTypeLabel\}\}/g, 'XP DOBRADO')
+    .replace(/\{\{eventEndDate\}\}/g, '02/02/2026 23:59')
+    // Links
+    .replace(/\{\{siteUrl\}\}/g, 'https://plantaoecg.com.br')
+    .replace(/\{\{resetLink\}\}/g, 'https://plantaoecg.com.br/reset-password?token=xxx')
+    .replace(/\{\{unsubscribeUrl\}\}/g, '#')
+}
 
 async function checkMasterAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -164,11 +249,37 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const emailType = searchParams.get('type')
+    const useCustom = searchParams.get('custom') === 'true'
 
     if (!emailType) {
       return NextResponse.json({ error: 'email type is required' }, { status: 400 })
     }
 
+    // First, check the email_config table for custom template
+    const supabaseAdmin = createServiceRoleClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: config } = await (supabaseAdmin as any)
+      .from('email_config')
+      .select('custom_html, use_custom_template')
+      .eq('email_type', emailType)
+      .single()
+
+    // If using custom template and custom_html exists, use that
+    if (config?.use_custom_template && config?.custom_html) {
+      const html = replaceTemplateVariables(config.custom_html)
+      return NextResponse.json({ html, available: true, type: 'custom' })
+    }
+
+    // If explicit request for default template (Template Padrão), use professional HTML templates
+    if (!useCustom || !config?.use_custom_template) {
+      const defaultTemplate = emailTemplates[emailType]
+      if (defaultTemplate) {
+        const html = replaceTemplateVariables(defaultTemplate)
+        return NextResponse.json({ html, available: true, type: 'default-html' })
+      }
+    }
+
+    // Fall back to React Email templates
     const emailComponent = getEmailComponent(emailType)
 
     if (!emailComponent) {
@@ -187,7 +298,7 @@ export async function GET(request: NextRequest) {
 
     const html = await render(emailComponent)
 
-    return NextResponse.json({ html, available: true })
+    return NextResponse.json({ html, available: true, type: 'react' })
   } catch (error) {
     console.error('[Email Preview] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

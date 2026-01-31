@@ -34,11 +34,11 @@ export function ProgressHeader({
       {/* Share Button */}
       <button
         onClick={() => setShowShareModal(true)}
-        className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-sm text-white/80 hover:text-white"
+        className="absolute top-4 right-4 px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm font-medium text-white/90 hover:bg-white/20 hover:text-white transition-all duration-200 flex items-center gap-2"
         title="Compartilhar progresso"
       >
         <Share2 className="h-4 w-4" />
-        <span className="hidden sm:inline">Compartilhar</span>
+        <span>Compartilhar</span>
       </button>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
